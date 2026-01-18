@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\Cart;
 use App\Models\CartItem;
 use Illuminate\Http\JsonResponse;
@@ -31,11 +30,11 @@ class CartController extends Controller
         ]);
     }
 
-    public function add(Request $request)
+    public function add(Request $request): JsonResponse
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity'   => 'required|integer|min:1',
         ]);
 
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
@@ -59,10 +58,10 @@ class CartController extends Controller
     }
 
     // Modifier la quantité
-    public function update(Request $request)
+    public function update(Request $request): JsonResponse
     {
         $request->validate([
-            'item_id' => 'required|exists:cart_items,id',
+            'item_id'  => 'required|exists:cart_items,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
@@ -72,7 +71,7 @@ class CartController extends Controller
     }
 
     // Supprimer un item
-    public function remove($itemId)
+    public function remove($itemId): JsonResponse
     {
         $item = CartItem::findOrFail($itemId);
         $item->delete();

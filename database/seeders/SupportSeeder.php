@@ -30,3 +30,4 @@ class SupportSeeder extends Seeder
         }
     }
 }
+

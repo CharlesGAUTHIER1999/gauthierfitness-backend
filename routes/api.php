@@ -13,7 +13,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // --- Public Products ---
 Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::get('/products/{slug}', [ProductController::class, 'show'])->where('slug', '[A-Za-z0-9\-]+');
 
 // --- Auth Required ---
 Route::middleware('auth:sanctum')->group(function () {
