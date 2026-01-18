@@ -4,18 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         return response()->json(
             $request->user()->orders()->with('items.product')->get()
         );
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $user = $request->user();
         $cart = $user->cartItems()->with('product')->get();
@@ -26,17 +27,17 @@ class OrderController extends Controller
 
         $order = Order::create([
             'user_id' => $user->id,
-            'total_ht' => $cart->sum(fn($i) => $i->product->price_ht * $i->quantity),
+            'total_ht'  => $cart->sum(fn($i) => $i->product->price_ht * $i->quantity),
             'total_ttc' => $cart->sum(fn($i) => $i->product->price_ttc * $i->quantity),
         ]);
 
         foreach ($cart as $item) {
             OrderItem::create([
-                'order_id' => $order->id,
+                'order_id'   => $order->id,
                 'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
+                'quantity'   => $item->quantity,
                 'unit_price' => $item->product->price_ttc,
-                'total' => $item->product->price_ttc * $item->quantity,
+                'total'      => $item->product->price_ttc * $item->quantity,
             ]);
         }
 
@@ -44,4 +45,3 @@ class OrderController extends Controller
         return response()->json($order->load('items.product'));
     }
 }
-

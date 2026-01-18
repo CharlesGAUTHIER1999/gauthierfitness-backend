@@ -5,13 +5,30 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
+        // ✅ 1 seul produit par groupe (anti-duplication)
         $query = Product::active()
-            ->with(['mainImage', 'categories']);
+            ->select('products.*')
+            ->whereIn('products.id', function ($sub) {
+                $sub->selectRaw('MIN(id)')
+                    ->from('products')
+                    ->where('is_active', true)
+                    ->groupBy(DB::raw('COALESCE(group_id, id)'));
+            })
+            ->with([
+                'mainImage',
+                'hoverImage',
+                'images',
+                'categories.parent', // ✅ utile pour deviner nutrition => flavor
+                'group',             // ✅ pour type color/flavor
+                'options' => fn ($q) => $q->where('type', 'size')->orderBy('position'),
+            ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -32,13 +49,15 @@ class ProductController extends Controller
         */
         if ($request->filled('category')) {
 
-            // Si on an un genre → on force le contexte
             if ($request->filled('gender')) {
                 $query->whereHas('categories', function ($q) use ($request) {
-                    $q->where('slug', 'like', $request->gender . '%-' . $request->category);
+                    $q->where(
+                        'slug',
+                        'like',
+                        $request->gender . '%-' . $request->category
+                    );
                 });
             } else {
-                // fallback (ancien comportement)
                 $query->whereHas('categories', function ($q) use ($request) {
                     $q->where('slug', 'like', '%-' . $request->category);
                 });
@@ -53,26 +72,54 @@ class ProductController extends Controller
         if ($request->filled('tag')) {
             if ($request->tag === 'new') {
                 $query->orderByDesc('created_at');
-            }
-
-            if ($request->tag === 'bestseller') {
+            } elseif ($request->tag === 'bestseller') {
                 $query->inRandomOrder(); // temporaire
             }
+        } else {
+            // ✅ ordre stable sinon pagination "bizarre"
+            $query->orderByDesc('products.id');
         }
 
+        // ✅ Si page "tous les produits" (pas de filtre) et front ne pagine pas :
+        // on renvoie + d'items par défaut.
+        $defaultPerPage = 12;
+        $isAllProductsPage = !$request->filled('gender') && !$request->filled('category') && !$request->filled('tag');
+
+        if (!$request->has('per_page') && $isAllProductsPage) {
+            $defaultPerPage = 200;
+        }
+
+        $perPage = (int) $request->get('per_page', $defaultPerPage);
+
         return ProductResource::collection(
-            $query->paginate(12)
+            $query->paginate($perPage)
         );
     }
 
-    public function show(int $id)
+    public function show(string $slug): ProductResource
     {
         $product = Product::with([
+            'supplier',
             'images',
             'mainImage',
-            'categories',
+            'hoverImage',
+            'categories.parent',
+            'group',
+
+            // variantes (couleurs ou goûts)
+            'group.products' => function ($q) {
+                $q->select('id', 'slug', 'group_id', 'color_code', 'color_label')
+                    ->where('is_active', true);
+            },
+            'group.products.mainImage',
+
+            'options' => function ($q) {
+                $q->orderBy('position')
+                    ->withSum('lots as stock_qty', 'quantity');
+            },
+
             'lots',
-        ])->findOrFail($id);
+        ])->where('slug', $slug)->firstOrFail();
 
         return new ProductResource($product);
     }

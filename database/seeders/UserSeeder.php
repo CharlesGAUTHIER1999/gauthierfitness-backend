@@ -12,8 +12,8 @@ class UserSeeder extends Seeder
     public function run():void {
         // Admin
         $admin = User::factory()->create([
-            'email' => 'admin@fitness.com',
-            'password' => Hash::make('admin123'),
+            'email' => 'charles.gauthier99@gmail.com',
+            'password' => Hash::make('bordeaux2025@'),
         ]);
         $admin->roles()->attach(Role::where('name', 'admin')->first());
 
