@@ -10,7 +10,9 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
+        // Désactivation temporaire des FK
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         DB::table('product_category')->truncate();
         Category::truncate();
 
@@ -21,17 +23,13 @@ class CategorySeeder extends Seeder
                 'type' => 'clothing',
                 'children' => [
                     'leggings',
-                    'jogging',
+                    'joggings',
                     'sweats',
                     'vestes',
                     'shorts',
                     'brassieres',
                     'tshirts',
-                    'hauts',
-                    'manches-longues',
-                    'combinaisons',
                     'accessoires',
-                    'chaussettes',
                 ],
             ],
             'hommes' => [
@@ -41,86 +39,52 @@ class CategorySeeder extends Seeder
                     'sweats',
                     'vestes',
                     'pantalons',
-                    'manches-longues',
                     'shorts',
-                    'debardeurs',
                     'tshirts',
-                    'chaussettes',
                 ],
             ],
+
             'nutrition' => [
                 'type' => 'nutrition',
                 'children' => [
-                    'proteines' => [
-                        'proteines-poudre',
-                        'isolats',
-                        'hydrolysees',
-                        'oeuf',
-                        'soja',
-                        'viande',
-                        'vegetales',
-                        'barres',
-                    ],
-                    'performance' => [
-                        'masse',
-                        'creatine',
-                        'preworkout',
-                        'boissons',
-                    ],
+                    'proteines-poudre',
+                    'isolats',
+                    'barres',
+                    'creatine',
+                    'boissons',
                 ],
             ],
-            'equipements' => [
+
+            'equipments' => [
                 'type' => 'equipment',
                 'children' => [
                     'barres',
                     'musculation',
-                    'rigs',
                     'prepa',
                     'calisthenie',
-                    'bandes',
                     'mobilite',
                 ],
             ],
         ];
 
         foreach ($categories as $root => $config) {
+
             $rootCategory = Category::create([
                 'name' => ucfirst($root),
                 'slug' => $root,
                 'type' => $config['type'],
                 'position' => 0,
+                'parent_id' => null,
             ]);
 
-            foreach ($config['children'] as $key => $value) {
-                if (is_array($value)) {
-
-                    $parent = Category::create([
-                        'name' => ucfirst($key),
-                        'slug' => $root . '-' . $key,
-                        'type' => $config['type'],
-                        'parent_id' => $rootCategory->id,
-                        'position' => 0,
-                    ]);
-
-                    foreach ($value as $child) {
-                        Category::create([
-                            'name' => ucfirst(str_replace('-', ' ', $child)),
-                            'slug' => $root . '-' . $key . '-' . $child,
-                            'type' => $config['type'],
-                            'parent_id' => $parent->id,
-                            'position' => 0,
-                        ]);
-                    }
-                } else {
-
-                    Category::create([
-                        'name' => ucfirst(str_replace('-', ' ', $value)),
-                        'slug' => $root . '-' . $value,
-                        'type' => $config['type'],
-                        'parent_id' => $rootCategory->id,
-                        'position' => 0,
-                    ]);
-                }
+            foreach ($config['children'] as $childSlug) {
+                Category::create([
+                    'name' => ucfirst(str_replace('-', ' ', $childSlug)),
+                    'slug' => $root . '-' . $childSlug,
+                    'type' => $config['type'],
+                    'parent_id' => $rootCategory->id,
+                    'position' => 0,
+                ]);
             }
         }
     }
