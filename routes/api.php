@@ -18,10 +18,10 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->where('slug'
 // --- Auth Required ---
 Route::middleware('auth:sanctum')->group(function () {
     // Cart
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart/add', [CartController::class, 'add']);
-    Route::post('/cart/update', [CartController::class, 'update']);
-    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove']);
+    Route::get('/cart', [CartController::class, 'show']);
+    Route::post('/cart/items', [CartController::class, 'add']);
+    Route::patch('/cart/items/{item}', [CartController::class, 'update']);
+    Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
     // Orders
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders', [OrderController::class, 'index']);

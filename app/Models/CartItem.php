@@ -7,11 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CartItem extends Model
 {
     protected $fillable = [
-        'cart_id', 'product_id', 'lot_id', 'quantity'
-    ];
-
-    protected $casts = [
-        'quantity' => 'integer',
+        'cart_id', 'product_id', 'product_option_id', 'quantity'
     ];
 
     public function cart()
@@ -24,9 +20,9 @@ class CartItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function lot()
+    public function option()
     {
-        return $this->belongsTo(StockLot::class, 'lot_id');
+        return $this->belongsTo(ProductOption::class, 'product_option_id');
     }
 }
 

@@ -8,22 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Panier
-        Schema::create('carts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
-        });
-
-        Schema::create('cart_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lot_id')->nullable()->constrained('stock_lots')->nullOnDelete();
-            $table->integer('quantity');
-            $table->timestamps();
-        });
-
         // Commandes
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
@@ -76,7 +60,5 @@ return new class extends Migration
         Schema::dropIfExists('payments');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
-        Schema::dropIfExists('cart_items');
-        Schema::dropIfExists('carts');
     }
 };
