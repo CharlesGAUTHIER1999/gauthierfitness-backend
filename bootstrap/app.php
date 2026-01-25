@@ -27,6 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
             SubstituteBindings::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'stripe/webhook', // si jamais tu le tapes hors /api
+        ]);
+
         $middleware->group('web', [
             //
         ]);

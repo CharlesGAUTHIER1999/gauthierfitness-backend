@@ -16,19 +16,23 @@ class User extends Authenticatable
     use HasApiTokens, Notifiable, HasFactory;
 
     protected $fillable = [
-        'firstname', 'lastname', 'email', 'password', 'phone',
-        'is_b2b', 'company_name', 'address', 'zip', 'city',
+        'name',
+        'firstname',
+        'email',
+        'phone',
+        'cellphone',
+        'address',
+        'zip',
+        'city',
+        'siret',
+        'activate',
+        'created_at',
+        'is_b2b'
     ];
 
     protected $hidden = ['password', 'remember_token'];
 
-    // Optionnel mais très utile : expose user.name (sans colonne SQL)
     protected $appends = ['name'];
-
-    public function getNameAttribute(): string
-    {
-        return trim(($this->firstname ?? '') . ' ' . ($this->lastname ?? ''));
-    }
 
     public function roles(): BelongsToMany
     {
@@ -50,14 +54,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
-    // ✅ Relation la plus logique : user -> cart -> items
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
     }
 
-    // ⚠️ Ce hasMany direct peut rester, mais il est “moins propre” conceptuellement
-    // car CartItem appartient à Cart, pas à User.
     public function cartItems(): HasManyThrough
     {
         return $this->hasManyThrough(CartItem::class, Cart::class);

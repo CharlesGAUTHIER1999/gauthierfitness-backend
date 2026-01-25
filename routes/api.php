@@ -14,6 +14,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // --- Public Products ---
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show'])->where('slug', '[A-Za-z0-9\-]+');
+Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
 
 // --- Auth Required ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -23,12 +24,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/cart/items/{item}', [CartController::class, 'update']);
     Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
     // Orders
-    Route::post('/orders', [OrderController::class, 'store']);
+    Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent']);
+    Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/orders', [OrderController::class, 'store']);
 });
-
-// checkout public
-Route::post('/payment/checkout', [StripeController::class, 'createCheckoutSession']);
 
 // webhook
 Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
