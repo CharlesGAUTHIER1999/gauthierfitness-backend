@@ -22,8 +22,6 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token'];
 
-    // Optionnel mais très utile : expose user.name (sans colonne SQL)
-    protected $appends = ['name'];
 
     public function getNameAttribute(): string
     {
@@ -50,16 +48,27 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
-    // ✅ Relation la plus logique : user -> cart -> items
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
     }
 
-    // ⚠️ Ce hasMany direct peut rester, mais il est “moins propre” conceptuellement
-    // car CartItem appartient à Cart, pas à User.
     public function cartItems(): HasManyThrough
     {
         return $this->hasManyThrough(CartItem::class, Cart::class);
+    }
+
+    public function hasRole(string $role): bool
+    {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->contains('name', $role);
+        }
+
+        return $this->roles()->where('name', $role)->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
     }
 }

@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+//use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,21 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
-        // CORS global
-        $middleware->append(HandleCors::class);
-
-        // API
-        $middleware->group('api', [
-            EnsureFrontendRequestsAreStateful::class,
-            ThrottleRequests::class . ':60,1',
-            SubstituteBindings::class,
-        ]);
-
-        $middleware->group('web', [
-            //
+        $middleware->prepend(HandleCors::class);
+        $middleware->group('api', [SubstituteBindings::class]);
+        $middleware->validateCsrfTokens(except: ['api/*']);
+        $middleware->alias([
+            'auth' => Authenticate::class,
+            'admin' => AdminMiddleware::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+    ->withExceptions(function (Exceptions $exceptions) {
+    })
+    ->create();
