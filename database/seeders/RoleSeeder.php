@@ -1,14 +1,15 @@
 <?php
 
 namespace Database\Seeders;
+
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
 {
-    public function run():void {
-        foreach (['admin', 'manager', 'support', 'client'] as $role) {
-            Role::create(['name' => $role]);
-        }
+    public function run(): void
+    {
+        Role::query()->delete();
+        Role::updateOrCreate(['name' => 'admin']);
     }
 }

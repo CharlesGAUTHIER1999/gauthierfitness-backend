@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -10,8 +11,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Compte admin/dev
-        User::updateOrCreate(
+        // Admin/dev account
+        $admin = User::updateOrCreate(
             ['email' => 'charles.gauthier99@gmail.com'],
             [
                 'firstname' => 'Charles',
@@ -20,17 +21,18 @@ class UserSeeder extends Seeder
                 'phone'     => null,
                 'is_b2b'    => false,
                 'company_name' => null,
-
-                // ✅ IMPORTANT : adresse non-null
                 'address' => '10 Rue de la Paix',
                 'city'    => 'Paris',
                 'zip'     => '75002',
-
                 'email_verified_at' => now(),
             ]
         );
 
-        // Quelques users random
+        // Attach admin role (idempotent)
+        $adminRole = Role::where('name', 'admin')->firstOrFail();
+        $admin->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        // Random users (no roles)
         User::factory()->count(10)->create();
     }
 }

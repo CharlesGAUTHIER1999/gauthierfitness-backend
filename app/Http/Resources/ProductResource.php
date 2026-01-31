@@ -9,11 +9,11 @@ class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Fallback si tu n’as pas chargé mainImage/hoverImage
+        // Fallback si mainImage/hoverImage pas chargés
         $mainFromImages  = $this->relationLoaded('images') ? $this->images->firstWhere('is_main', true) : null;
         $hoverFromImages = $this->relationLoaded('images') ? $this->images->firstWhere('is_main', false) : null;
 
-        $main = $this->relationLoaded('mainImage') ? $this->mainImage : $mainFromImages;
+        $main  = $this->relationLoaded('mainImage') ? $this->mainImage : $mainFromImages;
         $hover = $this->relationLoaded('hoverImage') ? $this->hoverImage : $hoverFromImages;
 
         $mainUrl = is_object($main)
@@ -24,14 +24,7 @@ class ProductResource extends JsonResource
             ? $hover->full_url
             : (is_string($hover) ? asset('storage/' . ltrim($hover, '/')) : null);
 
-        // ✅ Détection robuste du type de variantes
-        $variantType = $this->group?->type;
-
-        // Fallback si group.type est NULL (ex: seed avant fix fillable/type)
-        if (!$variantType) {
-            $variantType = $this->inferVariantTypeFromCategories();
-        }
-
+        $variantType = $this->group?->type ?: $this->inferVariantTypeFromCategories();
         $variantName = $variantType === 'flavor' ? 'Goûts' : 'Couleurs';
 
         return [
@@ -44,41 +37,38 @@ class ProductResource extends JsonResource
             'price_ttc'   => $this->price_ttc,
             'vat'         => $this->vat,
 
-            // ✅ champs historiques (gardés pour compat)
             'color_code'  => $this->color_code,
             'color_label' => $this->color_label,
 
-            // ✅ nouveaux champs "propres" pour le front
-            'variant_type'       => $variantType,   // "color" | "flavor" | null
-            'variant_name'       => $variantName,   // "Couleurs" | "Goûts"
-            'variant_value_code' => $this->color_code,
-            'variant_value_label'=> $this->color_label,
+            'variant_type'        => $variantType,
+            'variant_name'        => $variantName,
+            'variant_value_code'  => $this->color_code,
+            'variant_value_label' => $this->color_label,
 
-            // ✅ alias explicite pour nutrition (si tu veux l’utiliser côté front)
             'flavor_code'  => $variantType === 'flavor' ? $this->color_code : null,
             'flavor_label' => $variantType === 'flavor' ? $this->color_label : null,
 
-            // ✅ group info
             'group' => $this->whenLoaded('group', fn () => [
                 'id'   => $this->group?->id,
                 'name' => $this->group?->name,
                 'type' => $this->group?->type,
             ]),
 
-            // ✅ Images
             'main_image'  => $mainUrl,
             'hover_image' => $hoverUrl,
 
-            // ✅ Galerie complète
+            // Galerie complète (uniquement en détail quand images est chargé)
             'images' => $this->whenLoaded('images', function () {
                 return $this->images
-                    ->sortBy([['position', 'asc'], ['id', 'asc']])
+                    ->sortBy(function ($img) {
+                        return ((int) ($img->position ?? 0)) * 1000000 + (int) $img->id;
+                    })
                     ->values()
                     ->map(fn ($img) => [
                         'id'       => $img->id,
                         'url'      => $img->full_url,
                         'is_main'  => (bool) $img->is_main,
-                        'position' => $img->position ?? 0,
+                        'position' => (int) ($img->position ?? 0),
                     ]);
             }),
 
@@ -108,8 +98,8 @@ class ProductResource extends JsonResource
                     'type'      => $o->type,
                     'code'      => $o->code,
                     'label'     => $o->label,
-                    'stock_qty' => $o->stock_qty ?? 0,
-                    'in_stock'  => ($o->stock_qty ?? 0) > 0,
+                    'stock_qty' => (int) ($o->stock_qty ?? 0),
+                    'in_stock'  => ((int) ($o->stock_qty ?? 0)) > 0,
                 ])->values();
             }),
 
@@ -122,7 +112,6 @@ class ProductResource extends JsonResource
                 ])->values();
             }),
 
-            // ✅ Variantes (couleurs OU goûts)
             'variants' => $this->whenLoaded('group', function () use ($variantType, $variantName) {
                 $products = $this->group?->products ?? collect();
 
@@ -136,24 +125,21 @@ class ProductResource extends JsonResource
                         : (is_string($img) ? asset('storage/' . ltrim($img, '/')) : null);
 
                     return [
-                        'id'          => $p->id,
-                        'slug'        => $p->slug,
+                        'id'   => $p->id,
+                        'slug' => $p->slug,
 
-                        // compat
                         'color_code'  => $p->color_code,
                         'color_label' => $p->color_label,
 
-                        // nouveaux champs
                         'variant_type'        => $variantType,
                         'variant_name'        => $variantName,
                         'variant_value_code'  => $p->color_code,
                         'variant_value_label' => $p->color_label,
 
-                        // alias nutrition
                         'flavor_code'  => $variantType === 'flavor' ? $p->color_code : null,
                         'flavor_label' => $variantType === 'flavor' ? $p->color_label : null,
 
-                        'thumb_url'   => $url,
+                        'thumb_url' => $url,
                     ];
                 })->values();
             }),
@@ -165,12 +151,10 @@ class ProductResource extends JsonResource
 
     private function inferVariantTypeFromCategories(): ?string
     {
-        // Si une catégorie a un parent, le root = parent.slug
-        // sinon root = cat.slug (ex: "nutrition")
-        if (!$this->relationLoaded('categories')) return null;
+        if (! $this->relationLoaded('categories')) return null;
 
         $cat = $this->categories->first();
-        if (!$cat) return null;
+        if (! $cat) return null;
 
         $root = $cat->parent?->slug ?? $cat->slug;
 
