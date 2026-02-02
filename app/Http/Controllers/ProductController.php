@@ -79,7 +79,6 @@ class ProductController extends Controller
             if ($tag === 'new') {
                 $query->orderByDesc('created_at')->orderByDesc('products.id');
             } elseif ($tag === 'bestseller') {
-                // ✅ évite inRandomOrder() si tu as beaucoup de produits -> coûteux + pagination instable
                 $query->orderByDesc('products.id');
             } else {
                 $query->orderByDesc('products.id');

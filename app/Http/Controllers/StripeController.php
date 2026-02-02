@@ -4,97 +4,256 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\Shipment;
+use App\Models\WebhookEvent;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Stripe\Checkout\Session as CheckoutSession;
-use Stripe\Exception\ApiErrorException;
-use Stripe\Stripe;
+use Illuminate\Support\Facades\Log;
+use Stripe\StripeClient;
 use Stripe\Webhook;
+use Throwable;
 
 class StripeController extends Controller
 {
-    /**
-     * @throws ApiErrorException
-     */
-    public function createCheckoutSession(Request $request): JsonResponse
+    public function createPaymentIntent(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'items' => 'required|array',
-        ]);
-
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-
-        $lineItems = [];
-        foreach ($validated['items'] as $item) {
-            $lineItems[] = [
-                'price_data' => [
-                    'currency' => 'eur',
-                    'product_data' => [
-                        'name' => $item['name'],
-                    ],
-                    'unit_amount' => intval($item['price_ttc'] * 100),
-                ],
-                'quantity' => $item['quantity'],
-            ];
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $session = CheckoutSession::create([
-            'payment_method_types' => ['card'],
-            'line_items' => $lineItems,
-            'mode' => 'payment',
-            'success_url' => env('FRONTEND_URL') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => env('FRONTEND_URL') . '/payment-cancel',
+        $data = $request->validate([
+            'shipping' => ['required', 'array'],
+            'shipping.firstname' => ['required', 'string'],
+            'shipping.lastname'  => ['required', 'string'],
+            'shipping.address'   => ['required', 'string'],
+            'shipping.zip'       => ['required', 'string'],
+            'shipping.city'      => ['required', 'string'],
+            'shipping.country'   => ['required', 'string'],
+            'shipping.phone'     => ['nullable', 'string'],
         ]);
 
-        return response()->json([
-            'id' => $session->id,
-            'url' => $session->url,
+        // ✅ Assure 1 panier par user (ton unique user_id) + charge items
+        $cart = $user->cart()->firstOrCreate(['user_id' => $user->id]);
+
+        $cartItems = $cart->items()
+            ->with(['product', 'option'])
+            ->get();
+
+        Log::info('PAYMENT_INTENT_CART_CHECK', [
+            'user_id' => $user->id,
+            'cart_id' => $cart->id,
+            'items_count' => $cartItems->count(),
+            'cart_items_ids' => $cartItems->pluck('id')->all(),
         ]);
+
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['message' => 'Panier vide'], 400);
+        }
+
+        $stripe = new StripeClient(config('services.stripe.secret', env('STRIPE_SECRET')));
+
+        return DB::transaction(function () use ($user, $cartItems, $data, $stripe) {
+
+            // 1) Totaux depuis DB (source de vérité)
+            $totalTtc = 0.0;
+            $totalHt  = 0.0;
+
+            foreach ($cartItems as $ci) {
+                $product = $ci->product;
+
+                if (!$product) {
+                    abort(422, 'Produit introuvable dans le panier.');
+                }
+
+                $unitTtc = $ci->option?->price_ttc ?? $product->price_ttc;
+                $unitHt  = $ci->option?->price_ht  ?? $product->price_ht;
+
+                $qty = (int) $ci->quantity;
+
+                $totalTtc += ((float) $unitTtc) * $qty;
+                $totalHt  += ((float) $unitHt)  * $qty;
+            }
+
+            $totalTtc = round($totalTtc, 2);
+            $totalHt  = round($totalHt, 2);
+
+            // 2) Order
+            $order = Order::create([
+                'user_id'        => $user->id,
+                'total_ht'       => $totalHt,
+                'total_ttc'      => $totalTtc,
+                'payment_status' => 'pending',
+                'order_status'   => 'new',
+            ]);
+
+            // 3) Shipment (structuré)
+            Shipment::create([
+                'order_id'  => $order->id,
+                'firstname' => $data['shipping']['firstname'],
+                'lastname'  => $data['shipping']['lastname'],
+                'address'   => $data['shipping']['address'],
+                'zip'       => $data['shipping']['zip'],
+                'city'      => $data['shipping']['city'],
+                'country'   => $data['shipping']['country'],
+                'phone'     => $data['shipping']['phone'] ?? null,
+                'status'    => 'pending',
+            ]);
+
+            // 4) Items
+            foreach ($cartItems as $ci) {
+                $product = $ci->product;
+                if (!$product) {
+                    abort(422, 'Produit introuvable dans le panier.');
+                }
+
+                $unitTtc = $ci->option?->price_ttc ?? $product->price_ttc;
+                $qty = (int) $ci->quantity;
+
+                OrderItem::create([
+                    'order_id'          => $order->id,
+                    'product_id'        => $product->id,
+                    'product_option_id' => $ci->product_option_id,
+                    'lot_id'            => null,
+                    'unit_price'        => round((float) $unitTtc, 2),
+                    'quantity'          => $qty,
+                    'total'             => round(((float) $unitTtc) * $qty, 2),
+                ]);
+            }
+
+            // 5) Payment row
+            $payment = Payment::create([
+                'order_id'             => $order->id,
+                'provider'             => 'stripe',
+                'provider_payment_id'  => null,
+                'amount'               => $totalTtc,
+                'status'               => 'pending',
+                'raw_payload'          => null,
+            ]);
+
+            // 6) Stripe PaymentIntent
+            $intent = $stripe->paymentIntents->create([
+                'amount'   => (int) round($totalTtc * 100),
+                'currency' => 'eur',
+                'automatic_payment_methods' => ['enabled' => true],
+                'metadata' => [
+                    'order_id'   => (string) $order->id,
+                    'user_id'    => (string) $user->id,
+                    'payment_id' => (string) $payment->id,
+                ],
+            ]);
+
+            $payment->provider_payment_id = $intent->id;
+            $payment->raw_payload = $intent->toArray();
+            $payment->save();
+
+            return response()->json([
+                'order_id'          => $order->id,
+                'payment_intent_id' => $intent->id,
+                'client_secret'     => $intent->client_secret,
+                'amount'            => $totalTtc,
+                'currency'          => 'EUR',
+            ]);
+        });
     }
 
     public function webhook(Request $request): JsonResponse
     {
         $endpointSecret = env('STRIPE_WEBHOOK_SECRET');
         $payload = $request->getContent();
-        $signature = $request->header('Stripe-Signature');
+        $sig = $request->header('Stripe-Signature');
 
         try {
-            $event = Webhook::constructEvent($payload, $signature, $endpointSecret);
+            $event = Webhook::constructEvent($payload, $sig, $endpointSecret);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
 
-        if ($event->type === 'checkout.session.completed') {
-            $session = $event->data->object;
+        $provider = 'stripe';
+        $providerEventId = (string) $event->id;
 
-            DB::transaction(function () use ($session) {
-                $order = Order::create([
-                    'user_id' => $session->client_reference_id ?? 1,
-                    'total_ht' => 0,
-                    'total_ttc' => $session->amount_total / 100,
-                    'payment_status' => 'paid',
-                    'order_status' => 'processing',
-                ]);
-
-                $lineItems = CheckoutSession::retrieve(
-                    $session->id,
-                    ['expand' => ['line_items']]
-                )->line_items->data;
-
-                foreach ($lineItems as $item) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => null,
-                        'lot_id' => null,
-                        'unit_price' => $item->amount_total / $item->quantity / 100,
-                        'quantity' => $item->quantity,
-                        'total' => $item->amount_total / 100,
-                    ]);
-                }
-            });
+        try {
+            $we = WebhookEvent::firstOrCreate(
+                ['provider' => $provider, 'provider_event_id' => $providerEventId],
+                ['event_type' => $event->type, 'payload' => $event->toArray(), 'processed_at' => null]
+            );
+        } catch (QueryException $e) {
+            $we = WebhookEvent::where('provider', $provider)
+                ->where('provider_event_id', $providerEventId)
+                ->first();
         }
-        return response()->json(['status' => 'success']);
+
+        if ($we && $we->processed_at) {
+            return response()->json(['status' => 'already_processed']);
+        }
+
+        if ($we && empty($we->payload)) {
+            $we->payload = $event->toArray();
+            $we->save();
+        }
+
+        try {
+            if ($event->type === 'payment_intent.succeeded') {
+                $pi = $event->data->object;
+                $orderId = $pi->metadata->order_id ?? null;
+                $paymentId = $pi->metadata->payment_id ?? null;
+
+                DB::transaction(function () use ($pi, $orderId, $paymentId) {
+                    if ($paymentId && ($payment = Payment::find($paymentId))) {
+                        $payment->status = 'success';
+                        $payment->raw_payload = $pi->toArray();
+                        $payment->save();
+                    }
+
+                    if ($orderId && ($order = Order::with('user')->find($orderId))) {
+                        $order->payment_status = 'paid';
+                        $order->order_status = 'processing';
+                        $order->save();
+
+                        // ✅ vide panier DB
+                        $order->user?->cartItems()?->delete();
+                    }
+                });
+            }
+
+            if ($event->type === 'payment_intent.payment_failed') {
+                $pi = $event->data->object;
+                $orderId = $pi->metadata->order_id ?? null;
+                $paymentId = $pi->metadata->payment_id ?? null;
+
+                DB::transaction(function () use ($pi, $orderId, $paymentId) {
+                    if ($paymentId && ($payment = Payment::find($paymentId))) {
+                        $payment->status = 'failed';
+                        $payment->raw_payload = $pi->toArray();
+                        $payment->save();
+                    }
+
+                    if ($orderId && ($order = Order::find($orderId))) {
+                        $order->payment_status = 'failed';
+                        $order->order_status = 'new';
+                        $order->save();
+                    }
+                });
+            }
+
+            $we->processed_at = now();
+            $we->save();
+
+            return response()->json(['status' => 'success']);
+        } catch (Throwable $e) {
+            if ($we) {
+                $we->failures()->create([
+                    'error_message' => $e->getMessage(),
+                    'retry_count' => 0,
+                ]);
+            }
+
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

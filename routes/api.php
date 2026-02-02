@@ -40,7 +40,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
