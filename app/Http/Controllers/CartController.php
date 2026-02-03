@@ -30,7 +30,7 @@ class CartController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1']
         ]);
 
-        $qty = $data['quantity'] ?? 1;
+        $qty = (int) ($data['quantity'] ?? 1);
 
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
 
@@ -41,17 +41,18 @@ class CartController extends Controller
             )
             ->sum('quantity');
 
-        if ($qty > $stock) {
+        if ($qty > (int) $stock) {
             return response()->json(['message' => 'Stock insuffisant'], 422);
         }
 
-        $item = CartItem::firstOrCreate([
+        // ✅ FIX: firstOrNew pour éviter INSERT sans quantity
+        $item = CartItem::firstOrNew([
             'cart_id' => $cart->id,
             'product_id' => $data['product_id'],
             'product_option_id' => $data['product_option_id'] ?? null
         ]);
 
-        $item->quantity += $qty;
+        $item->quantity = ((int) $item->quantity) + $qty;
         $item->save();
 
         return $this->show($request);
@@ -65,7 +66,7 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1']
         ]);
 
-        $item->quantity = $data['quantity'];
+        $item->quantity = (int) $data['quantity'];
         $item->save();
 
         return $this->show($request);
@@ -92,14 +93,13 @@ class CartController extends Controller
             $variantType = $product->group?->type;
 
             if (!$variantType) {
-                // fallback categories -> root slug
                 $cat = $product->categories?->first();
                 $root = $cat?->parent?->slug ?? $cat?->slug;
                 $variantType = $root === 'nutrition' ? 'flavor' : 'color';
             }
 
             $variantTitle = $variantType === 'flavor' ? 'Goût' : 'Couleur';
-            $variantValue = $product->color_label; // chez toi: couleur OU goût (selon group.type)
+            $variantValue = $product->color_label;
 
             // --- size / option label ---
             $sizeLabel = null;
@@ -126,7 +126,9 @@ class CartController extends Controller
                 ] : null,
             ];
         });
+
         $subtotal = (float) $items->sum('line_total');
+
         return [
             'items'    => $items->values(),
             'count'    => (int) $items->sum('quantity'),

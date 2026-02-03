@@ -17,7 +17,7 @@ return new class extends Migration
                 ->after('supplier_id');
             $table->string('color_code', 40)->nullable()->after('group_id');
             $table->string('color_label', 80)->nullable()->after('color_code');
-            $table->index(['group_id', 'color_code']);
+            $table->index(['group_id', 'color_code'], 'products_group_color_idx');
         });
 
         // 2) stock_lots: option
@@ -54,24 +54,24 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('reservations', function (Blueprint $table) {
-            $table->dropIndex('reservations_product_option_exp_idx');
             $table->dropConstrainedForeignId('product_option_id');
+            $table->dropIndex('reservations_product_option_exp_idx');
         });
 
         Schema::table('stock_movements', function (Blueprint $table) {
-            $table->dropIndex('stock_movements_product_option_type_idx');
             $table->dropConstrainedForeignId('product_option_id');
+            $table->dropIndex('stock_movements_product_option_type_idx');
         });
 
         Schema::table('stock_lots', function (Blueprint $table) {
-            $table->dropIndex('stock_lots_product_option_exp_idx');
             $table->dropConstrainedForeignId('product_option_id');
+            $table->dropIndex('stock_lots_product_option_exp_idx');
         });
 
         Schema::table('products', function (Blueprint $table) {
-            $table->dropIndex(['group_id', 'color_code']);
-            $table->dropConstrainedForeignId('group_id');
-            $table->dropColumn(['color_code', 'color_label']);
+            $table->dropForeign(['group_id']);
+            $table->dropIndex('products_group_color_idx');
+            $table->dropColumn(['group_id', 'color_code', 'color_label']);
         });
     }
 };

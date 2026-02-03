@@ -20,8 +20,13 @@ class User extends Authenticatable
         'is_b2b', 'company_name', 'address', 'zip', 'city',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
     protected $hidden = ['password', 'remember_token'];
 
+    protected $appends = ['name'];
 
     public function getNameAttribute(): string
     {
@@ -33,37 +38,35 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class, 'user_roles');
     }
 
-    public function loyaltyAccount(): HasOne
-    {
-        return $this->hasOne(LoyaltyPointAccount::class);
-    }
-
-    public function tickets(): HasMany
-    {
-        return $this->hasMany(Ticket::class);
-    }
-
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
+    // ✅ Relation la plus logique : user -> cart -> items
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
     }
 
+    /**
+     * ✅ IMPORTANT: hasManyThrough doit avoir les clés explicites,
+     * sinon tu peux te retrouver avec "panier vide" côté back.
+     */
     public function cartItems(): HasManyThrough
     {
-        return $this->hasManyThrough(CartItem::class, Cart::class);
+        return $this->hasManyThrough(
+            CartItem::class,
+            Cart::class,
+            'user_id', // FK on carts
+            'cart_id', // FK on cart_items
+            'id',      // local key on users
+            'id'       // local key on carts
+        );
     }
 
     public function hasRole(string $role): bool
     {
-        if ($this->relationLoaded('roles')) {
-            return $this->roles->contains('name', $role);
-        }
-
         return $this->roles()->where('name', $role)->exists();
     }
 
