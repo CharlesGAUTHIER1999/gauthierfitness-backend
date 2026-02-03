@@ -43,6 +43,7 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    // ✅ Relation la plus logique : user -> cart -> items
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
