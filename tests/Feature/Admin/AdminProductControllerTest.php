@@ -85,6 +85,7 @@ class AdminProductControllerTest extends TestCase
 
         $response = $this->postJson('/api/admin/products', [
             'name'      => 'Nouveau produit test',
+            'sku'       => 'SKU-TEST-001',
             'price_ht'  => 19.99,
             'price_ttc' => 23.99,
             'vat'       => 20.0,
