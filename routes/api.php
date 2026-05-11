@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminStockController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
@@ -14,6 +16,9 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\CustomizationAssetController;
 use App\Http\Controllers\AI\AIDesignController;
+
+// Health check (used by CI/CD deploy-prod.sh)
+Route::get('/health', fn() => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
 Route::post('/login', LoginController::class)->name('login');
@@ -62,5 +67,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/ping', fn () => response()->json(['ok' => true]));
+    Route::get('/stats', [AdminOrderController::class, 'stats']);
+
+    // Products
+    Route::get('/products', [AdminProductController::class, 'index']);
+    Route::post('/products', [AdminProductController::class, 'store']);
+    Route::get('/products/{product}', [AdminProductController::class, 'show']);
+    Route::patch('/products/{product}', [AdminProductController::class, 'update']);
+    Route::delete('/products/{product}', [AdminProductController::class, 'destroy']);
+    Route::patch('/products/{product}/toggle-active', [AdminProductController::class, 'toggleActive']);
+
+    // Orders
+    Route::get('/orders', [AdminOrderController::class, 'index']);
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
+
+    // Stock
+    Route::get('/stock', [AdminStockController::class, 'list']);
+    Route::get('/products/{product}/stock', [AdminStockController::class, 'index']);
+    Route::post('/products/{product}/stock', [AdminStockController::class, 'store']);
+    Route::patch('/stock/lots/{lot}/adjust', [AdminStockController::class, 'adjust']);
+    Route::get('/products/{product}/stock/movements', [AdminStockController::class, 'movements']);
 });
