@@ -1,25 +1,41 @@
-name: CI (Backend)
+# ════════════════════════════════════════════════════════════════════
+#  GauthierFitness Backend — CI
+#  repo : CharlesGAUTHIER1999/gauthierfitness-backend
+#
+#  Séquence : PHPUnit → Pint → Build image GHCR → Trigger deploy infra
+# ════════════════════════════════════════════════════════════════════
+
+name: CI Backend
 
 on:
   push:
     branches: [main, develop]
   pull_request:
+    branches: [main, develop]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/charlesgauthier1999/gauthierfitness-backend
+
+# ──────────────────────────────────────────────────────────────────
+# JOB 1 — Tests PHPUnit
+# ──────────────────────────────────────────────────────────────────
 jobs:
-  php-ci:
+  phpunit:
+    name: "🧪 PHPUnit"
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          tools: composer
+          extensions: pdo, pdo_sqlite, pdo_mysql, mbstring, bcmath, gd, zip, pcntl
           coverage: none
 
-      - name: Prepare Laravel folders
+      - name: Préparer les dossiers Laravel
         run: |
           mkdir -p bootstrap/cache
           mkdir -p storage/framework/{cache,sessions,views}
@@ -31,32 +47,121 @@ jobs:
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Prepare env
+      - name: Préparer .env
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: PHP lint
-        run: php -l artisan
-
-      # Non-bloquant (souvent DB/cache-store dependent)
-      - name: Cache config/routes (non-blocking)
-        run: |
-          php artisan config:cache || true
-          php artisan route:cache || true
-
-      - name: Pint (non-blocking)
-        run: |
-          if [ -f vendor/bin/pint ]; then vendor/bin/pint --test || true; else echo "Pint not installed"; fi
-
-      - name: PHPUnit (non-blocking)
+      - name: PHPUnit (Unit + Feature)
+        run: php artisan test --parallel --stop-on-failure
         env:
           APP_ENV: testing
-        run: |
-          if [ -f vendor/bin/phpunit ]; then vendor/bin/phpunit || true; else echo "PHPUnit not installed"; fi
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+
+# ──────────────────────────────────────────────────────────────────
+# JOB 2 — Linter PHP (Pint)
+# ──────────────────────────────────────────────────────────────────
+  lint:
+    name: "🔍 Laravel Pint"
+    runs-on: ubuntu-latest
+    needs: phpunit
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Pint (vérification style)
+        run: ./vendor/bin/pint --test
+
+# ──────────────────────────────────────────────────────────────────
+# JOB 3 — Build & Push image GHCR (push uniquement, pas PR)
+# ──────────────────────────────────────────────────────────────────
+  build:
+    name: "🐳 Build image backend"
+    runs-on: ubuntu-latest
+    needs: lint
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+# ──────────────────────────────────────────────────────────────────
+# JOB 4 — Déclencher le deploy dans gauthierfitness-infra
+#          (seulement sur develop, après build réussi)
+# ──────────────────────────────────────────────────────────────────
+  trigger-deploy:
+    name: "📡 Trigger deploy infra"
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    steps:
+      - name: Dispatch vers gauthierfitness-infra
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: CharlesGAUTHIER1999/gauthierfitness-infra
+          event-type: deploy-staging
+          client-payload: |
+            {
+              "image_tag": "${{ needs.build.outputs.image_tag }}",
+              "service": "backend",
+              "branch": "${{ github.ref_name }}"
+            }
