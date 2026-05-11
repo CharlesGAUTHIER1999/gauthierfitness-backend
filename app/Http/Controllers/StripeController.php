@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\StockLot;
+use App\Models\StockMovement;
 use App\Models\Shipment;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
@@ -242,6 +244,36 @@ class StripeController extends Controller
                             $order->user->notify(new OrderConfirmed($order));
                             $order->paid_email_sent_at = now();
                             $order->save();
+                        }
+
+                        // ✅ Décrémente le stock — FIFO (lot expirant le plus tôt en premier)
+                        foreach ($order->items as $item) {
+                            $lot = StockLot::where('product_id', $item->product_id)
+                                ->when(
+                                    $item->product_option_id,
+                                    fn ($q) => $q->where('product_option_id', $item->product_option_id),
+                                    fn ($q) => $q->whereNull('product_option_id')
+                                )
+                                ->where('quantity', '>', 0)
+                                ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
+                                ->orderBy('id')
+                                ->first();
+
+                            if ($lot) {
+                                $deducted = min($lot->quantity, (int) $item->quantity);
+                                $lot->decrement('quantity', $deducted);
+
+                                StockMovement::create([
+                                    'lot_id'     => $lot->id,
+                                    'product_id' => $item->product_id,
+                                    'quantity'   => $deducted,
+                                    'type'       => 'out',
+                                    'reason'     => "Vente — Commande #{$order->id}",
+                                ]);
+
+                                $item->lot_id = $lot->id;
+                                $item->save();
+                            }
                         }
                     }
                 });

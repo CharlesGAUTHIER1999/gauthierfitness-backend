@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\StockLot;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +13,87 @@ use Illuminate\Support\Facades\DB;
 
 class AdminOrderController extends Controller
 {
+    public function stats(): JsonResponse
+    {
+        $lowThreshold = 5;
+
+        // Stock par produit actif
+        $stockByProduct = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')
+            ->groupBy('product_id')
+            ->pluck('total_qty', 'product_id');
+
+        $activeProductIds = Product::where('is_active', true)->pluck('id');
+
+        $outOfStock = $activeProductIds->filter(
+            fn ($id) => ($stockByProduct[$id] ?? 0) == 0
+        )->count();
+
+        $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
+            $qty = $stockByProduct[$id] ?? 0;
+            return $qty > 0 && $qty < $lowThreshold;
+        })->count();
+
+        return response()->json([
+            'products' => [
+                'total'        => Product::count(),
+                'active'       => $activeProductIds->count(),
+                'customizable' => Product::where('is_customizable', true)->count(),
+            ],
+            'orders' => [
+                'total'         => Order::count(),
+                'this_week'     => Order::where('created_at', '>=', now()->startOfWeek())->count(),
+                'by_status'     => Order::selectRaw('order_status, count(*) as count')
+                    ->groupBy('order_status')
+                    ->pluck('count', 'order_status'),
+                'revenue'       => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue_month' => (float) Order::where('payment_status', 'paid')
+                    ->where('created_at', '>=', now()->startOfMonth())
+                    ->sum('total_ttc'),
+            ],
+            'stock' => [
+                'out_of_stock' => $outOfStock,
+                'low_stock'    => $lowStock,
+            ],
+        ]);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $query = Order::with([
+            'user:id,firstname,lastname,email',
+            'payment:id,order_id,amount,status',
+        ])->orderByDesc('id');
+
+        if ($request->filled('status')) {
+            $query->where('order_status', $request->query('status'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhere('firstname', 'like', "%{$search}%")
+                    ->orWhere('lastname', 'like', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->paginate(20));
+    }
+
+    public function show(Order $order): JsonResponse
+    {
+        $order->load([
+            'user:id,firstname,lastname,email,phone',
+            'items',
+            'items.product:id,name,slug',
+            'items.product.mainImage:id,product_id,url,is_main',
+            'payment',
+            'shipment',
+        ]);
+
+        return response()->json($order);
+    }
+
     public function updateStatus(Request $request, Order $order): JsonResponse
     {
         $data = $request->validate([
@@ -20,19 +103,13 @@ class AdminOrderController extends Controller
         $newStatus = $data['order_status'];
 
         return DB::transaction(function () use ($order, $newStatus) {
-
-            // Si aucun changement, on renvoie tel quel
             if ($order->order_status === $newStatus) {
-                return response()->json([
-                    'message' => 'Status unchanged',
-                    'order' => $order,
-                ]);
+                return response()->json(['message' => 'Status unchanged', 'order' => $order]);
             }
 
             $order->order_status = $newStatus;
             $order->save();
 
-            // Envoi mail uniquement pour shipped/delivered/canceled et une seule fois
             $user = $order->user;
 
             if ($user) {
@@ -55,10 +132,7 @@ class AdminOrderController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Status updated',
-                'order' => $order->fresh(),
-            ]);
+            return response()->json(['message' => 'Status updated', 'order' => $order->fresh()]);
         });
     }
 }
