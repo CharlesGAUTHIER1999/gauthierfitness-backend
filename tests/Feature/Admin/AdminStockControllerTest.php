@@ -153,7 +153,7 @@ class AdminStockControllerTest extends TestCase
 
         $this->getJson("/api/admin/products/{$product->id}/stock/movements")
             ->assertOk()
-            ->assertJsonStructure(['data', 'meta' => ['total', 'per_page']]);
+            ->assertJsonStructure(['data', 'total', 'per_page']);
     }
 
     /* ── Stock par option ───────────────────────────────────────── */
