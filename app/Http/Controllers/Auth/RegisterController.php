@@ -35,7 +35,7 @@ class RegisterController extends Controller
                 'lastname' => $user->lastname,
                 'email' => $user->email,
                 'is_admin' => $user->isAdmin(),
-            ]
+            ],
         ], 201);
     }
 }

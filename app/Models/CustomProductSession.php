@@ -44,11 +44,13 @@ class CustomProductSession extends Model
         return $this->belongsTo(Design::class);
     }
 
-    public function cartItems(): HasMany {
+    public function cartItems(): HasMany
+    {
         return $this->hasMany(CartItem::class);
     }
 
-    public function orderItems(): HasMany {
+    public function orderItems(): HasMany
+    {
         return $this->hasMany(OrderItem::class);
     }
 }

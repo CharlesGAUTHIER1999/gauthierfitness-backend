@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
-//use Illuminate\Auth\Middleware\Authenticate;
+// use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +25,5 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-    })
+    ->withExceptions(function (Exceptions $exceptions) {})
     ->create();

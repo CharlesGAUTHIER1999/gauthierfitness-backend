@@ -12,8 +12,8 @@ class LoginController extends Controller
     public function __invoke(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required','email'],
-            'password' => ['required','string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
         $email = strtolower(trim($validated['email']));
@@ -38,11 +38,11 @@ class LoginController extends Controller
     private function userPayload(User $user): array
     {
         return [
-            'id'        => $user->id,
+            'id' => $user->id,
             'firstname' => $user->firstname,
-            'lastname'  => $user->lastname,
-            'email'     => $user->email,
-            'is_admin'  => $user->isAdmin(),
+            'lastname' => $user->lastname,
+            'email' => $user->email,
+            'is_admin' => $user->isAdmin(),
         ];
     }
 }

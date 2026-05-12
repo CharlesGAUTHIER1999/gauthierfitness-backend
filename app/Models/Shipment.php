@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Shipment extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'order_id',
         'firstname',
@@ -22,7 +23,8 @@ class Shipment extends Model
         'status',
     ];
 
-    public function order() {
+    public function order()
+    {
         return $this->belongsTo(Order::class);
     }
 }

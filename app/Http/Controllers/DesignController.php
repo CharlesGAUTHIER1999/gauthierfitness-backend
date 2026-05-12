@@ -2,7 +2,4 @@
 
 namespace App\Http\Controllers;
 
-class DesignController
-{
-
-}
+class DesignController {}

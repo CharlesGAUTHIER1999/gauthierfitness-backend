@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class TicketMessage extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'ticket_id',
         'sender_type',
@@ -15,11 +16,13 @@ class TicketMessage extends Model
         'message',
     ];
 
-    public function ticket() {
+    public function ticket()
+    {
         return $this->belongsTo(Ticket::class);
     }
 
-    public function sender() {
+    public function sender()
+    {
         return $this->belongsTo(User::class, 'sender_id');
     }
 }

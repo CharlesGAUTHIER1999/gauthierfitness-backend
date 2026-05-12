@@ -28,13 +28,13 @@ class AddToCartRequest extends FormRequest
         $validator->after(function ($validator) {
             $session_id = $this->input('custom_product_session_id');
 
-            if (!$session_id) {
+            if (! $session_id) {
                 return;
             }
 
             $session = CustomProductSession::find($session_id);
 
-            if (!$session) {
+            if (! $session) {
                 return;
             }
 

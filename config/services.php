@@ -42,7 +42,7 @@ return [
     ],
 
     'openai' => [
-    'key' => env('OPENAI_API_KEY'),
-    'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
+        'key' => env('OPENAI_API_KEY'),
+        'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
     ],
 ];

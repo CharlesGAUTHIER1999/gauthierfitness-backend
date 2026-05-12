@@ -10,7 +10,8 @@ use Throwable;
 
 class StockSeeder extends Seeder
 {
-    public function run(): void {
+    public function run(): void
+    {
         $this->disableFk();
         DB::table('stock_lots')->truncate();
         $this->enableFk();
@@ -41,9 +42,13 @@ class StockSeeder extends Seeder
         }
     }
 
-    private function rootSlug(Product $product): ?string {
+    private function rootSlug(Product $product): ?string
+    {
         $cat = $product->categories->first();
-        if (!$cat) return null;
+        if (! $cat) {
+            return null;
+        }
+
         return $cat->parent?->slug ?? $cat->slug;
     }
 
@@ -58,7 +63,7 @@ class StockSeeder extends Seeder
             DB::table('stock_lots')->insert([
                 'product_id' => $productId,
                 'product_option_id' => $optionId,
-                'lot_number' => 'LOT-' . strtoupper(Str::random(10)),
+                'lot_number' => 'LOT-'.strtoupper(Str::random(10)),
                 'expiration_date' => $isNutrition ? now()->addDays(rand(30, 365))->toDateString() : null,
                 'initial_quantity' => $qty,
                 'quantity' => $qty,
@@ -70,11 +75,17 @@ class StockSeeder extends Seeder
 
     private function disableFk(): void
     {
-        try { DB::statement('SET FOREIGN_KEY_CHECKS=0;'); } catch (Throwable $e) {}
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } catch (Throwable $e) {
+        }
     }
 
     private function enableFk(): void
     {
-        try { DB::statement('SET FOREIGN_KEY_CHECKS=1;'); } catch (Throwable $e) {}
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (Throwable $e) {
+        }
     }
 }

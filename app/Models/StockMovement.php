@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StockMovement extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'lot_id',
         'product_id',
@@ -17,11 +19,13 @@ class StockMovement extends Model
         'reason',
     ];
 
-    public function lot() {
+    public function lot()
+    {
         return $this->belongsTo(StockLot::class, 'lot_id');
     }
 
-    public function product() {
+    public function product()
+    {
         return $this->belongsTo(Product::class);
     }
 }

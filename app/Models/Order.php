@@ -24,10 +24,10 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'paid_email_sent_at'      => 'datetime',
-        'shipped_email_sent_at'   => 'datetime',
+        'paid_email_sent_at' => 'datetime',
+        'shipped_email_sent_at' => 'datetime',
         'delivered_email_sent_at' => 'datetime',
-        'canceled_email_sent_at'  => 'datetime',
+        'canceled_email_sent_at' => 'datetime',
     ];
 
     public function items()
