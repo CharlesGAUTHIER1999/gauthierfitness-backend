@@ -21,7 +21,8 @@ class AdminStockControllerTest extends TestCase
     {
         parent::setUp();
 
-        $role = Role::where('name', 'admin')->firstOrFail();
+        $role        = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
+        $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
     }
 
@@ -152,7 +153,7 @@ class AdminStockControllerTest extends TestCase
 
         $this->getJson("/api/admin/products/{$product->id}/stock/movements")
             ->assertOk()
-            ->assertJsonStructure(['data', 'total', 'per_page']);
+            ->assertJsonStructure(['data', 'meta' => ['total', 'per_page']]);
     }
 
     /* ── Stock par option ───────────────────────────────────────── */
