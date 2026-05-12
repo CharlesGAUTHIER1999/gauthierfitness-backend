@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class ProductGroup extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'slug',
-        'type'
+        'type',
     ];
 
-    public function products() {
+    public function products()
+    {
         return $this->hasMany(Product::class, 'group_id')->orderBy('color_code');
     }
 }

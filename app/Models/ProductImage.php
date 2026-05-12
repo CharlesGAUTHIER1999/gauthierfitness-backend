@@ -28,7 +28,7 @@ class ProductImage extends Model
 
     public function getFullUrlAttribute(): ?string
     {
-        if (!$this->url) {
+        if (! $this->url) {
             return null;
         }
 
@@ -38,6 +38,6 @@ class ProductImage extends Model
         }
 
         // Génère l’URL publique correcte : /storage/products/...
-        return asset('storage/' . ltrim($this->url, '/'));
+        return asset('storage/'.ltrim($this->url, '/'));
     }
 }

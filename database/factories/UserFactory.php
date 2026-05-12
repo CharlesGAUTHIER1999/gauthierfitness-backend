@@ -12,10 +12,10 @@ class UserFactory extends Factory
     {
         return [
             'firstname' => fake()->firstName(),
-            'lastname'  => fake()->lastName(),
-            'email'     => fake()->unique()->safeEmail(),
+            'lastname' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password'  => Hash::make('password'),
+            'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
 
             'phone' => fake()->optional()->phoneNumber(),
@@ -24,8 +24,8 @@ class UserFactory extends Factory
 
             // ✅ IMPORTANT : adresse non-null
             'address' => fake()->streetAddress(),
-            'city'    => fake()->city(),
-            'zip'     => fake()->postcode(),
+            'city' => fake()->city(),
+            'zip' => fake()->postcode(),
         ];
     }
 }

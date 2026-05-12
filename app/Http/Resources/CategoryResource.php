@@ -2,7 +2,4 @@
 
 namespace App\Http\Resources;
 
-class CategoryResource
-{
-
-}
+class CategoryResource {}

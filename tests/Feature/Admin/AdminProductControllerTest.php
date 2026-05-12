@@ -14,13 +14,14 @@ class AdminProductControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $role        = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
+        $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
 
@@ -84,11 +85,11 @@ class AdminProductControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $response = $this->postJson('/api/admin/products', [
-            'name'      => 'Nouveau produit test',
-            'sku'       => 'SKU-TEST-001',
-            'price_ht'  => 19.99,
+            'name' => 'Nouveau produit test',
+            'sku' => 'SKU-TEST-001',
+            'price_ht' => 19.99,
             'price_ttc' => 23.99,
-            'vat'       => 20.0,
+            'vat' => 20.0,
             'is_active' => true,
         ]);
 

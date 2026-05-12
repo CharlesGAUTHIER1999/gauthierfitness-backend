@@ -20,12 +20,12 @@ class Design extends Model
         'provider',
         'provider_job_id',
         'metadata',
-        'configuration'
+        'configuration',
     ];
 
     protected $casts = [
         'metadata' => 'array',
-        'configuration' => 'array'
+        'configuration' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -43,7 +43,8 @@ class Design extends Model
         return $this->belongsTo(ProductOption::class);
     }
 
-    public function assets(): HasMany {
+    public function assets(): HasMany
+    {
         return $this->hasMany(DesignAsset::class);
     }
 }

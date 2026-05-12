@@ -11,9 +11,9 @@ class LogoutController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
-                'message' => 'Unauthenticated'
+                'message' => 'Unauthenticated',
             ], 401);
         }
 
@@ -26,4 +26,3 @@ class LogoutController extends Controller
         return response()->json(['message' => 'ok']);
     }
 }
-

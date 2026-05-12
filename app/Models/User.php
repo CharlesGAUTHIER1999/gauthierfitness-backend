@@ -13,7 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'firstname', 'lastname', 'email', 'password', 'phone',
@@ -30,7 +30,7 @@ class User extends Authenticatable
 
     public function getNameAttribute(): string
     {
-        return trim(($this->firstname ?? '') . ' ' . ($this->lastname ?? ''));
+        return trim(($this->firstname ?? '').' '.($this->lastname ?? ''));
     }
 
     public function roles(): BelongsToMany

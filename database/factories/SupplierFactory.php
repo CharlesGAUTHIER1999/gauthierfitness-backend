@@ -12,11 +12,11 @@ class SupplierFactory extends Factory
         $name = $this->faker->company();
 
         return [
-            'name'          => $name,
-            'slug'          => Str::slug($name) . '-' . $this->faker->unique()->randomNumber(4),
-            'address'       => $this->faker->address(),
+            'name' => $name,
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->randomNumber(4),
+            'address' => $this->faker->address(),
             'contact_email' => $this->faker->unique()->companyEmail(),
-            'phone'         => $this->faker->phoneNumber(),
+            'phone' => $this->faker->phoneNumber(),
         ];
     }
 }

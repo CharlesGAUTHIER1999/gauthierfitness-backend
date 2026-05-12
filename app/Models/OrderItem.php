@@ -27,11 +27,13 @@ class OrderItem extends Model
         'customization_snapshot' => 'array',
     ];
 
-    public function order() {
+    public function order()
+    {
         return $this->belongsTo(Order::class);
     }
 
-    public function product() {
+    public function product()
+    {
         return $this->belongsTo(Product::class);
     }
 
@@ -40,7 +42,8 @@ class OrderItem extends Model
         return $this->belongsTo(ProductOption::class, 'product_option_id');
     }
 
-    public function lot() {
+    public function lot()
+    {
         return $this->belongsTo(StockLot::class);
     }
 

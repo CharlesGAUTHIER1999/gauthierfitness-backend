@@ -25,7 +25,7 @@ class AdminStockController extends Controller
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku',  'like', "%{$search}%");
+                    ->orWhere('sku', 'like', "%{$search}%");
             });
         }
 
@@ -37,8 +37,7 @@ class AdminStockController extends Controller
      */
     public function index(Product $product): JsonResponse
     {
-        $product->load(['options' => fn ($q) =>
-            $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position')
+        $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
         ]);
 
         // Lots sans option (stock global / produit sans variante)
@@ -57,21 +56,21 @@ class AdminStockController extends Controller
                 ->get();
 
             return [
-                'option_id'    => $option->id,
-                'option_code'  => $option->code,
+                'option_id' => $option->id,
+                'option_code' => $option->code,
                 'option_label' => $option->label,
-                'option_type'  => $option->type,
-                'total_qty'    => (int) $lots->sum('quantity'),
-                'lots'         => $lots,
+                'option_type' => $option->type,
+                'total_qty' => (int) $lots->sum('quantity'),
+                'lots' => $lots,
             ];
         });
 
         return response()->json([
-            'product_id'    => $product->id,
-            'product_name'  => $product->name,
-            'global_stock'  => [
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'global_stock' => [
                 'total_qty' => (int) $globalLots->sum('quantity'),
-                'lots'      => $globalLots,
+                'lots' => $globalLots,
             ],
             'option_stocks' => $optionStocks,
         ]);
@@ -84,29 +83,29 @@ class AdminStockController extends Controller
     {
         $data = $request->validate([
             'product_option_id' => ['nullable', 'integer', 'exists:product_options,id'],
-            'lot_number'        => ['required', 'string', 'max:100'],
-            'quantity'          => ['required', 'integer', 'min:1'],
-            'expiration_date'   => ['nullable', 'date', 'after:today'],
+            'lot_number' => ['required', 'string', 'max:100'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'expiration_date' => ['nullable', 'date', 'after:today'],
         ]);
 
         return DB::transaction(function () use ($data, $product) {
             $lot = StockLot::create([
-                'product_id'        => $product->id,
+                'product_id' => $product->id,
                 'product_option_id' => $data['product_option_id'] ?? null,
-                'lot_number'        => $data['lot_number'],
-                'initial_quantity'  => $data['quantity'],
-                'quantity'          => $data['quantity'],
-                'expiration_date'   => $data['expiration_date'] ?? null,
+                'lot_number' => $data['lot_number'],
+                'initial_quantity' => $data['quantity'],
+                'quantity' => $data['quantity'],
+                'expiration_date' => $data['expiration_date'] ?? null,
             ]);
 
             StockMovement::create([
-                'lot_id'            => $lot->id,
-                'product_id'        => $product->id,
+                'lot_id' => $lot->id,
+                'product_id' => $product->id,
                 'product_option_id' => $data['product_option_id'] ?? null,
-                'user_id'           => auth()->id(),
-                'type'              => 'in',
-                'quantity'          => $data['quantity'],
-                'reason'            => 'Réapprovisionnement admin — lot ' . $lot->lot_number,
+                'user_id' => auth()->id(),
+                'type' => 'in',
+                'quantity' => $data['quantity'],
+                'reason' => 'Réapprovisionnement admin — lot '.$lot->lot_number,
             ]);
 
             return response()->json($lot->load('option'), 201);
@@ -120,7 +119,7 @@ class AdminStockController extends Controller
     {
         $data = $request->validate([
             'quantity' => ['required', 'integer', 'min:0'],
-            'reason'   => ['required', 'string', 'max:255'],
+            'reason' => ['required', 'string', 'max:255'],
         ]);
 
         return DB::transaction(function () use ($data, $lot) {
@@ -130,13 +129,13 @@ class AdminStockController extends Controller
             $lot->save();
 
             StockMovement::create([
-                'lot_id'            => $lot->id,
-                'product_id'        => $lot->product_id,
+                'lot_id' => $lot->id,
+                'product_id' => $lot->product_id,
                 'product_option_id' => $lot->product_option_id,
-                'user_id'           => auth()->id(),
-                'type'              => 'correction',
-                'quantity'          => $delta,
-                'reason'            => $data['reason'],
+                'user_id' => auth()->id(),
+                'type' => 'correction',
+                'quantity' => $delta,
+                'reason' => $data['reason'],
             ]);
 
             return response()->json($lot->fresh()->load('option'));

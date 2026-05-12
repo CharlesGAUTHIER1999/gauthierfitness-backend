@@ -144,8 +144,8 @@ class ProductSeeder extends Seeder
     private array $femmes_images = [
         'femmes-pantalons' => [
             'classic' => [
-                'main'   => 'femmes/pantalons/classic0.png',
-                'hover'  => 'femmes/pantalons/classic1.png',
+                'main' => 'femmes/pantalons/classic0.png',
+                'hover' => 'femmes/pantalons/classic1.png',
                 'detail' => [
                     'femmes/pantalons/classic2.png',
                     'femmes/pantalons/classic3.png',
@@ -160,8 +160,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'training' => [
-                'main'   => 'femmes/pantalons/training0.png',
-                'hover'  => 'femmes/pantalons/training1.png',
+                'main' => 'femmes/pantalons/training0.png',
+                'hover' => 'femmes/pantalons/training1.png',
                 'detail' => [
                     'femmes/pantalons/training2.png',
                     'femmes/pantalons/training3.png',
@@ -176,8 +176,8 @@ class ProductSeeder extends Seeder
 
         'femmes-sweats' => [
             'classic' => [
-                'main'   => 'femmes/sweats/classic0.png',
-                'hover'  => 'femmes/sweats/classic1.png',
+                'main' => 'femmes/sweats/classic0.png',
+                'hover' => 'femmes/sweats/classic1.png',
                 'detail' => [
                     'femmes/sweats/classic2.png',
                     'femmes/sweats/classic3.png',
@@ -189,8 +189,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'zippe' => [
-                'main'   => 'femmes/sweats/zippe0.png',
-                'hover'  => 'femmes/sweats/zippe1.png',
+                'main' => 'femmes/sweats/zippe0.png',
+                'hover' => 'femmes/sweats/zippe1.png',
                 'detail' => [
                     'femmes/sweats/zippe2.png',
                     'femmes/sweats/zippe3.png',
@@ -205,8 +205,8 @@ class ProductSeeder extends Seeder
 
         'femmes-tshirts' => [
             'oversize' => [
-                'main'   => 'femmes/tshirts/oversize0.png',
-                'hover'  => 'femmes/tshirts/oversize1.png',
+                'main' => 'femmes/tshirts/oversize0.png',
+                'hover' => 'femmes/tshirts/oversize1.png',
                 'detail' => [
                     'femmes/tshirts/oversize2.png',
                     'femmes/tshirts/oversize3.png',
@@ -221,8 +221,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'training' => [
-                'main'   => 'femmes/tshirts/training0.png',
-                'hover'  => 'femmes/tshirts/training1.png',
+                'main' => 'femmes/tshirts/training0.png',
+                'hover' => 'femmes/tshirts/training1.png',
                 'detail' => [
                     'femmes/tshirts/training2.png',
                     'femmes/tshirts/training3.png',
@@ -240,8 +240,8 @@ class ProductSeeder extends Seeder
 
         'femmes-vestes' => [
             'classic' => [
-                'main'   => 'femmes/vestes/classic0.png',
-                'hover'  => 'femmes/vestes/classic1.png',
+                'main' => 'femmes/vestes/classic0.png',
+                'hover' => 'femmes/vestes/classic1.png',
                 'detail' => [
                     'femmes/vestes/classic2.png',
                     'femmes/vestes/classic3.png',
@@ -256,8 +256,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'coupevent' => [
-                'main'   => 'femmes/vestes/coupevent0.png',
-                'hover'  => 'femmes/vestes/coupevent1.png',
+                'main' => 'femmes/vestes/coupevent0.png',
+                'hover' => 'femmes/vestes/coupevent1.png',
                 'detail' => [
                     'femmes/vestes/coupevent2.png',
                     'femmes/vestes/coupevent3.png',
@@ -274,8 +274,8 @@ class ProductSeeder extends Seeder
     private array $hommes_images = [
         'hommes-pantalons' => [
             'classic' => [
-                'main'   => 'hommes/pantalons/classic0.png',
-                'hover'  => 'hommes/pantalons/classic1.png',
+                'main' => 'hommes/pantalons/classic0.png',
+                'hover' => 'hommes/pantalons/classic1.png',
                 'detail' => [
                     'hommes/pantalons/classic2.png',
                     'hommes/pantalons/classic3.png',
@@ -290,8 +290,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'training' => [
-                'main'   => 'hommes/pantalons/training0.png',
-                'hover'  => 'hommes/pantalons/training1.png',
+                'main' => 'hommes/pantalons/training0.png',
+                'hover' => 'hommes/pantalons/training1.png',
                 'detail' => [
                     'hommes/pantalons/training2.png',
                     'hommes/pantalons/training3.png',
@@ -306,8 +306,8 @@ class ProductSeeder extends Seeder
 
         'hommes-sweats' => [
             'classic' => [
-                'main'   => 'hommes/sweats/classic0.png',
-                'hover'  => 'hommes/sweats/classic1.png',
+                'main' => 'hommes/sweats/classic0.png',
+                'hover' => 'hommes/sweats/classic1.png',
                 'detail' => [
                     'hommes/sweats/classic2.png',
                     'hommes/sweats/classic3.png',
@@ -319,8 +319,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'zippe' => [
-                'main'   => 'hommes/sweats/zippe0.png',
-                'hover'  => 'hommes/sweats/zippe1.png',
+                'main' => 'hommes/sweats/zippe0.png',
+                'hover' => 'hommes/sweats/zippe1.png',
                 'detail' => [
                     'hommes/sweats/zippe2.png',
                     'hommes/sweats/zippe3.png',
@@ -335,8 +335,8 @@ class ProductSeeder extends Seeder
 
         'hommes-tshirts' => [
             'oversize' => [
-                'main'   => 'hommes/tshirts/oversize0.png',
-                'hover'  => 'hommes/tshirts/oversize1.png',
+                'main' => 'hommes/tshirts/oversize0.png',
+                'hover' => 'hommes/tshirts/oversize1.png',
                 'detail' => [
                     'hommes/tshirts/oversize2.png',
                     'hommes/tshirts/oversize3.png',
@@ -351,8 +351,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'training' => [
-                'main'   => 'hommes/tshirts/training0.png',
-                'hover'  => 'hommes/tshirts/training1.png',
+                'main' => 'hommes/tshirts/training0.png',
+                'hover' => 'hommes/tshirts/training1.png',
                 'detail' => [
                     'hommes/tshirts/training2.png',
                     'hommes/tshirts/training3.png',
@@ -370,8 +370,8 @@ class ProductSeeder extends Seeder
 
         'hommes-vestes' => [
             'classic' => [
-                'main'   => 'hommes/vestes/classic0.png',
-                'hover'  => 'hommes/vestes/classic1.png',
+                'main' => 'hommes/vestes/classic0.png',
+                'hover' => 'hommes/vestes/classic1.png',
                 'detail' => [
                     'hommes/vestes/classic2.png',
                     'hommes/vestes/classic3.png',
@@ -386,8 +386,8 @@ class ProductSeeder extends Seeder
                 ],
             ],
             'coupevent' => [
-                'main'   => 'hommes/vestes/coupevent0.png',
-                'hover'  => 'hommes/vestes/coupevent1.png',
+                'main' => 'hommes/vestes/coupevent0.png',
+                'hover' => 'hommes/vestes/coupevent1.png',
                 'detail' => [
                     'hommes/vestes/coupevent2.png',
                     'hommes/vestes/coupevent3.png',
@@ -404,15 +404,15 @@ class ProductSeeder extends Seeder
     private array $nutrition_images = [
         'nutrition-barres' => [
             'hydro' => [
-                'main'   => 'nutrition/barres/hydro1.jpg',
-                'hover'  => 'nutrition/barres/hydro2.jpg',
+                'main' => 'nutrition/barres/hydro1.jpg',
+                'hover' => 'nutrition/barres/hydro2.jpg',
                 'detail' => [
                     'nutrition/barres/hydro3.jpg',
                 ],
             ],
             'iso' => [
-                'main'   => 'nutrition/barres/iso1.jpg',
-                'hover'  => 'nutrition/barres/iso2.jpg',
+                'main' => 'nutrition/barres/iso1.jpg',
+                'hover' => 'nutrition/barres/iso2.jpg',
                 'detail' => [
                     'nutrition/barres/iso3.jpg',
                 ],
@@ -420,61 +420,61 @@ class ProductSeeder extends Seeder
         ],
         'nutrition-boissons' => [
             'gel' => [
-                'main'   => 'nutrition/boissons/gel1.jpg',
-                'hover'  => 'nutrition/boissons/gel2.jpg',
+                'main' => 'nutrition/boissons/gel1.jpg',
+                'hover' => 'nutrition/boissons/gel2.jpg',
                 'detail' => [],
             ],
             'hydra' => [
-                'main'   => 'nutrition/boissons/hydra1.jpg',
-                'hover'  => 'nutrition/boissons/hydra2.jpg',
+                'main' => 'nutrition/boissons/hydra1.jpg',
+                'hover' => 'nutrition/boissons/hydra2.jpg',
                 'detail' => [],
             ],
             'vit' => [
-                'main'   => 'nutrition/boissons/vit1.jpg',
-                'hover'  => 'nutrition/boissons/vit2.jpg',
+                'main' => 'nutrition/boissons/vit1.jpg',
+                'hover' => 'nutrition/boissons/vit2.jpg',
                 'detail' => [],
             ],
         ],
         'nutrition-creatine' => [
             'creaclon250' => [
-                'main'   => 'nutrition/creatine/creaclon1.jpg',
-                'hover'  => 'nutrition/creatine/creaclon1.jpg',
+                'main' => 'nutrition/creatine/creaclon1.jpg',
+                'hover' => 'nutrition/creatine/creaclon1.jpg',
                 'detail' => [],
             ],
             'creaclon500' => [
-                'main'   => 'nutrition/creatine/creaclon2.jpg',
-                'hover'  => 'nutrition/creatine/creaclon2.jpg',
+                'main' => 'nutrition/creatine/creaclon2.jpg',
+                'hover' => 'nutrition/creatine/creaclon2.jpg',
                 'detail' => [],
             ],
             'micropure250' => [
-                'main'   => 'nutrition/creatine/micropure250-1.jpg',
-                'hover'  => 'nutrition/creatine/micropure250-2.jpg',
+                'main' => 'nutrition/creatine/micropure250-1.jpg',
+                'hover' => 'nutrition/creatine/micropure250-2.jpg',
                 'detail' => [],
             ],
             'micropure500' => [
-                'main'   => 'nutrition/creatine/micropure500-1.jpg',
-                'hover'  => 'nutrition/creatine/micropure500-2.jpg',
+                'main' => 'nutrition/creatine/micropure500-1.jpg',
+                'hover' => 'nutrition/creatine/micropure500-2.jpg',
                 'detail' => [],
             ],
         ],
         'nutrition-isolats' => [
             'iso2kg' => [
-                'main'   => 'nutrition/isolats/iso2kg-1.jpg',
-                'hover'  => 'nutrition/isolats/iso2kg-2.jpg',
+                'main' => 'nutrition/isolats/iso2kg-1.jpg',
+                'hover' => 'nutrition/isolats/iso2kg-2.jpg',
                 'detail' => [
                     'nutrition/isolats/iso2kg-3.jpg',
                 ],
             ],
             'iso500' => [
-                'main'   => 'nutrition/isolats/iso500-1.jpg',
-                'hover'  => 'nutrition/isolats/iso500-2.jpg',
+                'main' => 'nutrition/isolats/iso500-1.jpg',
+                'hover' => 'nutrition/isolats/iso500-2.jpg',
                 'detail' => [
                     'nutrition/isolats/iso500-3.jpg',
                 ],
             ],
             'iso900' => [
-                'main'   => 'nutrition/isolats/iso900-1.jpg',
-                'hover'  => 'nutrition/isolats/iso900-2.jpg',
+                'main' => 'nutrition/isolats/iso900-1.jpg',
+                'hover' => 'nutrition/isolats/iso900-2.jpg',
                 'detail' => [
                     'nutrition/isolats/iso900-3.jpg',
                 ],
@@ -482,22 +482,22 @@ class ProductSeeder extends Seeder
         ],
         'nutrition-proteines-poudre' => [
             'whey2kg' => [
-                'main'   => 'nutrition/proteines-poudre/whey2kg-1.jpg',
-                'hover'  => 'nutrition/proteines-poudre/whey2kg-2.jpg',
+                'main' => 'nutrition/proteines-poudre/whey2kg-1.jpg',
+                'hover' => 'nutrition/proteines-poudre/whey2kg-2.jpg',
                 'detail' => [
                     'nutrition/proteines-poudre/whey2kg-3.jpg',
                 ],
             ],
             'whey500' => [
-                'main'   => 'nutrition/proteines-poudre/whey500-1.jpg',
-                'hover'  => 'nutrition/proteines-poudre/whey500-2.jpg',
+                'main' => 'nutrition/proteines-poudre/whey500-1.jpg',
+                'hover' => 'nutrition/proteines-poudre/whey500-2.jpg',
                 'detail' => [
                     'nutrition/proteines-poudre/whey500-3.jpg',
                 ],
             ],
             'whey900' => [
-                'main'   => 'nutrition/proteines-poudre/whey900-1.jpg',
-                'hover'  => 'nutrition/proteines-poudre/whey900-2.jpg',
+                'main' => 'nutrition/proteines-poudre/whey900-1.jpg',
+                'hover' => 'nutrition/proteines-poudre/whey900-2.jpg',
                 'detail' => [
                     'nutrition/proteines-poudre/whey900-3.jpg',
                 ],
@@ -792,7 +792,7 @@ class ProductSeeder extends Seeder
         foreach ($catalogue as $root => $categories) {
             foreach ($categories as $categorySlug => $products) {
                 $category = Category::where('slug', $categorySlug)->first();
-                if (!$category) {
+                if (! $category) {
                     continue;
                 }
 
@@ -814,12 +814,12 @@ class ProductSeeder extends Seeder
                     $product = Product::create([
                         'supplier_id' => $supplier->id,
                         'name' => $name,
-                        'slug' => Str::slug($categorySlug . '-' . $name) . '-' . rand(100, 999),
+                        'slug' => Str::slug($categorySlug.'-'.$name).'-'.rand(100, 999),
                         'description' => $description,
                         'price_ht' => $priceHt,
                         'price_ttc' => $priceTtc,
                         'vat' => $vat,
-                        'sku' => substr(strtoupper(Str::slug($name)), 0, 70) . '-' . rand(1000, 9999),
+                        'sku' => substr(strtoupper(Str::slug($name)), 0, 70).'-'.rand(1000, 9999),
                         'attributes' => null,
                         'is_active' => true,
                         'is_customizable' => $customization['is_customizable'],
@@ -832,7 +832,7 @@ class ProductSeeder extends Seeder
                     $product->categories()->attach($category->id);
 
                     $images = $imagesMap[$categorySlug][$productType] ?? null;
-                    if (!$images) {
+                    if (! $images) {
                         continue;
                     }
 
@@ -844,9 +844,9 @@ class ProductSeeder extends Seeder
                     foreach ($gallery as $i => $path) {
                         ProductImage::create([
                             'product_id' => $product->id,
-                            'url'        => 'products/' . $path,
-                            'is_main'    => $i === 0,
-                            'position'   => $i,
+                            'url' => 'products/'.$path,
+                            'is_main' => $i === 0,
+                            'position' => $i,
                         ]);
                     }
                 }

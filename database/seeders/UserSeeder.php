@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,14 +16,14 @@ class UserSeeder extends Seeder
             ['email' => 'charles.gauthier99@gmail.com'],
             [
                 'firstname' => 'Charles',
-                'lastname'  => 'Gauthier',
-                'password'  => Hash::make('Bordeaux2025@'),
-                'phone'     => null,
-                'is_b2b'    => false,
+                'lastname' => 'Gauthier',
+                'password' => Hash::make('Bordeaux2025@'),
+                'phone' => null,
+                'is_b2b' => false,
                 'company_name' => null,
                 'address' => '34 Rue du Vélodrome',
-                'city'    => 'Bordeaux',
-                'zip'     => '33200',
+                'city' => 'Bordeaux',
+                'zip' => '33200',
                 'email_verified_at' => now(),
             ]
         );

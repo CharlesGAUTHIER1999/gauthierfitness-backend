@@ -35,8 +35,7 @@ class CartController extends Controller
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
 
         $stock = StockLot::where('product_id', $data['product_id'])
-            ->when($data['product_option_id'] ?? null, fn ($q) =>
-            $q->where('product_option_id', $data['product_option_id'])
+            ->when($data['product_option_id'] ?? null, fn ($q) => $q->where('product_option_id', $data['product_option_id'])
             )
             ->sum('quantity');
 
@@ -83,7 +82,7 @@ class CartController extends Controller
         abort_unless($item->cart->user_id === $request->user()->id, 404);
 
         $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1']
+            'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         $item->quantity = (int) $data['quantity'];
@@ -111,7 +110,7 @@ class CartController extends Controller
     {
         $items = $cart->items->map(function ($item) {
             $product = $item->product;
-            $option  = $item->option;
+            $option = $item->option;
             $customSession = $item->customProductSession;
 
             $unit = $customSession?->unit_price_snapshot
@@ -188,9 +187,9 @@ class CartController extends Controller
         $path = ltrim($path, '/');
 
         if (Str::startsWith($path, 'storage/')) {
-            return url('/' . $path);
+            return url('/'.$path);
         }
 
-        return url('/storage/' . $path);
+        return url('/storage/'.$path);
     }
 }

@@ -30,7 +30,7 @@ class ProductTest extends TestCase
     {
         $product = Product::factory()->create([
             'price_ttc' => '29.99',
-            'price_ht'  => '24.99',
+            'price_ht' => '24.99',
         ]);
 
         $this->assertIsFloat($product->price_ttc);

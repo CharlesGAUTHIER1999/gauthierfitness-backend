@@ -30,29 +30,30 @@ class AdminOrderController extends Controller
 
         $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
             $qty = $stockByProduct[$id] ?? 0;
+
             return $qty > 0 && $qty < $lowThreshold;
         })->count();
 
         return response()->json([
             'products' => [
-                'total'        => Product::count(),
-                'active'       => $activeProductIds->count(),
+                'total' => Product::count(),
+                'active' => $activeProductIds->count(),
                 'customizable' => Product::where('is_customizable', true)->count(),
             ],
             'orders' => [
-                'total'         => Order::count(),
-                'this_week'     => Order::where('created_at', '>=', now()->startOfWeek())->count(),
-                'by_status'     => Order::selectRaw('order_status, count(*) as count')
+                'total' => Order::count(),
+                'this_week' => Order::where('created_at', '>=', now()->startOfWeek())->count(),
+                'by_status' => Order::selectRaw('order_status, count(*) as count')
                     ->groupBy('order_status')
                     ->pluck('count', 'order_status'),
-                'revenue'       => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
                 'revenue_month' => (float) Order::where('payment_status', 'paid')
                     ->where('created_at', '>=', now()->startOfMonth())
                     ->sum('total_ttc'),
             ],
             'stock' => [
                 'out_of_stock' => $outOfStock,
-                'low_stock'    => $lowStock,
+                'low_stock' => $lowStock,
             ],
         ]);
     }
@@ -113,19 +114,19 @@ class AdminOrderController extends Controller
             $user = $order->user;
 
             if ($user) {
-                if ($newStatus === 'shipped' && !$order->shipped_email_sent_at) {
+                if ($newStatus === 'shipped' && ! $order->shipped_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'shipped'));
                     $order->shipped_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'delivered' && !$order->delivered_email_sent_at) {
+                if ($newStatus === 'delivered' && ! $order->delivered_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'delivered'));
                     $order->delivered_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'canceled' && !$order->canceled_email_sent_at) {
+                if ($newStatus === 'canceled' && ! $order->canceled_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'canceled'));
                     $order->canceled_email_sent_at = now();
                     $order->save();
