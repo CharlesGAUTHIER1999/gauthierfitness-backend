@@ -58,6 +58,7 @@ class AdminProductController extends Controller
     {
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:255'],
+            'sku'                      => ['required', 'string', 'max:100', 'unique:products,sku'],
             'description'              => ['nullable', 'string'],
             'price_ht'                 => ['required', 'numeric', 'min:0'],
             'price_ttc'                => ['required', 'numeric', 'min:0'],
@@ -86,6 +87,7 @@ class AdminProductController extends Controller
         $product = Product::create([
             'name'                     => $data['name'],
             'slug'                     => $slug,
+            'sku'                      => $data['sku'],
             'description'              => $data['description'] ?? null,
             'price_ht'                 => $data['price_ht'],
             'price_ttc'                => $data['price_ttc'],
