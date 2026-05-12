@@ -74,7 +74,7 @@ class AdminProductControllerTest extends TestCase
 
         $this->getJson("/api/admin/products/{$product->id}")
             ->assertOk()
-            ->assertJsonPath('id', $product->id);
+            ->assertJsonPath('data.id', $product->id);
     }
 
     /* ── Store ──────────────────────────────────────────────────── */
@@ -93,7 +93,7 @@ class AdminProductControllerTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('name', 'Nouveau produit test');
+            ->assertJsonPath('data.name', 'Nouveau produit test');
 
         $this->assertDatabaseHas('products', ['name' => 'Nouveau produit test']);
     }
@@ -116,7 +116,7 @@ class AdminProductControllerTest extends TestCase
 
         $this->patchJson("/api/admin/products/{$product->id}", ['name' => 'New name'])
             ->assertOk()
-            ->assertJsonPath('name', 'New name');
+            ->assertJsonPath('data.name', 'New name');
     }
 
     /* ── Toggle active ──────────────────────────────────────────── */
