@@ -50,7 +50,7 @@ class AdminProductControllerTest extends TestCase
 
         $this->getJson('/api/admin/products')
             ->assertOk()
-            ->assertJsonStructure(['data', 'total', 'per_page']);
+            ->assertJsonStructure(['data', 'meta' => ['total', 'per_page']]);
     }
 
     public function test_admin_can_search_products(): void
