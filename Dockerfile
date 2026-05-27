@@ -13,6 +13,7 @@ RUN composer install \
     --ignore-platform-reqs
 
 COPY . .
+RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views \ && chmod -R 775 bootstrap/cache storage
 RUN composer dump-autoload --optimize --no-dev
 
 # ─────────────────────────────────────────────
