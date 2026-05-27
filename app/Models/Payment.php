@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'order_id',
         'provider',
@@ -21,7 +22,8 @@ class Payment extends Model
         'raw_payload' => 'array',
     ];
 
-    public function order() {
+    public function order()
+    {
         return $this->belongsTo(Order::class);
     }
 }

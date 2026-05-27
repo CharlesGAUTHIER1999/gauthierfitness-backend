@@ -21,7 +21,8 @@ class AdminStockControllerTest extends TestCase
     {
         parent::setUp();
 
-        $role = Role::where('name', 'admin')->firstOrFail();
+        $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
+        $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
     }
 
@@ -63,7 +64,7 @@ class AdminStockControllerTest extends TestCase
 
         $response = $this->postJson("/api/admin/products/{$product->id}/stock", [
             'lot_number' => 'LOT-TEST-001',
-            'quantity'   => 50,
+            'quantity' => 50,
         ]);
 
         $response->assertCreated()
@@ -72,15 +73,15 @@ class AdminStockControllerTest extends TestCase
 
         $this->assertDatabaseHas('stock_lots', [
             'product_id' => $product->id,
-            'quantity'   => 50,
+            'quantity' => 50,
             'lot_number' => 'LOT-TEST-001',
         ]);
 
         // Vérifier le mouvement 'in' créé automatiquement
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $product->id,
-            'type'       => 'in',
-            'quantity'   => 50,
+            'type' => 'in',
+            'quantity' => 50,
         ]);
     }
 
@@ -101,7 +102,7 @@ class AdminStockControllerTest extends TestCase
 
         $this->postJson("/api/admin/products/{$product->id}/stock", [
             'lot_number' => 'LOT-ZERO',
-            'quantity'   => 0,
+            'quantity' => 0,
         ])->assertUnprocessable();
     }
 
@@ -114,19 +115,19 @@ class AdminStockControllerTest extends TestCase
 
         $lot = StockLot::factory()->create([
             'product_id' => $product->id,
-            'quantity'   => 20,
+            'quantity' => 20,
         ]);
 
         $this->patchJson("/api/admin/stock/lots/{$lot->id}/adjust", [
             'quantity' => 15,
-            'reason'   => 'Inventaire mensuel',
+            'reason' => 'Inventaire mensuel',
         ])->assertOk()
             ->assertJsonPath('quantity', 15);
 
         // Mouvement de correction avec delta -5
         $this->assertDatabaseHas('stock_movements', [
-            'lot_id'   => $lot->id,
-            'type'     => 'correction',
+            'lot_id' => $lot->id,
+            'type' => 'correction',
             'quantity' => -5,
         ]);
     }
@@ -135,7 +136,7 @@ class AdminStockControllerTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
-        $lot     = StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 10]);
+        $lot = StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 10]);
 
         $this->patchJson("/api/admin/stock/lots/{$lot->id}/adjust", [
             'quantity' => 5,
@@ -161,23 +162,23 @@ class AdminStockControllerTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
-        $option  = ProductOption::create([
+        $option = ProductOption::create([
             'product_id' => $product->id,
-            'type'       => 'size',
-            'code'       => 'L',
-            'label'      => 'Large',
+            'type' => 'size',
+            'code' => 'L',
+            'label' => 'Large',
         ]);
 
         $this->postJson("/api/admin/products/{$product->id}/stock", [
             'product_option_id' => $option->id,
-            'lot_number'        => 'LOT-L-001',
-            'quantity'          => 30,
+            'lot_number' => 'LOT-L-001',
+            'quantity' => 30,
         ])->assertCreated();
 
         $this->assertDatabaseHas('stock_lots', [
-            'product_id'        => $product->id,
+            'product_id' => $product->id,
             'product_option_id' => $option->id,
-            'quantity'          => 30,
+            'quantity' => 30,
         ]);
     }
 }

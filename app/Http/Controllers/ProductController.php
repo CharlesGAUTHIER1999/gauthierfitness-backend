@@ -40,7 +40,7 @@ class ProductController extends Controller
 
             $query->whereHas('categories', function ($q) use ($gender) {
                 $q->where('slug', $gender)
-                    ->orWhere('slug', 'like', $gender . '-%');
+                    ->orWhere('slug', 'like', $gender.'-%');
             });
         }
 

@@ -12,12 +12,12 @@ class VerificationController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'id'        => $user->id,
+            'id' => $user->id,
             'firstname' => $user->firstname,
-            'lastname'  => $user->lastname,
-            'email'     => $user->email,
+            'lastname' => $user->lastname,
+            'email' => $user->email,
             'roles' => $user->roles()->pluck('name'),
-            'is_admin'  => $user->isAdmin(),
+            'is_admin' => $user->isAdmin(),
         ]);
     }
 }

@@ -14,13 +14,14 @@ class AdminProductControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $role        = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
+        $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
 
@@ -50,7 +51,7 @@ class AdminProductControllerTest extends TestCase
 
         $this->getJson('/api/admin/products')
             ->assertOk()
-            ->assertJsonStructure(['data', 'total', 'per_page']);
+            ->assertJsonStructure(['data', 'meta' => ['total', 'per_page']]);
     }
 
     public function test_admin_can_search_products(): void
@@ -74,7 +75,7 @@ class AdminProductControllerTest extends TestCase
 
         $this->getJson("/api/admin/products/{$product->id}")
             ->assertOk()
-            ->assertJsonPath('id', $product->id);
+            ->assertJsonPath('data.id', $product->id);
     }
 
     /* ── Store ──────────────────────────────────────────────────── */
@@ -84,10 +85,11 @@ class AdminProductControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $response = $this->postJson('/api/admin/products', [
-            'name'      => 'Nouveau produit test',
-            'price_ht'  => 19.99,
+            'name' => 'Nouveau produit test',
+            'sku' => 'SKU-TEST-001',
+            'price_ht' => 19.99,
             'price_ttc' => 23.99,
-            'vat'       => 20.0,
+            'vat' => 20.0,
             'is_active' => true,
         ]);
 

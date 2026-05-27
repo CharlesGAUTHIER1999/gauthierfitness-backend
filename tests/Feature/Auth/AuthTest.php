@@ -15,10 +15,10 @@ class AuthTest extends TestCase
     public function test_user_can_register(): void
     {
         $response = $this->postJson('/api/register', [
-            'firstname'             => 'Charles',
-            'lastname'              => 'Gauthier',
-            'email'                 => 'charles@gauthierfitness.fr',
-            'password'              => 'Password123!',
+            'firstname' => 'Charles',
+            'lastname' => 'Gauthier',
+            'email' => 'charles@gauthierfitness.fr',
+            'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ]);
 
@@ -33,10 +33,10 @@ class AuthTest extends TestCase
         User::factory()->create(['email' => 'dup@test.fr']);
 
         $this->postJson('/api/register', [
-            'firstname'             => 'Test',
-            'lastname'              => 'User',
-            'email'                 => 'dup@test.fr',
-            'password'              => 'Password123!',
+            'firstname' => 'Test',
+            'lastname' => 'User',
+            'email' => 'dup@test.fr',
+            'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ])->assertUnprocessable();
     }
@@ -46,12 +46,12 @@ class AuthTest extends TestCase
     public function test_user_can_login(): void
     {
         $user = User::factory()->create([
-            'email'    => 'login@test.fr',
+            'email' => 'login@test.fr',
             'password' => bcrypt('Password123!'),
         ]);
 
         $response = $this->postJson('/api/login', [
-            'email'    => 'login@test.fr',
+            'email' => 'login@test.fr',
             'password' => 'Password123!',
         ]);
 
@@ -62,12 +62,12 @@ class AuthTest extends TestCase
     public function test_login_fails_with_wrong_password(): void
     {
         User::factory()->create([
-            'email'    => 'wrong@test.fr',
+            'email' => 'wrong@test.fr',
             'password' => bcrypt('correct'),
         ]);
 
         $this->postJson('/api/login', [
-            'email'    => 'wrong@test.fr',
+            'email' => 'wrong@test.fr',
             'password' => 'wrong',
         ])->assertUnauthorized();
     }

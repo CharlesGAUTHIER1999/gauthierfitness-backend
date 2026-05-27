@@ -57,55 +57,57 @@ class AdminProductController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'                     => ['required', 'string', 'max:255'],
-            'description'              => ['nullable', 'string'],
-            'price_ht'                 => ['required', 'numeric', 'min:0'],
-            'price_ttc'                => ['required', 'numeric', 'min:0'],
-            'vat'                      => ['required', 'numeric', 'min:0'],
-            'is_active'                => ['boolean'],
-            'is_customizable'          => ['boolean'],
-            'customization_mode'       => ['nullable', 'in:2d,3d'],
+            'name' => ['required', 'string', 'max:255'],
+            'sku' => ['required', 'string', 'max:100', 'unique:products,sku'],
+            'description' => ['nullable', 'string'],
+            'price_ht' => ['required', 'numeric', 'min:0'],
+            'price_ttc' => ['required', 'numeric', 'min:0'],
+            'vat' => ['required', 'numeric', 'min:0'],
+            'is_active' => ['boolean'],
+            'is_customizable' => ['boolean'],
+            'customization_mode' => ['nullable', 'in:2d,3d'],
             'allow_text_customization' => ['boolean'],
-            'allow_image_upload'       => ['boolean'],
-            'allow_ai_generation'      => ['boolean'],
-            'options'                  => ['nullable', 'array'],
-            'options.*.type'           => ['required', 'in:size,format,capacity'],
-            'options.*.code'           => ['required', 'string', 'max:50'],
-            'options.*.label'          => ['nullable', 'string', 'max:255'],
-            'options.*.position'       => ['nullable', 'integer'],
+            'allow_image_upload' => ['boolean'],
+            'allow_ai_generation' => ['boolean'],
+            'options' => ['nullable', 'array'],
+            'options.*.type' => ['required', 'in:size,format,capacity'],
+            'options.*.code' => ['required', 'string', 'max:50'],
+            'options.*.label' => ['nullable', 'string', 'max:255'],
+            'options.*.position' => ['nullable', 'integer'],
         ]);
 
         $slug = Str::slug($data['name']);
         $base = $slug;
-        $i    = 1;
+        $i = 1;
         while (Product::where('slug', $slug)->exists()) {
             $slug = "{$base}-{$i}";
             $i++;
         }
 
         $product = Product::create([
-            'name'                     => $data['name'],
-            'slug'                     => $slug,
-            'description'              => $data['description'] ?? null,
-            'price_ht'                 => $data['price_ht'],
-            'price_ttc'                => $data['price_ttc'],
-            'vat'                      => $data['vat'],
-            'is_active'                => $data['is_active'] ?? true,
-            'is_customizable'          => $data['is_customizable'] ?? false,
-            'customization_mode'       => $data['customization_mode'] ?? null,
+            'name' => $data['name'],
+            'slug' => $slug,
+            'sku' => $data['sku'],
+            'description' => $data['description'] ?? null,
+            'price_ht' => $data['price_ht'],
+            'price_ttc' => $data['price_ttc'],
+            'vat' => $data['vat'],
+            'is_active' => $data['is_active'] ?? true,
+            'is_customizable' => $data['is_customizable'] ?? false,
+            'customization_mode' => $data['customization_mode'] ?? null,
             'allow_text_customization' => $data['allow_text_customization'] ?? false,
-            'allow_image_upload'       => $data['allow_image_upload'] ?? false,
-            'allow_ai_generation'      => $data['allow_ai_generation'] ?? false,
+            'allow_image_upload' => $data['allow_image_upload'] ?? false,
+            'allow_ai_generation' => $data['allow_ai_generation'] ?? false,
         ]);
 
         foreach ($data['options'] ?? [] as $idx => $opt) {
             ProductOption::create([
                 'product_id' => $product->id,
-                'type'       => $opt['type'],
-                'code'       => $opt['code'],
-                'label'      => $opt['label'] ?? $opt['code'],
-                'position'   => $opt['position'] ?? $idx,
-                'is_active'  => true,
+                'type' => $opt['type'],
+                'code' => $opt['code'],
+                'label' => $opt['label'] ?? $opt['code'],
+                'position' => $opt['position'] ?? $idx,
+                'is_active' => true,
             ]);
         }
 
@@ -117,17 +119,17 @@ class AdminProductController extends Controller
     public function update(Request $request, Product $product): JsonResponse
     {
         $data = $request->validate([
-            'name'                     => ['sometimes', 'string', 'max:255'],
-            'description'              => ['nullable', 'string'],
-            'price_ht'                 => ['sometimes', 'numeric', 'min:0'],
-            'price_ttc'                => ['sometimes', 'numeric', 'min:0'],
-            'vat'                      => ['sometimes', 'numeric', 'min:0'],
-            'is_active'                => ['boolean'],
-            'is_customizable'          => ['boolean'],
-            'customization_mode'       => ['nullable', 'in:2d,3d'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'price_ht' => ['sometimes', 'numeric', 'min:0'],
+            'price_ttc' => ['sometimes', 'numeric', 'min:0'],
+            'vat' => ['sometimes', 'numeric', 'min:0'],
+            'is_active' => ['boolean'],
+            'is_customizable' => ['boolean'],
+            'customization_mode' => ['nullable', 'in:2d,3d'],
             'allow_text_customization' => ['boolean'],
-            'allow_image_upload'       => ['boolean'],
-            'allow_ai_generation'      => ['boolean'],
+            'allow_image_upload' => ['boolean'],
+            'allow_ai_generation' => ['boolean'],
         ]);
 
         $product->update($data);
@@ -138,12 +140,14 @@ class AdminProductController extends Controller
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
+
         return response()->json(['message' => 'Produit supprimé.']);
     }
 
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
+
         return response()->json(['is_active' => $product->is_active]);
     }
 }

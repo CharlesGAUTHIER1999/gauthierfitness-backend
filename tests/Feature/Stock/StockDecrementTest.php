@@ -24,27 +24,27 @@ class StockDecrementTest extends TestCase
     {
         // Arrange
         $customer = User::factory()->create();
-        $product  = Product::factory()->create();
+        $product = Product::factory()->create();
 
         $lot = StockLot::factory()->create([
-            'product_id'       => $product->id,
-            'lot_number'       => 'LOT-INIT',
+            'product_id' => $product->id,
+            'lot_number' => 'LOT-INIT',
             'initial_quantity' => 100,
-            'quantity'         => 100,
+            'quantity' => 100,
         ]);
 
         $order = Order::factory()->create([
-            'user_id'        => $customer->id,
+            'user_id' => $customer->id,
             'payment_status' => 'pending',
-            'order_status'   => 'new',
+            'order_status' => 'new',
         ]);
 
         $item = OrderItem::create([
-            'order_id'   => $order->id,
+            'order_id' => $order->id,
             'product_id' => $product->id,
             'unit_price' => 29.99,
-            'quantity'   => 3,
-            'total'      => 89.97,
+            'quantity' => 3,
+            'total' => 89.97,
         ]);
 
         // Act — simule la logique du webhook (FIFO)
@@ -61,11 +61,11 @@ class StockDecrementTest extends TestCase
         $availableLot->decrement('quantity', $deducted);
 
         StockMovement::create([
-            'lot_id'     => $availableLot->id,
+            'lot_id' => $availableLot->id,
             'product_id' => $item->product_id,
-            'quantity'   => $deducted,
-            'type'       => 'out',
-            'reason'     => "Vente — Commande #{$order->id}",
+            'quantity' => $deducted,
+            'type' => 'out',
+            'reason' => "Vente — Commande #{$order->id}",
         ]);
 
         $item->lot_id = $availableLot->id;
@@ -73,19 +73,19 @@ class StockDecrementTest extends TestCase
 
         // Assert
         $this->assertDatabaseHas('stock_lots', [
-            'id'       => $lot->id,
+            'id' => $lot->id,
             'quantity' => 97, // 100 - 3
         ]);
 
         $this->assertDatabaseHas('stock_movements', [
-            'lot_id'     => $lot->id,
+            'lot_id' => $lot->id,
             'product_id' => $product->id,
-            'type'       => 'out',
-            'quantity'   => 3,
+            'type' => 'out',
+            'quantity' => 3,
         ]);
 
         $this->assertDatabaseHas('order_items', [
-            'id'     => $item->id,
+            'id' => $item->id,
             'lot_id' => $lot->id,
         ]);
     }
@@ -93,22 +93,22 @@ class StockDecrementTest extends TestCase
     public function test_fifo_uses_lot_with_earliest_expiration(): void
     {
         $customer = User::factory()->create();
-        $product  = Product::factory()->create();
+        $product = Product::factory()->create();
 
         // Lot expirant en dernier
         StockLot::factory()->create([
-            'product_id'       => $product->id,
-            'lot_number'       => 'LOT-LATE',
-            'quantity'         => 50,
-            'expiration_date'  => now()->addYear(),
+            'product_id' => $product->id,
+            'lot_number' => 'LOT-LATE',
+            'quantity' => 50,
+            'expiration_date' => now()->addYear(),
         ]);
 
         // Lot expirant en premier (doit être utilisé)
         $firstLot = StockLot::factory()->create([
-            'product_id'       => $product->id,
-            'lot_number'       => 'LOT-EARLY',
-            'quantity'         => 50,
-            'expiration_date'  => now()->addMonth(),
+            'product_id' => $product->id,
+            'lot_number' => 'LOT-EARLY',
+            'quantity' => 50,
+            'expiration_date' => now()->addMonth(),
         ]);
 
         $selectedLot = StockLot::where('product_id', $product->id)

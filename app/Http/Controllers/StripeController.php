@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Shipment;
 use App\Models\StockLot;
 use App\Models\StockMovement;
-use App\Models\Shipment;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
 use Exception;
@@ -33,12 +33,12 @@ class StripeController extends Controller
         $data = $request->validate([
             'shipping' => ['required', 'array'],
             'shipping.firstname' => ['required', 'string'],
-            'shipping.lastname'  => ['required', 'string'],
-            'shipping.address'   => ['required', 'string'],
-            'shipping.zip'       => ['required', 'string'],
-            'shipping.city'      => ['required', 'string'],
-            'shipping.country'   => ['required', 'string'],
-            'shipping.phone'     => ['nullable', 'string'],
+            'shipping.lastname' => ['required', 'string'],
+            'shipping.address' => ['required', 'string'],
+            'shipping.zip' => ['required', 'string'],
+            'shipping.city' => ['required', 'string'],
+            'shipping.country' => ['required', 'string'],
+            'shipping.phone' => ['nullable', 'string'],
         ]);
 
         $cart = $user->cart()->firstOrCreate(['user_id' => $user->id]);
@@ -54,7 +54,6 @@ class StripeController extends Controller
             'cart_items_ids' => $cartItems->pluck('id')->all(),
         ]);
 
-
         if ($cartItems->isEmpty()) {
             return response()->json(['message' => 'Panier vide'], 400);
         }
@@ -63,7 +62,7 @@ class StripeController extends Controller
 
         return DB::transaction(function () use ($user, $cartItems, $data, $stripe) {
             $totalTtc = 0.0;
-            $totalHt  = 0.0;
+            $totalHt = 0.0;
 
             foreach ($cartItems as $ci) {
                 $product = $ci->product;
@@ -77,38 +76,38 @@ class StripeController extends Controller
                 $qty = (int) $ci->quantity;
 
                 $totalTtc += ((float) $unitTtc) * $qty;
-                $totalHt  += ((float) $unitHt) * $qty;
+                $totalHt += ((float) $unitHt) * $qty;
             }
 
             $totalTtc = round($totalTtc, 2);
-            $totalHt  = round($totalHt, 2);
+            $totalHt = round($totalHt, 2);
 
             // 2) Order
             $order = Order::create([
-                'user_id'        => $user->id,
-                'total_ht'       => $totalHt,
-                'total_ttc'      => $totalTtc,
+                'user_id' => $user->id,
+                'total_ht' => $totalHt,
+                'total_ttc' => $totalTtc,
                 'payment_status' => 'pending',
-                'order_status'   => 'new',
+                'order_status' => 'new',
             ]);
 
             // 3) Shipment (structuré)
             Shipment::create([
-                'order_id'  => $order->id,
+                'order_id' => $order->id,
                 'firstname' => $data['shipping']['firstname'],
-                'lastname'  => $data['shipping']['lastname'],
-                'address'   => $data['shipping']['address'],
-                'zip'       => $data['shipping']['zip'],
-                'city'      => $data['shipping']['city'],
-                'country'   => $data['shipping']['country'],
-                'phone'     => $data['shipping']['phone'] ?? null,
-                'status'    => 'pending',
+                'lastname' => $data['shipping']['lastname'],
+                'address' => $data['shipping']['address'],
+                'zip' => $data['shipping']['zip'],
+                'city' => $data['shipping']['city'],
+                'country' => $data['shipping']['country'],
+                'phone' => $data['shipping']['phone'] ?? null,
+                'status' => 'pending',
             ]);
 
             // 4) Items
             foreach ($cartItems as $ci) {
                 $product = $ci->product;
-                if (!$product) {
+                if (! $product) {
                     abort(422, 'Produit introuvable dans le panier.');
                 }
 
@@ -122,7 +121,7 @@ class StripeController extends Controller
                     'product_id' => $ci->product_id,
                     'product_option_id' => $ci->product_option_id,
                     'custom_product_session_id_on_cart_item' => $ci->custom_product_session_id,
-                    'custom_session_loaded' => (bool)$customSession,
+                    'custom_session_loaded' => (bool) $customSession,
                     'custom_session_id' => $customSession?->id,
                     'custom_session_configuration' => $customSession?->configuration,
                     'custom_session_preview_image_path' => $customSession?->preview_image_path,
@@ -144,24 +143,24 @@ class StripeController extends Controller
 
             // 5) Payment row
             $payment = Payment::create([
-                'order_id'             => $order->id,
-                'provider'             => 'stripe',
-                'provider_payment_id'  => null,
-                'amount'               => $totalTtc,
-                'status'               => 'pending',
-                'raw_payload'          => null,
+                'order_id' => $order->id,
+                'provider' => 'stripe',
+                'provider_payment_id' => null,
+                'amount' => $totalTtc,
+                'status' => 'pending',
+                'raw_payload' => null,
             ]);
 
             // 6) Stripe PaymentIntent
             $intent = $stripe->paymentIntents->create([
-                'amount'   => (int) round($totalTtc * 100),
+                'amount' => (int) round($totalTtc * 100),
                 'currency' => 'eur',
-                //'automatic_payment_methods' => ['enabled' => true],
+                // 'automatic_payment_methods' => ['enabled' => true],
                 'payment_method_types' => ['card'],
                 'description' => "Commande #$order->id",
                 'metadata' => [
-                    'order_id'   => (string) $order->id,
-                    'user_id'    => (string) $user->id,
+                    'order_id' => (string) $order->id,
+                    'user_id' => (string) $user->id,
                     'payment_id' => (string) $payment->id,
                 ],
             ]);
@@ -171,11 +170,11 @@ class StripeController extends Controller
             $payment->save();
 
             return response()->json([
-                'order_id'          => $order->id,
+                'order_id' => $order->id,
                 'payment_intent_id' => $intent->id,
-                'client_secret'     => $intent->client_secret,
-                'amount'            => $totalTtc,
-                'currency'          => 'EUR',
+                'client_secret' => $intent->client_secret,
+                'amount' => $totalTtc,
+                'currency' => 'EUR',
             ]);
         });
     }
@@ -240,7 +239,7 @@ class StripeController extends Controller
                         }
 
                         // ✅ Email confirmation (idempotent)
-                        if ($order->user && !$order->paid_email_sent_at) {
+                        if ($order->user && ! $order->paid_email_sent_at) {
                             $order->user->notify(new OrderConfirmed($order));
                             $order->paid_email_sent_at = now();
                             $order->save();
@@ -264,11 +263,11 @@ class StripeController extends Controller
                                 $lot->decrement('quantity', $deducted);
 
                                 StockMovement::create([
-                                    'lot_id'     => $lot->id,
+                                    'lot_id' => $lot->id,
                                     'product_id' => $item->product_id,
-                                    'quantity'   => $deducted,
-                                    'type'       => 'out',
-                                    'reason'     => "Vente — Commande #{$order->id}",
+                                    'quantity' => $deducted,
+                                    'type' => 'out',
+                                    'reason' => "Vente — Commande #{$order->id}",
                                 ]);
 
                                 $item->lot_id = $lot->id;
@@ -280,7 +279,7 @@ class StripeController extends Controller
 
                 Log::info('STRIPE_WEBHOOK_RECEIVED', ['type' => $event->type]);
 
-// Dans succeeded :
+                // Dans succeeded :
                 Log::info('STRIPE_PI_SUCCEEDED', [
                     'order_id' => $orderId,
                     'payment_id' => $paymentId,

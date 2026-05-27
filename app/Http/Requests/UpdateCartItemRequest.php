@@ -2,7 +2,4 @@
 
 namespace App\Http\Requests;
 
-class UpdateCartItemRequest
-{
-
-}
+class UpdateCartItemRequest {}

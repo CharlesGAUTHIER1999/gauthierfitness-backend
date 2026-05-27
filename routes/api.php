@@ -3,22 +3,21 @@
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminStockController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AI\AIDesignController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CustomizationAssetController;
+use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StripeController;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\VerificationController;
-use App\Http\Controllers\Auth\LogoutController;
-use App\Http\Controllers\CustomizationController;
-use App\Http\Controllers\CustomizationAssetController;
-use App\Http\Controllers\AI\AIDesignController;
-
 // Health check (used by CI/CD deploy-prod.sh)
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'env' => app()->environment()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
 Route::post('/login', LoginController::class)->name('login');

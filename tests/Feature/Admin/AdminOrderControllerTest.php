@@ -14,13 +14,14 @@ class AdminOrderControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $role        = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
+        $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
         $this->customer = User::factory()->create();
@@ -36,8 +37,8 @@ class AdminOrderControllerTest extends TestCase
             ->assertOk()
             ->assertJsonStructure([
                 'products' => ['total', 'active', 'customizable'],
-                'orders'   => ['total', 'by_status', 'revenue', 'revenue_month', 'this_week'],
-                'stock'    => ['out_of_stock', 'low_stock'],
+                'orders' => ['total', 'by_status', 'revenue', 'revenue_month', 'this_week'],
+                'stock' => ['out_of_stock', 'low_stock'],
             ]);
     }
 
@@ -94,7 +95,7 @@ class AdminOrderControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $order = Order::factory()->create([
-            'user_id'      => $this->customer->id,
+            'user_id' => $this->customer->id,
             'order_status' => 'new',
         ]);
 
@@ -109,7 +110,7 @@ class AdminOrderControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $order = Order::factory()->create([
-            'user_id'      => $this->customer->id,
+            'user_id' => $this->customer->id,
             'order_status' => 'new',
         ]);
 
@@ -123,7 +124,7 @@ class AdminOrderControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         $order = Order::factory()->create([
-            'user_id'      => $this->customer->id,
+            'user_id' => $this->customer->id,
             'order_status' => 'new',
         ]);
 

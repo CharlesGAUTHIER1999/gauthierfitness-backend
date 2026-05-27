@@ -12,6 +12,7 @@ use Throwable;
 class ProductGroupSeeder extends Seeder
 {
     private ?int $skuMax = null;
+
     private ?int $slugMax = null;
 
     public function run(): void
@@ -32,16 +33,16 @@ class ProductGroupSeeder extends Seeder
         $this->slugMax = $this->getColumnMaxLen('products', 'slug', 255);
 
         $c = [
-            'black'      => ['code' => 'black', 'label' => 'Noir'],
-            'white'      => ['code' => 'white', 'label' => 'Blanc'],
-            'grey'       => ['code' => 'grey', 'label' => 'Gris'],
-            'blue'       => ['code' => 'blue', 'label' => 'Bleu'],
-            'green'      => ['code' => 'green', 'label' => 'Vert'],
-            'purple'     => ['code' => 'purple', 'label' => 'Violet'],
-            'cyan'       => ['code' => 'cyan', 'label' => 'Cyan'],
+            'black' => ['code' => 'black', 'label' => 'Noir'],
+            'white' => ['code' => 'white', 'label' => 'Blanc'],
+            'grey' => ['code' => 'grey', 'label' => 'Gris'],
+            'blue' => ['code' => 'blue', 'label' => 'Bleu'],
+            'green' => ['code' => 'green', 'label' => 'Vert'],
+            'purple' => ['code' => 'purple', 'label' => 'Violet'],
+            'cyan' => ['code' => 'cyan', 'label' => 'Cyan'],
             'sage-green' => ['code' => 'sage-green', 'label' => 'Sage Green'],
-            'red'        => ['code' => 'red', 'label' => 'Rouge'],
-            'wood'       => ['code' => 'wood', 'label' => 'Bois'],
+            'red' => ['code' => 'red', 'label' => 'Rouge'],
+            'wood' => ['code' => 'wood', 'label' => 'Bois'],
         ];
 
         $colorSlicesByProductKey = [
@@ -243,12 +244,12 @@ class ProductGroupSeeder extends Seeder
             [$categorySlug, $productName] = explode('|', $productKey, 2);
 
             $base = $this->findProductByCategoryAndName($categorySlug, $productName);
-            if (!$base) {
+            if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::updateOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $productName)],
+                ['slug' => Str::slug($categorySlug.'-'.$productName)],
                 ['name' => $productName, 'type' => 'flavor']
             );
 
@@ -290,12 +291,12 @@ class ProductGroupSeeder extends Seeder
             [$categorySlug, $productName] = explode('|', $productKey, 2);
 
             $base = $this->findProductByCategoryAndName($categorySlug, $productName);
-            if (!$base) {
+            if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $productName)],
+                ['slug' => Str::slug($categorySlug.'-'.$productName)],
                 ['name' => $productName, 'type' => 'color']
             );
 
@@ -320,18 +321,18 @@ class ProductGroupSeeder extends Seeder
                 $firstCode = $colors[0]['code'];
                 $urlsBase = $this->sliceUrls($baseUrls, $slicesByCode[$firstCode] ?? []);
 
-                if (!empty($urlsBase)) {
+                if (! empty($urlsBase)) {
                     $this->replaceProductImages((int) $base->id, $urlsBase);
                 }
 
                 foreach (array_slice($colors, 1) as $color) {
                     $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
-                    if (!$newId) {
+                    if (! $newId) {
                         continue;
                     }
 
                     $urls = $this->sliceUrls($baseUrls, $slicesByCode[$color['code']] ?? []);
-                    if (!empty($urls)) {
+                    if (! empty($urls)) {
                         $this->replaceProductImages((int) $newId, $urls);
                     } else {
                         $this->copyImagesFromBase((int) $base->id, (int) $newId);
@@ -353,14 +354,14 @@ class ProductGroupSeeder extends Seeder
 
         foreach ($allProducts as $product) {
             $categorySlug = $this->firstCategorySlug((int) $product->id) ?? 'default';
-            $productKey = $categorySlug . '|' . $product->name;
+            $productKey = $categorySlug.'|'.$product->name;
 
             if (in_array($productKey, $handledKeys, true)) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $product->name)],
+                ['slug' => Str::slug($categorySlug.'-'.$product->name)],
                 ['name' => $product->name, 'type' => null]
             );
 
@@ -383,13 +384,13 @@ class ProductGroupSeeder extends Seeder
 
     private function hasSlicesForAllVariants(?array $slicesByCode, array $colors): bool
     {
-        if (!$slicesByCode || !is_array($slicesByCode)) {
+        if (! $slicesByCode || ! is_array($slicesByCode)) {
             return false;
         }
 
         foreach ($colors as $c) {
             $code = $c['code'] ?? null;
-            if (!$code || !array_key_exists($code, $slicesByCode)) {
+            if (! $code || ! array_key_exists($code, $slicesByCode)) {
                 return false;
             }
         }
@@ -413,7 +414,7 @@ class ProductGroupSeeder extends Seeder
     private function cloneProductVariant(int $baseProductId, int $groupId, string $variantCode, string $variantLabel): int
     {
         $base = DB::table('products')->where('id', $baseProductId)->first();
-        if (!$base) {
+        if (! $base) {
             return 0;
         }
 
@@ -523,37 +524,39 @@ class ProductGroupSeeder extends Seeder
 
         // On garde une partie du SKU de base + variant + random pour garantir l’unicité
         $variant = strtoupper(Str::slug($variantCode));
-        $random = '-' . rand(1000, 9999);
+        $random = '-'.rand(1000, 9999);
 
         // On réserve la place pour "-VARIANT-1234"
-        $suffix = '-' . $variant . $random;
+        $suffix = '-'.$variant.$random;
         $keep = max(1, $max - strlen($suffix));
 
-        return substr($baseSku, 0, $keep) . $suffix;
+        return substr($baseSku, 0, $keep).$suffix;
     }
 
     private function makeSlug(string $baseSlug, string $variantCode): string
     {
         $max = (int) ($this->slugMax ?? 255);
-        $suffix = '-' . Str::slug($variantCode);
+        $suffix = '-'.Str::slug($variantCode);
         $keep = max(1, $max - strlen($suffix));
-        return substr($baseSlug, 0, $keep) . $suffix;
+
+        return substr($baseSlug, 0, $keep).$suffix;
     }
 
     private function getColumnMaxLen(string $table, string $column, int $default): int
     {
         try {
             $row = DB::selectOne(
-                "SELECT CHARACTER_MAXIMUM_LENGTH AS len
+                'SELECT CHARACTER_MAXIMUM_LENGTH AS len
                  FROM information_schema.COLUMNS
                  WHERE TABLE_SCHEMA = DATABASE()
                    AND TABLE_NAME = ?
                    AND COLUMN_NAME = ?
-                 LIMIT 1",
+                 LIMIT 1',
                 [$table, $column]
             );
 
             $len = isset($row->len) ? (int) $row->len : 0;
+
             return $len > 0 ? $len : $default;
         } catch (Throwable $e) {
             return $default;

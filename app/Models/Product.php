@@ -38,13 +38,13 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'price_ht'   => 'float',
-        'price_ttc'  => 'float',
-        'vat'        => 'float',
-        'weight'     => 'float',
-        'is_active'  => 'boolean',
+        'price_ht' => 'float',
+        'price_ttc' => 'float',
+        'vat' => 'float',
+        'weight' => 'float',
+        'is_active' => 'boolean',
         'attributes' => 'array',
-        'group_id'   => 'integer',
+        'group_id' => 'integer',
         'is_customizable' => 'boolean',
         'allow_text_customization' => 'boolean',
         'allow_image_upload' => 'boolean',
@@ -75,7 +75,8 @@ class Product extends Model
             ->orderBy('color_code');
     }
 
-    public function categories() {
+    public function categories()
+    {
         return $this->belongsToMany(Category::class, 'product_category');
     }
 
@@ -100,7 +101,8 @@ class Product extends Model
             ->orderBy('id');
     }
 
-    public function options() {
+    public function options()
+    {
         return $this->hasMany(ProductOption::class)->orderBy('position');
     }
 
@@ -114,11 +116,13 @@ class Product extends Model
         return $this->hasMany(CartItem::class);
     }
 
-    public function designs() {
+    public function designs()
+    {
         return $this->hasMany(Design::class);
     }
 
-    public function customizationSessions() {
+    public function customizationSessions()
+    {
         return $this->hasMany(CustomProductSession::class);
     }
 
