@@ -13,11 +13,11 @@
         "stripe/stripe-php": "^19.0",
         "symfony/css-selector": "^7.4",
         "symfony/dom-crawler": "^7.4",
-      "ext-pdo": "*"
+        "fakerphp/faker": "^1.23",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
-        "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
