@@ -24,13 +24,13 @@ class CustomizationController extends Controller
 
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
 
-        if (!empty($data['design_id'])) {
+        if (! empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int)$design->user_id === (int)$request->user()->id, 403);
-            abort_unless((int)$design->product_id === (int)$product->id, 422, 'Design does not match the selected product.');
+            abort_unless((int) $design->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
         }
 
-        $option = !empty($data['product_option_id'])
+        $option = ! empty($data['product_option_id'])
             ? $product->options()->find($data['product_option_id'])
             : null;
 
@@ -89,10 +89,10 @@ class CustomizationController extends Controller
             'status' => ['nullable', 'in:draft,ready,added_to_cart,ordered'],
         ]);
 
-        if (!empty($data['design_id'])) {
+        if (! empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int)$design->user_id === (int)$request->user()->id, 403);
-            abort_unless((int)$design->product_id === (int)$customizationSession->product_id, 422, 'Design does not match the customization session product.');
+            abort_unless((int) $design->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
         }
 
         $customizationSession->update([
