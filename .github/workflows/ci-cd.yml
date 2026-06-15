@@ -9,20 +9,20 @@ name: CI Backend
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main, develop]
+    branches: [ main, develop ]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/charlesgauthier1999/gauthierfitness-backend
 
 # ──────────────────────────────────────────────────────────────────
-# JOB 1 — Tests PHPUnit
+# JOB 1 - Tests PHPUnit
 # ──────────────────────────────────────────────────────────────────
 jobs:
   phpunit:
-    name: "🧪 PHPUnit"
+    name: "PHPUnit"
     runs-on: ubuntu-latest
 
     steps:
@@ -65,10 +65,10 @@ jobs:
           DB_DATABASE: ":memory:"
 
   # ──────────────────────────────────────────────────────────────────
-  # JOB 2 — Linter PHP (Pint)
+  # JOB 2 - Linter PHP (Pint)
   # ──────────────────────────────────────────────────────────────────
   lint:
-    name: "🔍 Laravel Pint"
+    name: "Laravel Pint"
     runs-on: ubuntu-latest
     needs: phpunit
 
@@ -94,10 +94,10 @@ jobs:
         run: ./vendor/bin/pint --test
 
   # ──────────────────────────────────────────────────────────────────
-  # JOB 3 — Build & Push image GHCR (push uniquement, pas PR)
+  # JOB 3 - Build & Push image GHCR (push uniquement, pas PR)
   # ──────────────────────────────────────────────────────────────────
   build:
-    name: "🐳 Build image backend"
+    name: "Build image backend"
     runs-on: ubuntu-latest
     needs: lint
     if: github.event_name == 'push'
@@ -143,7 +143,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ──────────────────────────────────────────────────────────────────
-  # JOB 4 — Déclencher le deploy dans gauthierfitness-infra
+  # JOB 4 - Déclencher le deploy dans gauthierfitness-infra
   #          (seulement sur develop, après build réussi)
   # ──────────────────────────────────────────────────────────────────
   trigger-deploy:
