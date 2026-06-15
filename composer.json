@@ -13,7 +13,7 @@
         "stripe/stripe-php": "^19.0",
         "symfony/css-selector": "^7.4",
         "symfony/dom-crawler": "^7.4",
-      "ext-pdo": "*"
+        "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
