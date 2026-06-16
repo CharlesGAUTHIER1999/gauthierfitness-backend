@@ -2,4 +2,6 @@
 
 namespace App\Http\Controllers;
 
-class CategoryController {}
+class CategoryController
+{
+}
