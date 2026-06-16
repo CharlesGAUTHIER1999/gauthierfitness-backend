@@ -9,12 +9,12 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomizationAssetController;
 use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StripeController;
-use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
 // Health check (used by CI/CD deploy-prod.sh)
