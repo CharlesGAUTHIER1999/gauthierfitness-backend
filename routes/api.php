@@ -14,6 +14,7 @@ use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StripeController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
 // Health check (used by CI/CD deploy-prod.sh)
@@ -30,6 +31,9 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])
 
 // Stripe webhook (public)
 Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
+
+// Contact Form (public)
+Route::post('/contact', ContactController::class)->middleware('throttle:5,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
