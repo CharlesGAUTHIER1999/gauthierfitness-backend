@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomizationAssetController;
 use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\OrderController;
@@ -30,6 +31,9 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])
 
 // Stripe webhook (public)
 Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
+
+// Contact Form (public)
+Route::post('/contact', ContactController::class)->middleware('throttle:5,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
