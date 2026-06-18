@@ -7,10 +7,10 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\StockLot;
 use App\Notifications\OrderStatusUpdated;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Dedoc\Scramble\Attributes\Group;
 
 #[Group(name: 'Admin - Commandes', weight: 11)]
 class AdminOrderController extends Controller
@@ -33,7 +33,7 @@ class AdminOrderController extends Controller
         $activeProductIds = Product::where('is_active', true)->pluck('id');
 
         $outOfStock = $activeProductIds->filter(
-            fn($id) => ($stockByProduct[$id] ?? 0) == 0
+            fn ($id) => ($stockByProduct[$id] ?? 0) == 0
         )->count();
 
         $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
@@ -54,8 +54,8 @@ class AdminOrderController extends Controller
                 'by_status' => Order::selectRaw('order_status, count(*) as count')
                     ->groupBy('order_status')
                     ->pluck('count', 'order_status'),
-                'revenue' => (float)Order::where('payment_status', 'paid')->sum('total_ttc'),
-                'revenue_month' => (float)Order::where('payment_status', 'paid')
+                'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue_month' => (float) Order::where('payment_status', 'paid')
                     ->where('created_at', '>=', now()->startOfMonth())
                     ->sum('total_ttc'),
             ],
@@ -141,19 +141,19 @@ class AdminOrderController extends Controller
             $user = $order->user;
 
             if ($user) {
-                if ($newStatus === 'shipped' && !$order->shipped_email_sent_at) {
+                if ($newStatus === 'shipped' && ! $order->shipped_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'shipped'));
                     $order->shipped_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'delivered' && !$order->delivered_email_sent_at) {
+                if ($newStatus === 'delivered' && ! $order->delivered_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'delivered'));
                     $order->delivered_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'canceled' && !$order->canceled_email_sent_at) {
+                if ($newStatus === 'canceled' && ! $order->canceled_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'canceled'));
                     $order->canceled_email_sent_at = now();
                     $order->save();

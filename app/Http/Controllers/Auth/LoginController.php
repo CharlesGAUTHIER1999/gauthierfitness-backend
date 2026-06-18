@@ -37,7 +37,7 @@ class LoginController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 

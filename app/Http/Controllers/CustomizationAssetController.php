@@ -35,8 +35,8 @@ class CustomizationAssetController extends Controller
         $user = $request->user();
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
 
-        $directory = 'customization/logos/' . $user->id;
-        $filename = Str::uuid()->toString() . '.' . $extension;
+        $directory = 'customization/logos/'.$user->id;
+        $filename = Str::uuid()->toString().'.'.$extension;
 
         $storedPath = $file->storeAs($directory, $filename, 'public');
 
@@ -75,8 +75,8 @@ class CustomizationAssetController extends Controller
         $user = $request->user();
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
 
-        $directory = 'customization/images/' . $user->id;
-        $filename = Str::uuid()->toString() . '.' . $extension;
+        $directory = 'customization/images/'.$user->id;
+        $filename = Str::uuid()->toString().'.'.$extension;
 
         $storedPath = $file->storeAs($directory, $filename, 'public');
 

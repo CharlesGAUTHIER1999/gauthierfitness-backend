@@ -47,7 +47,7 @@ class AdminStockController extends Controller
      */
     public function index(Product $product): JsonResponse
     {
-        $product->load(['options' => fn($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
+        $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
         ]);
 
         // Lots sans option (stock global / produit sans variante)
@@ -70,7 +70,7 @@ class AdminStockController extends Controller
                 'option_code' => $option->code,
                 'option_label' => $option->label,
                 'option_type' => $option->type,
-                'total_qty' => (int)$lots->sum('quantity'),
+                'total_qty' => (int) $lots->sum('quantity'),
                 'lots' => $lots,
             ];
         });
@@ -79,7 +79,7 @@ class AdminStockController extends Controller
             'product_id' => $product->id,
             'product_name' => $product->name,
             'global_stock' => [
-                'total_qty' => (int)$globalLots->sum('quantity'),
+                'total_qty' => (int) $globalLots->sum('quantity'),
                 'lots' => $globalLots,
             ],
             'option_stocks' => $optionStocks,
@@ -120,7 +120,7 @@ class AdminStockController extends Controller
                 'user_id' => auth()->id(),
                 'type' => 'in',
                 'quantity' => $data['quantity'],
-                'reason' => 'Réapprovisionnement admin — lot ' . $lot->lot_number,
+                'reason' => 'Réapprovisionnement admin — lot '.$lot->lot_number,
             ]);
 
             return response()->json($lot->load('option'), 201);

@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\ProductOption;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
-use Dedoc\Scramble\Attributes\Group;
 
 #[Group(name: 'Admin - Produits', weight: 10)]
 class AdminProductController extends Controller
@@ -187,7 +187,7 @@ class AdminProductController extends Controller
      */
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
 
         return response()->json(['is_active' => $product->is_active]);
     }

@@ -15,7 +15,6 @@ use App\Http\Controllers\CustomizationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StripeController;
-use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -25,7 +24,7 @@ use Illuminate\Support\Facades\Route;
  *
  * @response 200 {"status": "ok", "env": "production"}
  */
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'env' => app()->environment()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
 Route::post('/login', LoginController::class)->name('login');
@@ -82,7 +81,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
      * @response 200 {"ok": true}
      * @response 403 {"message": "Forbidden"}
      */
-    Route::get('/ping', fn() => response()->json(['ok' => true]));
+    Route::get('/ping', fn () => response()->json(['ok' => true]));
     Route::get('/stats', [AdminOrderController::class, 'stats']);
 
     // Products

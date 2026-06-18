@@ -29,9 +29,8 @@ class AIDesignController extends Controller
      */
     public function __invoke(
         GenerateDesignRequest $request,
-        OpenAIImageService    $openAIImageService
-    ): JsonResponse
-    {
+        OpenAIImageService $openAIImageService
+    ): JsonResponse {
 
         $product = Product::findOrFail($request->validated('product_id'));
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
