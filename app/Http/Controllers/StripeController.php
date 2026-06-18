@@ -10,6 +10,7 @@ use App\Models\StockLot;
 use App\Models\StockMovement;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
+use Dedoc\Scramble\Attributes\Group;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -20,8 +21,28 @@ use Stripe\StripeClient;
 use Stripe\Webhook;
 use Throwable;
 
+#[Group(name: 'Paiement', weight: 7)]
 class StripeController extends Controller
 {
+    /**
+     * Créer un PaymentIntent Stripe pour le panier courant.
+     *
+     * Cycle complet de checkout : valide l'adresse de livraison, calcule les totaux HT/TTC à partir
+     * des snapshots de prix, crée la commande, la livraison, les lignes de commande et un Payment
+     * en `pending`, puis crée un PaymentIntent Stripe en EUR. Le `client_secret` retourné permet au
+     * frontend de confirmer le paiement côté client. Le statut final est mis à jour par le webhook
+     * `POST /api/stripe/webhook`.
+     *
+     * @response 200 scenario="PaymentIntent créé" {
+     *   "order_id": 42,
+     *   "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx",
+     *   "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy",
+     *   "amount": 89.90, "currency": "EUR"
+     * }
+     * @response 400 scenario="Panier vide" {"message": "Panier vide"}
+     * @response 401 scenario="Non authentifié" {"message": "Unauthenticated"}
+     * @response 422 scenario="Données de livraison invalides" {"message": "The shipping.zip field is required."}
+     */
     public function createPaymentIntent(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -179,6 +200,23 @@ class StripeController extends Controller
         });
     }
 
+    /**
+     * Webhook Stripe — événements de paiement.
+     *
+     * Endpoint appelé par Stripe (non par le frontend). Vérifie la signature `Stripe-Signature`
+     * contre `STRIPE_WEBHOOK_SECRET`, déduplique via la table `webhook_events` (idempotence),
+     * puis traite l'événement :
+     * - `payment_intent.succeeded` → marque le paiement et la commande comme payés, vide le panier,
+     *   envoie l'email de confirmation et décrémente le stock en FIFO (lot expirant le plus tôt).
+     * - `payment_intent.payment_failed` → marque le paiement et la commande en `failed`.
+     *
+     * @unauthenticated
+     *
+     * @response 200 scenario="Événement traité" {"status": "success"}
+     * @response 200 scenario="Événement déjà traité (idempotence)" {"status": "already_processed"}
+     * @response 400 scenario="Signature invalide" {"error": "Invalid signature"}
+     * @response 500 scenario="Erreur de traitement (retry possible côté Stripe)" {"error": "..."}
+     */
     public function webhook(Request $request): JsonResponse
     {
         $endpointSecret = env('STRIPE_WEBHOOK_SECRET');

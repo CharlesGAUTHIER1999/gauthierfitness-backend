@@ -7,23 +7,24 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1",
-        "laravel/sanctum": "^4.2",
-        "stripe/stripe-php": "^19.0",
-        "symfony/css-selector": "^7.4",
-        "symfony/dom-crawler": "^7.4",
-        "ext-pdo": "*"
+        "ext-pdo": "*",
+        "dedoc/scramble": "^0.13.28",
+        "laravel/framework": "^v13.16.1",
+        "laravel/sanctum": "^v4.3.2",
+        "laravel/tinker": "^v3.0.2",
+        "stripe/stripe-php": "^v19.4.1",
+        "symfony/css-selector": "^v7.4.9",
+        "symfony/dom-crawler": "^v7.4.12"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
         "fakerphp/faker": "^1.23",
-        "laravel/pail": "^1.2.2",
-        "laravel/pint": "^1.24",
-        "laravel/sail": "^1.41",
-        "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3"
+        "laravel/pail": "^v1.2.7",
+        "laravel/pint": "^v1.29.3",
+        "laravel/sail": "^v1.62.0",
+        "mockery/mockery": "^v1.6.12",
+        "nunomaduro/collision": "^v8.9.4",
+        "phpunit/phpunit": "^v11.5.55"
     },
     "autoload": {
         "psr-4": {

@@ -9,13 +9,23 @@ use App\Models\DesignAsset;
 use App\Models\Product;
 use App\Models\PromptHistory;
 use App\Services\AI\OpenAIImageService;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 
+#[Group(name: 'IA — Génération de designs', weight: 5)]
 class AIDesignController extends Controller
 {
     /**
+     * Générer un design via OpenAI à partir d'un prompt texte.
+     *
+     * Délègue à `OpenAIImageService` la génération d'une image, persiste le `Design`, son `DesignAsset`
+     * primaire et trace l'appel dans `prompt_histories`. Le produit cible doit être customisable
+     * (`is_customizable`) et autoriser l'IA (`allow_ai_generation`).
+     *
      * @throws ConnectionException
+     *
+     * @response 422 scenario="Produit ne supporte pas l'IA" {"message": "AI generation is not allowed for this product."}
      */
     public function __invoke(
         GenerateDesignRequest $request,

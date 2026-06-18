@@ -7,11 +7,19 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CustomProductSession;
 use App\Models\StockLot;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+#[Group(name: 'Panier', weight: 3)]
 class CartController extends Controller
 {
+    /**
+     * Récupérer le panier de l'utilisateur courant.
+     *
+     * Crée un panier vide à la volée si l'utilisateur n'en a pas encore. Renvoie chaque ligne
+     * avec ses snapshots de prix, variantes (couleur/taille/goût) et personnalisation éventuelle.
+     */
     public function show(Request $request)
     {
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
@@ -26,6 +34,16 @@ class CartController extends Controller
         return response()->json($this->formatCart($cart));
     }
 
+    /**
+     * Ajouter un produit au panier.
+     *
+     * Vérifie le stock avant ajout. Si une session de personnalisation est passée, celle-ci doit
+     * appartenir à l'utilisateur et matcher le produit ; son statut passe alors à `added_to_cart`.
+     * Sinon, la ligne existante (même produit + même option) est incrémentée.
+     *
+     * @response 422 scenario="Stock insuffisant" {"message": "Stock insuffisant"}
+     * @response 403 scenario="Session de personnalisation d'un autre utilisateur" {}
+     */
     public function add(AddToCartRequest $request)
     {
         $data = $request->validated();
@@ -77,6 +95,11 @@ class CartController extends Controller
         return $this->show($request);
     }
 
+    /**
+     * Mettre à jour la quantité d'une ligne du panier.
+     *
+     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     */
     public function update(Request $request, CartItem $item)
     {
         abort_unless($item->cart->user_id === $request->user()->id, 404);
@@ -91,6 +114,13 @@ class CartController extends Controller
         return $this->show($request);
     }
 
+    /**
+     * Supprimer une ligne du panier.
+     *
+     * Si la ligne référence une session de personnalisation, celle-ci repasse en `ready` (libérée).
+     *
+     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     */
     public function destroy(Request $request, CartItem $item)
     {
         abort_unless($item->cart->user_id === $request->user()->id, 404);

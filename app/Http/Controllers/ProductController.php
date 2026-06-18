@@ -4,12 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
+#[Group(name: 'Catalogue', weight: 2)]
 class ProductController extends Controller
 {
+    /**
+     * Liste paginée des produits publics.
+     *
+     * Renvoie les produits actifs visibles sur la boutique. Les produits déclinés en variantes
+     * (couleur, taille) sont regroupés : un seul produit par groupe est retourné. Supporte le
+     * filtrage par genre, catégorie et tag.
+     *
+     * @unauthenticated
+     *
+     * @queryParam per_page integer Nombre de produits par page (1–60, défaut 12). Example: 24
+     * @queryParam gender string Slug d'une catégorie genre (ex: "homme", "femme"). Example: homme
+     * @queryParam category string Slug d'une catégorie (ex: "t-shirts"). Example: t-shirts
+     * @queryParam tag string Tri spécial : "new" (nouveautés), "bestseller" (meilleures ventes). Example: new
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $defaultPerPage = 12;
@@ -72,6 +88,18 @@ class ProductController extends Controller
         );
     }
 
+    /**
+     * Détail d'un produit par slug.
+     *
+     * Renvoie un produit avec toutes ses relations (images, catégories, options, lots de stock,
+     * variantes du groupe). Utilisé sur la page produit du frontend.
+     *
+     * @unauthenticated
+     *
+     * @urlParam slug string required Slug du produit (URL-safe). Example: t-shirt-fitness-noir
+     *
+     * @response 404 scenario="Produit introuvable" {"message": "No query results for model [App\\Models\\Product]."}
+     */
     public function show(string $slug): ProductResource
     {
         $product = Product::with([
