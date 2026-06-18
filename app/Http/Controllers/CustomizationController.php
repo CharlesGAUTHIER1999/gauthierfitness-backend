@@ -5,11 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\CustomProductSession;
 use App\Models\Design;
 use App\Models\Product;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group(name: 'Customisation', weight: 4)]
 class CustomizationController extends Controller
 {
+    /**
+     * Créer une session de personnalisation.
+     *
+     * Snapshot la configuration de design (texte, logo, couleurs, position) pour un produit
+     * customisable. La session est ensuite référencée par une ligne de panier puis par une commande.
+     *
+     * @response 422 scenario="Produit non customisable" {"message": "This product is not customizable."}
+     * @response 403 scenario="Design d'un autre utilisateur" {}
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -61,6 +72,11 @@ class CustomizationController extends Controller
         ], 201);
     }
 
+    /**
+     * Récupérer une session de personnalisation.
+     *
+     * @response 403 scenario="Session d'un autre utilisateur" {}
+     */
     public function show(CustomProductSession $customizationSession): JsonResponse
     {
         $this->authorizeOwner($customizationSession->user_id, request()->user()->id);
@@ -78,6 +94,14 @@ class CustomizationController extends Controller
         ]);
     }
 
+    /**
+     * Mettre à jour une session de personnalisation.
+     *
+     * Permet de modifier la configuration, le design associé, l'image de preview et le statut.
+     * Les transitions de statut autorisées sont : `draft`, `ready`, `added_to_cart`, `ordered`.
+     *
+     * @response 403 scenario="Session d'un autre utilisateur" {}
+     */
     public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
         $this->authorizeOwner($customizationSession->user_id, $request->user()->id);

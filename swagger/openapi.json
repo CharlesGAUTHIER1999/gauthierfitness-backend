@@ -1,0 +1,3804 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "GauthierFitness \u2014 API Documentation",
+        "version": "1.0.0",
+        "description": "**API REST de GauthierFitness** \u2014 boutique e-commerce de produits fitness personnalisables (v\u00eatements, accessoires, nutrition).\n\n## Conventions\n- Authentification : **Laravel Sanctum** (`Bearer <token>`). Le token est obtenu via `POST /api/login` ou `POST /api/register`.\n- Format : JSON (`Accept: application/json`).\n- Codes d'erreur :\n  - `401` \u2014 non authentifi\u00e9\n  - `403` \u2014 interdit (ex : ressource d'un autre utilisateur)\n  - `404` \u2014 ressource introuvable\n  - `422` \u2014 donn\u00e9es de validation invalides\n- Rate limiting : `POST /api/contact` est limit\u00e9 \u00e0 5 requ\u00eates/minute/IP.\n\n## Domaines fonctionnels\n- **Auth** \u2014 inscription, connexion, d\u00e9connexion, v\u00e9rification.\n- **Catalogue** \u2014 produits publics (listing pagin\u00e9 + d\u00e9tail).\n- **Panier & Commande** \u2014 gestion du panier, paiement Stripe, suivi commande.\n- **Customisation** \u2014 sessions de personnalisation 2D/3D + assets (logos, images).\n- **IA** \u2014 g\u00e9n\u00e9ration d'images via OpenAI pour designs personnalis\u00e9s.\n- **Admin** \u2014 produits, commandes, stocks (r\u00e9serv\u00e9 aux administrateurs)."
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Authentification"
+        },
+        {
+            "name": "Catalogue"
+        },
+        {
+            "name": "Panier"
+        },
+        {
+            "name": "Customisation"
+        },
+        {
+            "name": "IA \u2014 G\u00e9n\u00e9ration de designs"
+        },
+        {
+            "name": "Commandes"
+        },
+        {
+            "name": "Paiement"
+        },
+        {
+            "name": "Contact"
+        },
+        {
+            "name": "Admin \u2014 Produits"
+        },
+        {
+            "name": "Admin \u2014 Commandes"
+        },
+        {
+            "name": "Admin \u2014 Stock"
+        }
+    ],
+    "security": [
+        {
+            "Sanctum": []
+        }
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "operationId": "login",
+                "description": "Authentifie un utilisateur via email/mot de passe et renvoie un token Sanctum.\nLe token pr\u00e9c\u00e9dent nomm\u00e9 \"react\" est r\u00e9voqu\u00e9 pour limiter la session \u00e0 un seul appareil actif.",
+                "summary": "Connexion utilisateur",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/register": {
+            "post": {
+                "operationId": "register",
+                "description": "Cr\u00e9e un compte utilisateur (non-admin par d\u00e9faut) et renvoie un token Sanctum permettant de l'authentifier imm\u00e9diatement.",
+                "summary": "Inscription d'un nouvel utilisateur",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "firstname": {
+                                        "type": "string"
+                                    },
+                                    "lastname": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 6
+                                    }
+                                },
+                                "required": [
+                                    "firstname",
+                                    "lastname",
+                                    "email",
+                                    "password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 201
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/me": {
+            "get": {
+                "operationId": "me",
+                "description": "Renvoie l'utilisateur authentifi\u00e9 avec ses r\u00f4les. Sert au frontend pour hydrater le store\net v\u00e9rifier si le token est toujours valide au d\u00e9marrage de l'application.",
+                "summary": "Profil utilisateur courant",
+                "tags": [
+                    "Authentification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "operationId": "logout",
+                "description": "R\u00e9voque le token Sanctum courant. L'appel suivant n\u00e9cessitera un nouveau login.",
+                "summary": "D\u00e9connexion",
+                "tags": [
+                    "Authentification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/products": {
+            "get": {
+                "operationId": "product.index",
+                "description": "Renvoie les produits actifs visibles sur la boutique. Les produits d\u00e9clin\u00e9s en variantes\n(couleur, taille) sont regroup\u00e9s : un seul produit par groupe est retourn\u00e9. Supporte le\nfiltrage par genre, cat\u00e9gorie et tag.",
+                "summary": "Liste pagin\u00e9e des produits publics",
+                "tags": [
+                    "Catalogue"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProductResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/products/{slug}": {
+            "get": {
+                "operationId": "product.show",
+                "description": "Renvoie un produit avec toutes ses relations (images, cat\u00e9gories, options, lots de stock,\nvariantes du groupe). Utilis\u00e9 sur la page produit du frontend.",
+                "summary": "D\u00e9tail d'un produit par slug",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 404
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/cart": {
+            "get": {
+                "operationId": "cart.show",
+                "description": "Cr\u00e9e un panier vide \u00e0 la vol\u00e9e si l'utilisateur n'en a pas encore. Renvoie chaque ligne\navec ses snapshots de prix, variantes (couleur/taille/go\u00fbt) et personnalisation \u00e9ventuelle.",
+                "summary": "R\u00e9cup\u00e9rer le panier de l'utilisateur courant",
+                "tags": [
+                    "Panier"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "product_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "custom_product_session_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_customized": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "image": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "unit_price": {
+                                                        "type": "number"
+                                                    },
+                                                    "line_total": {
+                                                        "type": "number"
+                                                    },
+                                                    "variant_title": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "enum": [
+                                                            "Go\u00fbt",
+                                                            "Couleur",
+                                                            null
+                                                        ]
+                                                    },
+                                                    "variant_value": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "size": {
+                                                        "type": "string"
+                                                    },
+                                                    "delivery_text": {
+                                                        "type": "string",
+                                                        "const": "D\u00e9lai de livraison : 4\u20137 jours ouvr\u00e9s"
+                                                    },
+                                                    "option": {
+                                                        "type": [
+                                                            "object",
+                                                            "null"
+                                                        ],
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "label",
+                                                            "type"
+                                                        ]
+                                                    },
+                                                    "customization": {
+                                                        "type": [
+                                                            "object",
+                                                            "null"
+                                                        ],
+                                                        "properties": {
+                                                            "status": {
+                                                                "type": "string"
+                                                            },
+                                                            "preview_image_path": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "configuration": {
+                                                                "type": [
+                                                                    "array",
+                                                                    "null"
+                                                                ],
+                                                                "items": {}
+                                                            },
+                                                            "design_id": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "status",
+                                                            "preview_image_path",
+                                                            "configuration",
+                                                            "design_id"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "product_id",
+                                                    "custom_product_session_id",
+                                                    "is_customized",
+                                                    "name",
+                                                    "image",
+                                                    "quantity",
+                                                    "unit_price",
+                                                    "line_total",
+                                                    "variant_title",
+                                                    "variant_value",
+                                                    "size",
+                                                    "delivery_text",
+                                                    "option",
+                                                    "customization"
+                                                ]
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "subtotal": {
+                                            "type": "number"
+                                        },
+                                        "currency": {
+                                            "type": "string",
+                                            "const": "EUR"
+                                        }
+                                    },
+                                    "required": [
+                                        "items",
+                                        "count",
+                                        "subtotal",
+                                        "currency"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/cart/items": {
+            "post": {
+                "operationId": "cart.add",
+                "description": "V\u00e9rifie le stock avant ajout. Si une session de personnalisation est pass\u00e9e, celle-ci doit\nappartenir \u00e0 l'utilisateur et matcher le produit ; son statut passe alors \u00e0 `added_to_cart`.\nSinon, la ligne existante (m\u00eame produit + m\u00eame option) est incr\u00e9ment\u00e9e.",
+                "summary": "Ajouter un produit au panier",
+                "tags": [
+                    "Panier"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddToCartRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/cart/items/{item}": {
+            "patch": {
+                "operationId": "cart.update",
+                "summary": "Mettre \u00e0 jour la quantit\u00e9 d'une ligne du panier",
+                "tags": [
+                    "Panier"
+                ],
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "description": "The item ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "required": [
+                                    "quantity"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 404
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cart.destroy",
+                "description": "Si la ligne r\u00e9f\u00e9rence une session de personnalisation, celle-ci repasse en `ready` (lib\u00e9r\u00e9e).",
+                "summary": "Supprimer une ligne du panier",
+                "tags": [
+                    "Panier"
+                ],
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "description": "The item ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 404
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/customization/sessions": {
+            "post": {
+                "operationId": "customization.store",
+                "description": "Snapshot la configuration de design (texte, logo, couleurs, position) pour un produit\ncustomisable. La session est ensuite r\u00e9f\u00e9renc\u00e9e par une ligne de panier puis par une commande.",
+                "summary": "Cr\u00e9er une session de personnalisation",
+                "tags": [
+                    "Customisation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer"
+                                    },
+                                    "product_option_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "configuration": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "design_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "preview_image_path": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "product_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "example": ""
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/customization/sessions/{customizationSession}": {
+            "get": {
+                "operationId": "customization.show",
+                "summary": "R\u00e9cup\u00e9rer une session de personnalisation",
+                "tags": [
+                    "Customisation"
+                ],
+                "parameters": [
+                    {
+                        "name": "customizationSession",
+                        "in": "path",
+                        "required": true,
+                        "description": "The customization session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 403
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "customization.update",
+                "description": "Permet de modifier la configuration, le design associ\u00e9, l'image de preview et le statut.\nLes transitions de statut autoris\u00e9es sont : `draft`, `ready`, `added_to_cart`, `ordered`.",
+                "summary": "Mettre \u00e0 jour une session de personnalisation",
+                "tags": [
+                    "Customisation"
+                ],
+                "parameters": [
+                    {
+                        "name": "customizationSession",
+                        "in": "path",
+                        "required": true,
+                        "description": "The customization session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "configuration": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "design_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "preview_image_path": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "draft",
+                                            "ready",
+                                            "added_to_cart",
+                                            "ordered"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 403
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "example": ""
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/customization/assets/logo": {
+            "post": {
+                "operationId": "customizationAsset.uploadLogo",
+                "description": "Stocke le fichier dans `storage/app/public/customization/logos/{user_id}/` et renvoie l'URL\npublique servie via le disque `public`. Utilis\u00e9 par l'\u00e9diteur de personnalisation 2D.",
+                "summary": "Uploader un logo (PNG/JPG/JPEG/WebP, \u2264 3 Mo)",
+                "tags": [
+                    "Customisation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "contentMediaType": "application/octet-stream",
+                                        "maxLength": 3072
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/customization/assets/image": {
+            "post": {
+                "operationId": "customizationAsset.uploadImage",
+                "description": "Stocke le fichier dans `storage/app/public/customization/images/{user_id}/`.",
+                "summary": "Uploader une image de personnalisation (PNG/JPG/JPEG/WebP, \u2264 5 Mo)",
+                "tags": [
+                    "Customisation"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "contentMediaType": "application/octet-stream",
+                                        "maxLength": 5120
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/ai/designs/generate": {
+            "post": {
+                "operationId": "ai.aIDesign",
+                "description": "D\u00e9l\u00e8gue \u00e0 `OpenAIImageService` la g\u00e9n\u00e9ration d'une image, persiste le `Design`, son `DesignAsset`\nprimaire et trace l'appel dans `prompt_histories`. Le produit cible doit \u00eatre customisable\n(`is_customizable`) et autoriser l'IA (`allow_ai_generation`).",
+                "summary": "G\u00e9n\u00e9rer un design via OpenAI \u00e0 partir d'un prompt texte",
+                "tags": [
+                    "IA \u2014 G\u00e9n\u00e9ration de designs"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateDesignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "get": {
+                "operationId": "order.index",
+                "description": "Renvoie toutes les commandes de l'utilisateur authentifi\u00e9 (les plus r\u00e9centes en premier),\navec leur paiement et livraison associ\u00e9s.",
+                "summary": "Historique des commandes de l'utilisateur",
+                "tags": [
+                    "Commandes"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Order"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "order.store",
+                "description": "Cet endpoint renvoie syst\u00e9matiquement 405. La cr\u00e9ation d'une commande passe par `POST /api/payment/intent` qui orchestre la cr\u00e9ation de la commande, du paiement Stripe et de la livraison en une seule transaction.",
+                "summary": "Cr\u00e9er une commande (d\u00e9pr\u00e9ci\u00e9)",
+                "deprecated": true,
+                "tags": [
+                    "Commandes"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 405
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/orders/{order}": {
+            "get": {
+                "operationId": "order.show",
+                "description": "V\u00e9rifie que la commande appartient bien \u00e0 l'utilisateur authentifi\u00e9.",
+                "summary": "D\u00e9tail d'une commande",
+                "tags": [
+                    "Commandes"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 404
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/stripe/webhook": {
+            "post": {
+                "operationId": "stripe.webhook",
+                "description": "Endpoint appel\u00e9 par Stripe (non par le frontend). V\u00e9rifie la signature `Stripe-Signature`\ncontre `STRIPE_WEBHOOK_SECRET`, d\u00e9duplique via la table `webhook_events` (idempotence),\npuis traite l'\u00e9v\u00e9nement :\n- `payment_intent.succeeded` \u2192 marque le paiement et la commande comme pay\u00e9s, vide le panier,\n  envoie l'email de confirmation et d\u00e9cr\u00e9mente le stock en FIFO (lot expirant le plus t\u00f4t).\n- `payment_intent.payment_failed` \u2192 marque le paiement et la commande en `failed`.",
+                "summary": "Webhook Stripe \u2014 \u00e9v\u00e9nements de paiement",
+                "tags": [
+                    "Paiement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/payment/intent": {
+            "post": {
+                "operationId": "stripe.createPaymentIntent",
+                "description": "Cycle complet de checkout : valide l'adresse de livraison, calcule les totaux HT/TTC \u00e0 partir\ndes snapshots de prix, cr\u00e9e la commande, la livraison, les lignes de commande et un Payment\nen `pending`, puis cr\u00e9e un PaymentIntent Stripe en EUR. Le `client_secret` retourn\u00e9 permet au\nfrontend de confirmer le paiement c\u00f4t\u00e9 client. Le statut final est mis \u00e0 jour par le webhook\n`POST /api/stripe/webhook`.",
+                "summary": "Cr\u00e9er un PaymentIntent Stripe pour le panier courant",
+                "tags": [
+                    "Paiement"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shipping": {
+                                        "type": "object",
+                                        "properties": {
+                                            "firstname": {
+                                                "type": "string"
+                                            },
+                                            "lastname": {
+                                                "type": "string"
+                                            },
+                                            "address": {
+                                                "type": "string"
+                                            },
+                                            "zip": {
+                                                "type": "string"
+                                            },
+                                            "city": {
+                                                "type": "string"
+                                            },
+                                            "country": {
+                                                "type": "string"
+                                            },
+                                            "phone": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "firstname",
+                                            "lastname",
+                                            "address",
+                                            "zip",
+                                            "city",
+                                            "country"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "shipping"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/contact": {
+            "post": {
+                "operationId": "contact",
+                "description": "Envoie un email \u00e0 l'adresse support configur\u00e9e (`mail.support_address`). Cet endpoint est\n**rate-limit\u00e9 \u00e0 5 requ\u00eates/minute par IP** pour limiter les abus.",
+                "summary": "Envoyer un message de contact",
+                "tags": [
+                    "Contact"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 190
+                                    },
+                                    "subject": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 160
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "maxLength": 5000
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "message"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/admin/products": {
+            "get": {
+                "operationId": "adminProduct.index",
+                "description": "Inclut les produits inactifs et permet la recherche/filtrage. Pagination fixe \u00e0 20/page.",
+                "summary": "Liste pagin\u00e9e des produits (admin)",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_customizable",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProductResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "adminProduct.store",
+                "description": "Le slug est d\u00e9riv\u00e9 du nom et d\u00e9dupliqu\u00e9 automatiquement (suffixe `-N` si conflit). Les\noptions (taille, format, capacit\u00e9) peuvent \u00eatre pass\u00e9es en une seule requ\u00eate.",
+                "summary": "Cr\u00e9er un produit",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "price_ht": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "price_ttc": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "vat": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "is_customizable": {
+                                        "type": "boolean"
+                                    },
+                                    "customization_mode": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "2d",
+                                            "3d"
+                                        ]
+                                    },
+                                    "allow_text_customization": {
+                                        "type": "boolean"
+                                    },
+                                    "allow_image_upload": {
+                                        "type": "boolean"
+                                    },
+                                    "allow_ai_generation": {
+                                        "type": "boolean"
+                                    },
+                                    "options": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "size",
+                                                        "format",
+                                                        "capacity"
+                                                    ]
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "maxLength": 50
+                                                },
+                                                "label": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "maxLength": 255
+                                                },
+                                                "position": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "type",
+                                                "code"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "sku",
+                                    "price_ht",
+                                    "price_ttc",
+                                    "vat"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}": {
+            "get": {
+                "operationId": "adminProduct.show",
+                "summary": "D\u00e9tail d'un produit (admin)",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProductResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProductResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "adminProduct.update",
+                "description": "Tous les champs sont optionnels (`sometimes`). Le slug n'est pas modifiable ici.",
+                "summary": "Mettre \u00e0 jour un produit",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "price_ht": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "price_ttc": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "vat": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "is_customizable": {
+                                        "type": "boolean"
+                                    },
+                                    "customization_mode": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "2d",
+                                            "3d"
+                                        ]
+                                    },
+                                    "allow_text_customization": {
+                                        "type": "boolean"
+                                    },
+                                    "allow_image_upload": {
+                                        "type": "boolean"
+                                    },
+                                    "allow_ai_generation": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProductResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "adminProduct.destroy",
+                "description": "Soft-delete si le mod\u00e8le utilise `SoftDeletes`. Les commandes existantes conservent leur snapshot.",
+                "summary": "Supprimer un produit",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/toggle-active": {
+            "patch": {
+                "operationId": "adminProduct.toggleActive",
+                "description": "Bascule la valeur `is_active`. Renvoie l'\u00e9tat final.",
+                "summary": "Activer / d\u00e9sactiver un produit",
+                "tags": [
+                    "Admin \u2014 Produits"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/stats": {
+            "get": {
+                "operationId": "adminOrder.stats",
+                "description": "Agr\u00e8ge produits, commandes (CA total, CA mensuel, par statut), stock (rupture, faible).\nSert au dashboard d'accueil de l'admin panel.",
+                "summary": "Tableau de bord \u2014 statistiques globales",
+                "tags": [
+                    "Admin \u2014 Commandes"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "products": {
+                                            "type": "object",
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "active": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "customizable": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "total",
+                                                "active",
+                                                "customizable"
+                                            ]
+                                        },
+                                        "orders": {
+                                            "type": "object",
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "this_week": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "by_status": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                },
+                                                "revenue": {
+                                                    "type": "number"
+                                                },
+                                                "revenue_month": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "required": [
+                                                "total",
+                                                "this_week",
+                                                "by_status",
+                                                "revenue",
+                                                "revenue_month"
+                                            ]
+                                        },
+                                        "stock": {
+                                            "type": "object",
+                                            "properties": {
+                                                "out_of_stock": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "low_stock": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "out_of_stock",
+                                                "low_stock"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "products",
+                                        "orders",
+                                        "stock"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders": {
+            "get": {
+                "operationId": "adminOrder.index",
+                "summary": "Liste pagin\u00e9e des commandes (admin)",
+                "tags": [
+                    "Admin \u2014 Commandes"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Order"
+                                            }
+                                        },
+                                        "first_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "minimum": 1
+                                        },
+                                        "last_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "description": "Generated paginator links.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "url",
+                                                    "label",
+                                                    "active"
+                                                ]
+                                            }
+                                        },
+                                        "next_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "path": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Base path for paginator generated URLs."
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "description": "Number of items shown per page.",
+                                            "minimum": 0
+                                        },
+                                        "prev_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "description": "Number of the last item in the slice.",
+                                            "minimum": 1
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "description": "Total number of items being paginated.",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "current_page",
+                                        "data",
+                                        "first_page_url",
+                                        "from",
+                                        "last_page_url",
+                                        "last_page",
+                                        "links",
+                                        "next_page_url",
+                                        "path",
+                                        "per_page",
+                                        "prev_page_url",
+                                        "to",
+                                        "total"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}": {
+            "get": {
+                "operationId": "adminOrder.show",
+                "summary": "D\u00e9tail d'une commande (admin)",
+                "tags": [
+                    "Admin \u2014 Commandes"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/status": {
+            "patch": {
+                "operationId": "adminOrder.updateStatus",
+                "description": "D\u00e9clenche les emails de notification (`OrderStatusUpdated`) pour les transitions vers\n`shipped`, `delivered`, `canceled`. Chaque email est envoy\u00e9 une seule fois (idempotence\nvia `*_email_sent_at`).",
+                "summary": "Mettre \u00e0 jour le statut d'une commande",
+                "tags": [
+                    "Admin \u2014 Commandes"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "order_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "processing",
+                                            "shipped",
+                                            "delivered",
+                                            "canceled"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "order_status"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/stock": {
+            "get": {
+                "operationId": "adminStock.list",
+                "description": "Renvoie une pagination de produits (25/page) avec la somme des quantit\u00e9s de leurs lots\n(`stock_qty`). Recherche possible par nom/SKU.",
+                "summary": "Vue globale du stock : tous les produits avec leur quantit\u00e9 totale",
+                "tags": [
+                    "Admin \u2014 Stock"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Product"
+                                            }
+                                        },
+                                        "first_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "minimum": 1
+                                        },
+                                        "last_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "description": "Generated paginator links.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "url",
+                                                    "label",
+                                                    "active"
+                                                ]
+                                            }
+                                        },
+                                        "next_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "path": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Base path for paginator generated URLs."
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "description": "Number of items shown per page.",
+                                            "minimum": 0
+                                        },
+                                        "prev_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "description": "Number of the last item in the slice.",
+                                            "minimum": 1
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "description": "Total number of items being paginated.",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "current_page",
+                                        "data",
+                                        "first_page_url",
+                                        "from",
+                                        "last_page_url",
+                                        "last_page",
+                                        "links",
+                                        "next_page_url",
+                                        "path",
+                                        "per_page",
+                                        "prev_page_url",
+                                        "to",
+                                        "total"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/stock": {
+            "get": {
+                "operationId": "adminStock.index",
+                "description": "Renvoie les lots group\u00e9s en deux blocs : `global_stock` (lots sans option) et\n`option_stocks` (lots par variante). Les lots sont tri\u00e9s FIFO (expiration la plus proche).",
+                "summary": "D\u00e9tail du stock pour un produit",
+                "tags": [
+                    "Admin \u2014 Stock"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "product_id": {
+                                            "type": "integer"
+                                        },
+                                        "product_name": {
+                                            "type": "string"
+                                        },
+                                        "global_stock": {
+                                            "type": "object",
+                                            "properties": {
+                                                "total_qty": {
+                                                    "type": "integer"
+                                                },
+                                                "lots": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/StockLot"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "total_qty",
+                                                "lots"
+                                            ]
+                                        },
+                                        "option_stocks": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "option_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "option_code": {
+                                                        "type": "string"
+                                                    },
+                                                    "option_label": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "option_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_qty": {
+                                                        "type": "integer"
+                                                    },
+                                                    "lots": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "$ref": "#/components/schemas/StockLot"
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "option_id",
+                                                    "option_code",
+                                                    "option_label",
+                                                    "option_type",
+                                                    "total_qty",
+                                                    "lots"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "product_id",
+                                        "product_name",
+                                        "global_stock",
+                                        "option_stocks"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "adminStock.store",
+                "description": "Trace l'entr\u00e9e en stock dans `stock_movements` avec `type=in`. La date d'expiration doit\n\u00eatre strictement future (ou nulle pour les produits non p\u00e9rissables).",
+                "summary": "Cr\u00e9er un nouveau lot (r\u00e9approvisionnement)",
+                "tags": [
+                    "Admin \u2014 Stock"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "product_option_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "lot_number": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "expiration_date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "lot_number",
+                                    "quantity"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 422
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/stock/lots/{lot}/adjust": {
+            "patch": {
+                "operationId": "adminStock.adjust",
+                "description": "Calcule le delta (`nouvelle_quantit\u00e9 - ancienne_quantit\u00e9`) et trace l'\u00e9cart dans\n`stock_movements` avec `type=correction` et la raison fournie. Utilis\u00e9 pour g\u00e9rer la\ncasse, l'inventaire ou les corrections d'erreur.",
+                "summary": "Ajuster manuellement la quantit\u00e9 d'un lot",
+                "tags": [
+                    "Admin \u2014 Stock"
+                ],
+                "parameters": [
+                    {
+                        "name": "lot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The lot ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "quantity",
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StockLot"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/stock/movements": {
+            "get": {
+                "operationId": "adminStock.movements",
+                "description": "Retourne tous les `stock_movements` (entr\u00e9es, sorties, corrections) li\u00e9s au produit,\n30 par page, du plus r\u00e9cent au plus ancien.",
+                "summary": "Historique pagin\u00e9 des mouvements de stock d'un produit",
+                "tags": [
+                    "Admin \u2014 Stock"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StockMovement"
+                                            }
+                                        },
+                                        "first_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "from": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "minimum": 1
+                                        },
+                                        "last_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "description": "Generated paginator links.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "url": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "url",
+                                                    "label",
+                                                    "active"
+                                                ]
+                                            }
+                                        },
+                                        "next_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "path": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Base path for paginator generated URLs."
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "description": "Number of items shown per page.",
+                                            "minimum": 0
+                                        },
+                                        "prev_page_url": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "to": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ],
+                                            "description": "Number of the last item in the slice.",
+                                            "minimum": 1
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "description": "Total number of items being paginated.",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "required": [
+                                        "current_page",
+                                        "data",
+                                        "first_page_url",
+                                        "from",
+                                        "last_page_url",
+                                        "last_page",
+                                        "links",
+                                        "next_page_url",
+                                        "path",
+                                        "per_page",
+                                        "prev_page_url",
+                                        "to",
+                                        "total"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "Health check public, utilis\u00e9 par le script `infra/deploy-prod.sh` et les sondes de supervision",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/admin/ping": {
+            "get": {
+                "summary": "Ping admin \u2014 v\u00e9rifie que le middleware `admin` accepte bien l'utilisateur",
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "Sanctum": {
+                "type": "http",
+                "description": "Token Sanctum obtenu via `POST /api/login` ou `POST /api/register`. Pr\u00e9fix\u00e9 par `Bearer ` dans le header `Authorization`.",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "AddToCartRequest": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "product_option_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "custom_product_session_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "quantity": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    }
+                },
+                "required": [
+                    "product_id"
+                ],
+                "title": "AddToCartRequest"
+            },
+            "GenerateDesignRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "product_option_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "minLength": 10,
+                        "maxLength": 5000
+                    }
+                },
+                "required": [
+                    "product_id",
+                    "prompt"
+                ],
+                "title": "GenerateDesignRequest"
+            },
+            "Order": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "total_ht": {
+                        "type": "string"
+                    },
+                    "total_ttc": {
+                        "type": "string"
+                    },
+                    "payment_status": {
+                        "type": "string"
+                    },
+                    "order_status": {
+                        "type": "string"
+                    },
+                    "paid_email_sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "shipped_email_sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "delivered_email_sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "canceled_email_sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "user_id",
+                    "total_ht",
+                    "total_ttc",
+                    "payment_status",
+                    "order_status",
+                    "paid_email_sent_at",
+                    "shipped_email_sent_at",
+                    "delivered_email_sent_at",
+                    "canceled_email_sent_at",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Order"
+            },
+            "Product": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "supplier_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "brand": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "origin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price_ht": {
+                        "type": "number"
+                    },
+                    "price_ttc": {
+                        "type": "number"
+                    },
+                    "vat": {
+                        "type": "number"
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "barcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "weight": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "attributes": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {}
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "group_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "color_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_customizable": {
+                        "type": "boolean"
+                    },
+                    "customization_mode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "allow_text_customization": {
+                        "type": "boolean"
+                    },
+                    "allow_image_upload": {
+                        "type": "boolean"
+                    },
+                    "allow_ai_generation": {
+                        "type": "boolean"
+                    },
+                    "main_image": {
+                        "type": "string"
+                    },
+                    "hover_image": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "supplier_id",
+                    "name",
+                    "slug",
+                    "brand",
+                    "origin",
+                    "description",
+                    "price_ht",
+                    "price_ttc",
+                    "vat",
+                    "sku",
+                    "barcode",
+                    "weight",
+                    "attributes",
+                    "is_active",
+                    "created_at",
+                    "updated_at",
+                    "group_id",
+                    "color_code",
+                    "color_label",
+                    "is_customizable",
+                    "customization_mode",
+                    "allow_text_customization",
+                    "allow_image_upload",
+                    "allow_ai_generation",
+                    "main_image",
+                    "hover_image"
+                ],
+                "title": "Product"
+            },
+            "ProductResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price_ht": {
+                        "type": "number"
+                    },
+                    "price_ttc": {
+                        "type": "number"
+                    },
+                    "vat": {
+                        "type": "number"
+                    },
+                    "color_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "flavor",
+                                    "color"
+                                ]
+                            }
+                        ]
+                    },
+                    "variant_name": {
+                        "type": "string",
+                        "enum": [
+                            "Go\u00fbts",
+                            "Couleurs"
+                        ]
+                    },
+                    "variant_value_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_value_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "flavor_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "flavor_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "group": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "slug",
+                            "type"
+                        ]
+                    },
+                    "main_image": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "hover_image": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "images": {
+                        "type": "array",
+                        "description": "Galerie compl\u00e8te (uniquement en d\u00e9tail quand images est charg\u00e9)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "url": {
+                                    "type": "string"
+                                },
+                                "is_main": {
+                                    "type": "boolean"
+                                },
+                                "position": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "url",
+                                "is_main",
+                                "position"
+                            ]
+                        }
+                    },
+                    "supplier": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "slug": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "slug"
+                            ]
+                        }
+                    },
+                    "sizes_preview": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "stock_qty": {
+                                    "type": "integer"
+                                },
+                                "in_stock": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "type",
+                                "code",
+                                "label",
+                                "stock_qty",
+                                "in_stock"
+                            ]
+                        }
+                    },
+                    "lots": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "in_stock": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "label",
+                                "quantity",
+                                "in_stock"
+                            ]
+                        }
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "color_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "color_label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_type": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "null"
+                                        },
+                                        {
+                                            "type": "string",
+                                            "enum": [
+                                                "flavor",
+                                                "color"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Go\u00fbts",
+                                        "Couleurs"
+                                    ]
+                                },
+                                "variant_value_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_value_label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "flavor_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "flavor_label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "thumb_url": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "slug",
+                                "color_code",
+                                "color_label",
+                                "variant_type",
+                                "variant_name",
+                                "variant_value_code",
+                                "variant_value_label",
+                                "flavor_code",
+                                "flavor_label",
+                                "thumb_url"
+                            ]
+                        }
+                    },
+                    "is_customizable": {
+                        "type": "boolean"
+                    },
+                    "customization": {
+                        "type": "object",
+                        "properties": {
+                            "mode": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "text": {
+                                "type": "boolean"
+                            },
+                            "image": {
+                                "type": "boolean"
+                            },
+                            "ai": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "mode",
+                            "text",
+                            "image",
+                            "ai"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "description",
+                    "price_ht",
+                    "price_ttc",
+                    "vat",
+                    "color_code",
+                    "color_label",
+                    "variant_type",
+                    "variant_name",
+                    "variant_value_code",
+                    "variant_value_label",
+                    "flavor_code",
+                    "flavor_label",
+                    "main_image",
+                    "hover_image",
+                    "is_customizable",
+                    "customization",
+                    "is_active",
+                    "created_at"
+                ],
+                "title": "ProductResource"
+            },
+            "StockLot": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "lot_number": {
+                        "type": "string"
+                    },
+                    "expiration_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "initial_quantity": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "product_option_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "product_id",
+                    "lot_number",
+                    "expiration_date",
+                    "initial_quantity",
+                    "quantity",
+                    "created_at",
+                    "updated_at",
+                    "product_option_id"
+                ],
+                "title": "StockLot"
+            },
+            "StockMovement": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "lot_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "product_option_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "lot_id",
+                    "product_id",
+                    "user_id",
+                    "type",
+                    "quantity",
+                    "reason",
+                    "created_at",
+                    "updated_at",
+                    "product_option_id"
+                ],
+                "title": "StockMovement"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "AuthorizationException": {
+                "description": "Authorization error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

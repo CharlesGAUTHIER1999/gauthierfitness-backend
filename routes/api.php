@@ -17,7 +17,13 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StripeController;
 use Illuminate\Support\Facades\Route;
 
-// Health check (used by CI/CD deploy-prod.sh)
+/**
+ * Health check public, utilisé par le script `infra/deploy-prod.sh` et les sondes de supervision.
+ *
+ * @unauthenticated
+ *
+ * @response 200 {"status": "ok", "env": "production"}
+ */
 Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
@@ -69,6 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    /**
+     * Ping admin — vérifie que le middleware `admin` accepte bien l'utilisateur.
+     *
+     * @response 200 {"ok": true}
+     * @response 403 {"message": "Forbidden"}
+     */
     Route::get('/ping', fn () => response()->json(['ok' => true]));
     Route::get('/stats', [AdminOrderController::class, 'stats']);
 

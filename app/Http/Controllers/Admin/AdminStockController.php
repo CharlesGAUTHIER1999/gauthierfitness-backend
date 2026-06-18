@@ -6,14 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockLot;
 use App\Models\StockMovement;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+#[Group(name: 'Admin — Stock', weight: 12)]
 class AdminStockController extends Controller
 {
     /**
-     * Vue globale : tous les produits avec leur stock total.
+     * Vue globale du stock : tous les produits avec leur quantité totale.
+     *
+     * Renvoie une pagination de produits (25/page) avec la somme des quantités de leurs lots
+     * (`stock_qty`). Recherche possible par nom/SKU.
+     *
+     * @queryParam search string Recherche par nom ou SKU. Example: protéine
      */
     public function list(Request $request): JsonResponse
     {
@@ -33,7 +40,10 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Détail du stock pour un produit (lots par option + stock global).
+     * Détail du stock pour un produit.
+     *
+     * Renvoie les lots groupés en deux blocs : `global_stock` (lots sans option) et
+     * `option_stocks` (lots par variante). Les lots sont triés FIFO (expiration la plus proche).
      */
     public function index(Product $product): JsonResponse
     {
@@ -77,7 +87,12 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Réapprovisionner un produit — crée un nouveau lot.
+     * Créer un nouveau lot (réapprovisionnement).
+     *
+     * Trace l'entrée en stock dans `stock_movements` avec `type=in`. La date d'expiration doit
+     * être strictement future (ou nulle pour les produits non périssables).
+     *
+     * @response 422 scenario="Date d'expiration passée" {"message": "The expiration date field must be a date after today."}
      */
     public function store(Request $request, Product $product): JsonResponse
     {
@@ -113,7 +128,11 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Correction manuelle de la quantité d'un lot existant.
+     * Ajuster manuellement la quantité d'un lot.
+     *
+     * Calcule le delta (`nouvelle_quantité - ancienne_quantité`) et trace l'écart dans
+     * `stock_movements` avec `type=correction` et la raison fournie. Utilisé pour gérer la
+     * casse, l'inventaire ou les corrections d'erreur.
      */
     public function adjust(Request $request, StockLot $lot): JsonResponse
     {
@@ -143,7 +162,10 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Historique paginé des mouvements pour un produit.
+     * Historique paginé des mouvements de stock d'un produit.
+     *
+     * Retourne tous les `stock_movements` (entrées, sorties, corrections) liés au produit,
+     * 30 par page, du plus récent au plus ancien.
      */
     public function movements(Product $product): JsonResponse
     {
