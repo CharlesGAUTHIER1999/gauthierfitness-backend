@@ -7,11 +7,19 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CustomProductSession;
 use App\Models\StockLot;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+#[Group(name: 'Panier', weight: 3)]
 class CartController extends Controller
 {
+    /**
+     * Récupérer le panier de l'utilisateur courant.
+     *
+     * Crée un panier vide à la volée si l'utilisateur n'en a pas encore. Renvoie chaque ligne
+     * avec ses snapshots de prix, variantes (couleur/taille/goût) et personnalisation éventuelle.
+     */
     public function show(Request $request)
     {
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
@@ -26,20 +34,30 @@ class CartController extends Controller
         return response()->json($this->formatCart($cart));
     }
 
+    /**
+     * Ajouter un produit au panier.
+     *
+     * Vérifie le stock avant ajout. Si une session de personnalisation est passée, celle-ci doit
+     * appartenir à l'utilisateur et matcher le produit ; son statut passe alors à `added_to_cart`.
+     * Sinon, la ligne existante (même produit + même option) est incrémentée.
+     *
+     * @response 422 scenario="Stock insuffisant" {"message": "Stock insuffisant"}
+     * @response 403 scenario="Session de personnalisation d'un autre utilisateur" {}
+     */
     public function add(AddToCartRequest $request)
     {
         $data = $request->validated();
 
-        $qty = (int) ($data['quantity'] ?? 1);
+        $qty = (int)($data['quantity'] ?? 1);
 
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
 
         $stock = StockLot::where('product_id', $data['product_id'])
-            ->when($data['product_option_id'] ?? null, fn ($q) => $q->where('product_option_id', $data['product_option_id'])
+            ->when($data['product_option_id'] ?? null, fn($q) => $q->where('product_option_id', $data['product_option_id'])
             )
             ->sum('quantity');
 
-        if ($qty > (int) $stock) {
+        if ($qty > (int)$stock) {
             return response()->json(['message' => 'Stock insuffisant'], 422);
         }
 
@@ -48,8 +66,8 @@ class CartController extends Controller
         if ($customSessionId) {
             $session = CustomProductSession::findOrFail($customSessionId);
 
-            abort_unless((int) $session->user_id === (int) $request->user()->id, 403);
-            abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
+            abort_unless((int)$session->user_id === (int)$request->user()->id, 403);
+            abort_unless((int)$session->product_id === (int)$data['product_id'], 422, 'Customization session does not match product.');
 
             $item = CartItem::create([
                 'cart_id' => $cart->id,
@@ -70,13 +88,18 @@ class CartController extends Controller
                 'custom_product_session_id' => null,
             ]);
 
-            $item->quantity = ((int) $item->quantity) + $qty;
+            $item->quantity = ((int)$item->quantity) + $qty;
             $item->save();
         }
 
         return $this->show($request);
     }
 
+    /**
+     * Mettre à jour la quantité d'une ligne du panier.
+     *
+     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     */
     public function update(Request $request, CartItem $item)
     {
         abort_unless($item->cart->user_id === $request->user()->id, 404);
@@ -85,12 +108,19 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $item->quantity = (int) $data['quantity'];
+        $item->quantity = (int)$data['quantity'];
         $item->save();
 
         return $this->show($request);
     }
 
+    /**
+     * Supprimer une ligne du panier.
+     *
+     * Si la ligne référence une session de personnalisation, celle-ci repasse en `ready` (libérée).
+     *
+     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     */
     public function destroy(Request $request, CartItem $item)
     {
         abort_unless($item->cart->user_id === $request->user()->id, 404);
@@ -120,7 +150,7 @@ class CartController extends Controller
 
             $variantType = $product->group?->type;
 
-            if (! $variantType) {
+            if (!$variantType) {
                 $cat = $product->categories?->first();
                 $root = $cat?->parent?->slug ?? $cat?->slug;
                 $variantType = $root === 'nutrition' ? 'flavor' : 'color';
@@ -138,14 +168,14 @@ class CartController extends Controller
                 'id' => $item->id,
                 'product_id' => $item->product_id,
                 'custom_product_session_id' => $customSession?->id,
-                'is_customized' => (bool) $customSession,
+                'is_customized' => (bool)$customSession,
                 'name' => $product->name,
                 'image' => $customSession?->preview_image_path
                     ? $this->publicImageUrl($customSession->preview_image_path)
                     : ($this->publicImageUrl($product->main_image) ?? '/placeholder.jpg'),
-                'quantity' => (int) $item->quantity,
-                'unit_price' => round((float) $unit, 2),
-                'line_total' => round((float) $unit * (int) $item->quantity, 2),
+                'quantity' => (int)$item->quantity,
+                'unit_price' => round((float)$unit, 2),
+                'line_total' => round((float)$unit * (int)$item->quantity, 2),
                 'variant_title' => $variantValue ? $variantTitle : null,
                 'variant_value' => $variantValue ?: null,
                 'size' => $sizeLabel,
@@ -164,11 +194,11 @@ class CartController extends Controller
             ];
         });
 
-        $subtotal = (float) $items->sum('line_total');
+        $subtotal = (float)$items->sum('line_total');
 
         return [
             'items' => $items->values(),
-            'count' => (int) $items->sum('quantity'),
+            'count' => (int)$items->sum('quantity'),
             'subtotal' => round($subtotal, 2),
             'currency' => 'EUR',
         ];
@@ -176,7 +206,7 @@ class CartController extends Controller
 
     private function publicImageUrl(?string $path): ?string
     {
-        if (! $path) {
+        if (!$path) {
             return null;
         }
 
@@ -187,9 +217,9 @@ class CartController extends Controller
         $path = ltrim($path, '/');
 
         if (Str::startsWith($path, 'storage/')) {
-            return url('/'.$path);
+            return url('/' . $path);
         }
 
-        return url('/storage/'.$path);
+        return url('/storage/' . $path);
     }
 }

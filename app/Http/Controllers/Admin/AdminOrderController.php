@@ -10,9 +10,17 @@ use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Dedoc\Scramble\Attributes\Group;
 
+#[Group(name: 'Admin - Commandes', weight: 11)]
 class AdminOrderController extends Controller
 {
+    /**
+     * Tableau de bord — statistiques globales.
+     *
+     * Agrège produits, commandes (CA total, CA mensuel, par statut), stock (rupture, faible).
+     * Sert au dashboard d'accueil de l'admin panel.
+     */
     public function stats(): JsonResponse
     {
         $lowThreshold = 5;
@@ -25,7 +33,7 @@ class AdminOrderController extends Controller
         $activeProductIds = Product::where('is_active', true)->pluck('id');
 
         $outOfStock = $activeProductIds->filter(
-            fn ($id) => ($stockByProduct[$id] ?? 0) == 0
+            fn($id) => ($stockByProduct[$id] ?? 0) == 0
         )->count();
 
         $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
@@ -46,8 +54,8 @@ class AdminOrderController extends Controller
                 'by_status' => Order::selectRaw('order_status, count(*) as count')
                     ->groupBy('order_status')
                     ->pluck('count', 'order_status'),
-                'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
-                'revenue_month' => (float) Order::where('payment_status', 'paid')
+                'revenue' => (float)Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue_month' => (float)Order::where('payment_status', 'paid')
                     ->where('created_at', '>=', now()->startOfMonth())
                     ->sum('total_ttc'),
             ],
@@ -58,6 +66,12 @@ class AdminOrderController extends Controller
         ]);
     }
 
+    /**
+     * Liste paginée des commandes (admin).
+     *
+     * @queryParam status string Filtre par statut : new, processing, shipped, delivered, canceled.
+     * @queryParam search string Recherche par email/nom/prénom du client.
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Order::with([
@@ -81,6 +95,9 @@ class AdminOrderController extends Controller
         return response()->json($query->paginate(20));
     }
 
+    /**
+     * Détail d'une commande (admin).
+     */
     public function show(Order $order): JsonResponse
     {
         $order->load([
@@ -95,6 +112,16 @@ class AdminOrderController extends Controller
         return response()->json($order);
     }
 
+    /**
+     * Mettre à jour le statut d'une commande.
+     *
+     * Déclenche les emails de notification (`OrderStatusUpdated`) pour les transitions vers
+     * `shipped`, `delivered`, `canceled`. Chaque email est envoyé une seule fois (idempotence
+     * via `*_email_sent_at`).
+     *
+     * @response 200 {"message": "Status updated", "order": {}}
+     * @response 200 scenario="Aucun changement" {"message": "Status unchanged", "order": {}}
+     */
     public function updateStatus(Request $request, Order $order): JsonResponse
     {
         $data = $request->validate([
@@ -114,19 +141,19 @@ class AdminOrderController extends Controller
             $user = $order->user;
 
             if ($user) {
-                if ($newStatus === 'shipped' && ! $order->shipped_email_sent_at) {
+                if ($newStatus === 'shipped' && !$order->shipped_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'shipped'));
                     $order->shipped_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'delivered' && ! $order->delivered_email_sent_at) {
+                if ($newStatus === 'delivered' && !$order->delivered_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'delivered'));
                     $order->delivered_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'canceled' && ! $order->canceled_email_sent_at) {
+                if ($newStatus === 'canceled' && !$order->canceled_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'canceled'));
                     $order->canceled_email_sent_at = now();
                     $order->save();
