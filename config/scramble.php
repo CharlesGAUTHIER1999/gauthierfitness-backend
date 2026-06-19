@@ -1,8 +1,6 @@
 <?php
 
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
-use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
-use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 return [
     /*
@@ -186,13 +184,13 @@ return [
      *     ],
      * ],
      */
-    'security_strategy' => [
-        MiddlewareAuthSecurityStrategy::class,
-        [
-            'middleware' => ['auth', 'auth:*'],
-            'scheme' => SecurityScheme::http('bearer')
-                ->as('Sanctum')
-                ->setDescription('Token Sanctum obtenu via `POST /api/login` ou `POST /api/register`. Préfixé par `Bearer ` dans le header `Authorization`.'),
-        ],
-    ],
+    /*
+    * Disabled here on purpose: the security scheme + per-route public/private flagging
+    * is configured programmatically in `App\Providers\AppServiceProvider::configureScramble()`.
+    *
+    * Why: `SecurityScheme` objects are not var_export-serializable, so leaving the array
+    * form above would break `php artisan config:cache` in production with an error like
+    *   "Call to undefined method HttpSecurityScheme::__set_state()".
+    */
+    'security_strategy' => null,
 ];
