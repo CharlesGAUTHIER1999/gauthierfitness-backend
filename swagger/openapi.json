@@ -3293,7 +3293,7 @@
                     },
                     "images": {
                         "type": "array",
-                        "description": "Galerie compl\u00e8te (uniquement en detail quand images est charge)",
+                        "description": "Galerie complete (uniquement en detail quand images est charge)",
                         "items": {
                             "type": "object",
                             "properties": {
