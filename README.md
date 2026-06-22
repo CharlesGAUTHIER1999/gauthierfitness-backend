@@ -1,59 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GauthierFitness - Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> API REST de la boutique e-commerce GauthierFitness. Gère le catalogue, le panier, les paiements Stripe, les sessions
+> de customisation 3D, la génération de designs IA et l'administration.
 
-## About Laravel
+Repo : `CharlesGAUTHIER1999/gauthierfitness-backend` &nbsp;·&nbsp; Production : <https://api.gauthierfitness.fr>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> Documentation projet transverse (architecture, déploiement, manuel utilisateur, mise à jour) : [meta-repo
+`gauthierfitness/docs`](https://github.com/CharlesGAUTHIER1999/gauthierfitness/tree/main/docs)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Stack
 
-## Learning Laravel
+| Couche          | Technologie                                              |
+|-----------------|----------------------------------------------------------|
+| Runtime         | PHP 8.3                                                  |
+| Framework       | Laravel 13                                               |
+| Base de données | MySQL 8                                                  |
+| Auth API        | Laravel Sanctum (Bearer token)                           |
+| Paiement        | Stripe (PaymentIntents + webhook signé)                  |
+| IA              | OpenAI Images                                            |
+| Doc API         | [Scramble](https://scramble.dedoc.co) (OpenAPI 3.1 auto) |
+| Tests           | PHPUnit 11 (SQLite in-memory en CI)                      |
+| Style           | Laravel Pint (PSR-12)                                    |
+| CI/CD           | GitHub Actions → image GHCR → dispatch infra             |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Démarrage local
 
-## Laravel Sponsors
+```bash
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate --seed
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Lance simultanément server, queue, pail, vite
+composer dev
+```
 
-### Premium Partners
+API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000/docs/api`.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Variables d'environnement clés
 
-## Contributing
+| Var                                       | Usage                                           |
+|-------------------------------------------|-------------------------------------------------|
+| `APP_ENV`                                 | `local` / `staging` / `production`              |
+| `DB_*`                                    | Connexion MySQL                                 |
+| `SANCTUM_STATEFUL_DOMAINS`                | Domaines autorisés à utiliser le cookie Sanctum |
+| `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe                                          |
+| `OPENAI_API_KEY`                          | OpenAI Images                                   |
+| `MAIL_*`                                  | SMTP (Mailpit en local, OVH en prod)            |
+| `API_VERSION`                             | Version exposée dans la spec OpenAPI            |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Tableau
+complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Structure du code
 
-## Security Vulnerabilities
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── Admin/        Admin produits, commandes, stock
+│   │   ├── AI/           AIDesignController (génération IA)
+│   │   ├── Auth/         Login/Register/Logout/Verification
+│   │   ├── CartController.php
+│   │   ├── CustomizationController.php
+│   │   ├── CustomizationAssetController.php
+│   │   ├── OrderController.php
+│   │   ├── ProductController.php
+│   │   ├── ContactController.php
+│   │   └── StripeController.php          ← PaymentIntent + webhook
+│   ├── Requests/         FormRequests (validation + autorisation)
+│   └── Resources/        API Resources (ProductResource, CartResource, …)
+├── Models/               Eloquent : User, Cart, Order, Product, StockLot, …
+├── Notifications/        Emails transactionnels (OrderConfirmed, OrderStatusUpdated)
+├── Providers/            AppServiceProvider (RateLimiter, Scramble security)
+└── Services/AI/          OpenAIImageService
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+routes/api.php            41 routes (3 groupes : public / auth:sanctum / auth:sanctum + admin)
+database/migrations/      Schéma versionné
+swagger/openapi.json      Spec OpenAPI 3.1 régénérée par Scramble
+tests/                    Feature + Unit (SQLite in-memory)
+```
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Conventions
+
+- **Validation** : `Illuminate\Http\Request::validate()` pour les règles simples, FormRequest dédié quand validation
+  croisée nécessaire (cf. `AddToCartRequest::withValidator`).
+- **Réponses** : `JsonResponse` typé en retour. API Resources pour les structures complexes.
+- **Doc OpenAPI** : Scramble lit les type-hints, FormRequests et docblocks. Pour grouper les endpoints, attribut PHP 8
+  `#[Group(name: 'Authentification', weight: 1)]` sur la classe contrôleur. Pour les réponses :
+  `@response 200 scenario="..." {...}` en docblock.
+- **Sécurité Scramble** : la configuration du scheme Sanctum global + flagging public/privé est faite dans [
+  `app/Providers/AppServiceProvider.php`](app/Providers/AppServiceProvider.php), **pas** dans `config/scramble.php`. Les
+  objets `SecurityScheme` ne sont pas `var_export`-sérialisables, ce qui ferait crasher `php artisan config:cache` en
+  production.
+- **Snapshot des prix** : `cart_items` et `order_items` portent le prix au moment de l'action, jamais relus du produit.
+- **Idempotence webhooks** : table `webhook_events` indexée `(provider, provider_event_id)`.
+
+---
+
+## Tests et qualité
+
+```bash
+php artisan test                  # PHPUnit (SQLite in-memory en CI)
+./vendor/bin/pint                 # Format PSR-12 (auto-fix)
+./vendor/bin/pint --test          # Vérification sans fix (CI)
+```
+
+CI : `phpunit` → `lint` → `build image GHCR` → `dispatch infra`. Cf. [
+`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
+
+---
+
+## Documentation OpenAPI
+
+La documentation est générée **depuis le code** par Scramble - il n'y a rien à maintenir à la main pour la structure des
+endpoints.
+
+```bash
+# Régénérer la spec
+php artisan scramble:export       # → swagger/openapi.json
+
+# Consulter en local
+php artisan serve
+# → http://localhost:8000/docs/api
+```
+
+Annotations supportées sur les contrôleurs : `#[Group(name, weight)]`, docblock summary, `@response`, `@queryParam`,
+`@urlParam`, `@unauthenticated`.
+Détail : [docs/05-api.md](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/05-api.md).
+
+---
+
+## Convention de branchage
+
+- `feature` : `GF{n}-{NomCourt}` (ex : `GF21-SwaggerDoc`, `GF22-Documentation`)
+- `develop` : push automatique → image `ghcr.io/.../gauthierfitness-backend:develop` → infra déploie staging
+- `main` : push → image `:latest` + tag SHA → déclenchement manuel prod
+
+---
+
+## Liens utiles
+
+- 📖 [Manuel de déploiement](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md)
+- 📖 [Manuel de mise à jour](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/04-upgrade.md)
+- 📖 [Architecture détaillée](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/01-architecture.md)
+- 🎨 [Repo frontend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend)
+- 🚀 [Repo infra](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)
