@@ -13,9 +13,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Bind Stripe client via le container pour pouvoir le swap par un mock en tests.
+        $this->app->singleton(StripeClient::class, function () {
+            return new StripeClient(config('services.stripe.secret', env('STRIPE_SECRET')));
+        });
+    }
+
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
