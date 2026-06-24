@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\StockLot;
 use App\Models\User;
+use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -267,7 +268,7 @@ class StripeWebhookTest extends TestCase
             'provider' => 'stripe',
             'provider_event_id' => 'evt_dup_42',
         ]);
-        $we = \App\Models\WebhookEvent::where('provider_event_id', 'evt_dup_42')->first();
+        $we = WebhookEvent::where('provider_event_id', 'evt_dup_42')->first();
         $this->assertNotNull($we->processed_at, 'processed_at devrait être set après le 1er appel');
 
         // 2e appel : nouvelle signature (timestamp différent) mais MÊME event_id Stripe

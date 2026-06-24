@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -36,7 +37,7 @@ class LogoutTest extends TestCase
         Sanctum::actingAs($user, ['*']);
 
         // Re-charge le user avec le token courant marqué
-        $user->withAccessToken(\Laravel\Sanctum\PersonalAccessToken::first());
+        $user->withAccessToken(PersonalAccessToken::first());
 
         $this->postJson('/api/logout')->assertOk();
 
