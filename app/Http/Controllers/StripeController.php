@@ -79,7 +79,7 @@ class StripeController extends Controller
             return response()->json(['message' => 'Panier vide'], 400);
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret', env('STRIPE_SECRET')));
+        $stripe = app(StripeClient::class);
 
         return DB::transaction(function () use ($user, $cartItems, $data, $stripe) {
             $totalTtc = 0.0;
@@ -219,7 +219,7 @@ class StripeController extends Controller
      */
     public function webhook(Request $request): JsonResponse
     {
-        $endpointSecret = env('STRIPE_WEBHOOK_SECRET');
+        $endpointSecret = config('services.stripe.webhook_secret', env('STRIPE_WEBHOOK_SECRET'));
         $payload = $request->getContent();
         $sig = $request->header('Stripe-Signature');
 
