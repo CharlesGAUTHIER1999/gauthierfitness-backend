@@ -12,6 +12,7 @@
         "laravel/framework": "^v13.16.1",
         "laravel/sanctum": "^v4.3.2",
         "laravel/tinker": "^v3.0.2",
+        "sentry/sentry-laravel": "^4.26",
         "stripe/stripe-php": "^v19.4.1",
         "symfony/css-selector": "^v7.4.9",
         "symfony/dom-crawler": "^v7.4.12"
