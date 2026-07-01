@@ -438,12 +438,12 @@ class ProductSeeder extends Seeder
         'nutrition-creatine' => [
             'creaclon250' => [
                 'main' => 'nutrition/creatine/creaclon1.jpg',
-                'hover' => 'nutrition/creatine/creaclon1.jpg',
+                'hover' => 'nutrition/creatine/creaclon2.jpg',
                 'detail' => [],
             ],
             'creaclon500' => [
-                'main' => 'nutrition/creatine/creaclon2.jpg',
-                'hover' => 'nutrition/creatine/creaclon2.jpg',
+                'main' => 'nutrition/creatine/creaclon3.jpg',
+                'hover' => 'nutrition/creatine/creaclon4.jpg',
                 'detail' => [],
             ],
             'micropure250' => [
