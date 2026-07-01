@@ -160,6 +160,112 @@
                 "security": []
             }
         },
+        "/forgot-password": {
+            "post": {
+                "operationId": "password.email",
+                "description": "Envoie un email contenant un lien de r\u00e9initialisation si un compte existe pour cet email.\nRenvoie toujours le m\u00eame message g\u00e9n\u00e9rique, que l'email existe ou non, pour \u00e9viter\nqu'un attaquant ne puisse d\u00e9duire quels emails sont enregistr\u00e9s (OWASP A01 - user enumeration).",
+                "summary": "Demande de r\u00e9initialisation de mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "required": [
+                                    "email"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/reset-password": {
+            "post": {
+                "operationId": "password.reset",
+                "description": "V\u00e9rifie le token re\u00e7u par email et change le mot de passe. Tous les tokens Sanctum\nexistants sont r\u00e9voqu\u00e9s : l'utilisateur doit se reconnecter partout apr\u00e8s un reset.",
+                "summary": "R\u00e9initialisation du mot de passe",
+                "tags": [
+                    "Authentification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 6
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "minLength": 6
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "token",
+                                    "password",
+                                    "password_confirmation"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 200
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/me": {
             "get": {
                 "operationId": "me",

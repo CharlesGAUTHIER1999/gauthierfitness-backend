@@ -4,9 +4,11 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminStockController;
 use App\Http\Controllers\AI\AIDesignController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ContactController;
@@ -29,6 +31,10 @@ Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app(
 // Public auth
 Route::post('/login', LoginController::class)->name('login');
 Route::post('/register', RegisterController::class)->name('register');
+Route::post('/forgot-password', ForgotPasswordController::class)
+    ->middleware('throttle:5,1')
+    ->name('password.email');
+Route::post('/reset-password', ResetPasswordController::class)->name('password.reset');
 
 // Public data
 Route::get('/products', [ProductController::class, 'index']);
