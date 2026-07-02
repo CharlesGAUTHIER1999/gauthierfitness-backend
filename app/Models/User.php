@@ -58,16 +58,21 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->hasOne(Cart::class);
     }
 
-    /** Items in the user's cart. */
+    /**
+     * Items in the user's cart.
+     *
+     * IMPORTANT: hasManyThrough needs explicit keys, otherwise you can end up
+     * with an empty cart on the backend.
+     */
     public function cartItems(): HasManyThrough
     {
         return $this->hasManyThrough(
             CartItem::class,
             Cart::class,
-            'user_id',
-            'cart_id',
-            'id',
-            'id'
+            'user_id', // FK on carts
+            'cart_id', // FK on cart_items
+            'id',      // local key on users
+            'id'       // local key on carts
         );
     }
 
