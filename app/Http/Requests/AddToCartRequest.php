@@ -8,11 +8,13 @@ use Illuminate\Validation\Validator;
 
 class AddToCartRequest extends FormRequest
 {
+    /** Only authenticated users may add items to the cart. */
     public function authorize(): bool
     {
         return auth()->check();
     }
 
+    /** Base validation rules for the add-to-cart payload. */
     public function rules(): array
     {
         return [
@@ -23,17 +25,15 @@ class AddToCartRequest extends FormRequest
         ];
     }
 
+    /** Cross-field checks : the customization session (if any) must belong to the current user and match the selected product/option. */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             $session_id = $this->input('custom_product_session_id');
-
             if (! $session_id) {
                 return;
             }
-
             $session = CustomProductSession::find($session_id);
-
             if (! $session) {
                 return;
             }

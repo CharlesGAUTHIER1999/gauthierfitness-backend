@@ -25,23 +25,14 @@ use Throwable;
 class StripeController extends Controller
 {
     /**
-     * Créer un PaymentIntent Stripe pour le panier courant.
+     * Create a Stripe PaymentIntent for the current cart
      *
-     * Cycle complet de checkout : valide l'adresse de livraison, calcule les totaux HT/TTC à partir
-     * des snapshots de prix, crée la commande, la livraison, les lignes de commande et un Payment
-     * en `pending`, puis crée un PaymentIntent Stripe en EUR. Le `client_secret` retourné permet au
-     * frontend de confirmer le paiement côté client. Le statut final est mis à jour par le webhook
-     * `POST /api/stripe/webhook`.
-     *
-     * @response 200 scenario="PaymentIntent créé" {
-     *   "order_id": 42,
-     *   "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx",
-     *   "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy",
-     *   "amount": 89.90, "currency": "EUR"
-     * }
+     * @response 200 scenario="PaymentIntent créé" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
      * @response 400 scenario="Panier vide" {"message": "Panier vide"}
      * @response 401 scenario="Non authentifié" {"message": "Unauthenticated"}
      * @response 422 scenario="Données de livraison invalides" {"message": "The shipping.zip field is required."}
+     *
+     * @throws Throwable
      */
     public function createPaymentIntent(Request $request): JsonResponse
     {
@@ -112,7 +103,7 @@ class StripeController extends Controller
                 'order_status' => 'new',
             ]);
 
-            // 3) Shipment (structuré)
+            // 3) Shipment (structured)
             Shipment::create([
                 'order_id' => $order->id,
                 'firstname' => $data['shipping']['firstname'],
@@ -201,14 +192,9 @@ class StripeController extends Controller
     }
 
     /**
-     * Webhook Stripe — événements de paiement.
-     *
-     * Endpoint appelé par Stripe (non par le frontend). Vérifie la signature `Stripe-Signature`
-     * contre `STRIPE_WEBHOOK_SECRET`, déduplique via la table `webhook_events` (idempotence),
-     * puis traite l'événement :
-     * - `payment_intent.succeeded` → marque le paiement et la commande comme payés, vide le panier,
-     *   envoie l'email de confirmation et décrémente le stock en FIFO (lot expirant le plus tôt).
-     * - `payment_intent.payment_failed` → marque le paiement et la commande en `failed`.
+     * Stripe webhook - payment events
+     * Endpoint called by Stripe (not by the frontend).
+     * Verifies the `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`
      *
      * @unauthenticated
      *
@@ -232,7 +218,7 @@ class StripeController extends Controller
         $provider = 'stripe';
         $providerEventId = (string) $event->id;
 
-        // ✅ idempotence
+        // idempotency
         try {
             $we = WebhookEvent::firstOrCreate(
                 ['provider' => $provider, 'provider_event_id' => $providerEventId],
@@ -271,19 +257,19 @@ class StripeController extends Controller
                         $order->order_status = 'processing';
                         $order->save();
 
-                        // ✅ vide panier DB (source: cart->items)
+                        // clear DB cart (source: cart->items)
                         if ($order->user) {
                             $order->user->cart?->items()->delete();
                         }
 
-                        // ✅ Email confirmation (idempotent)
+                        // confirmation email (idempotent)
                         if ($order->user && ! $order->paid_email_sent_at) {
                             $order->user->notify(new OrderConfirmed($order));
                             $order->paid_email_sent_at = now();
                             $order->save();
                         }
 
-                        // ✅ Décrémente le stock — FIFO (lot expirant le plus tôt en premier)
+                        // Decrement stock — FIFO (earliest-expiring lot first)
                         foreach ($order->items as $item) {
                             $lot = StockLot::where('product_id', $item->product_id)
                                 ->when(
@@ -317,7 +303,7 @@ class StripeController extends Controller
 
                 Log::info('STRIPE_WEBHOOK_RECEIVED', ['type' => $event->type]);
 
-                // Dans succeeded :
+                // Inside succeeded:
                 Log::info('STRIPE_PI_SUCCEEDED', [
                     'order_id' => $orderId,
                     'payment_id' => $paymentId,

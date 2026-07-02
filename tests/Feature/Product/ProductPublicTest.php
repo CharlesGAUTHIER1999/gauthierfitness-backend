@@ -11,7 +11,7 @@ class ProductPublicTest extends TestCase
 {
     use RefreshDatabase;
 
-    /* ── Index ─────────────────────────────────────────────────── */
+    // Index
 
     public function test_guest_can_list_active_products(): void
     {
@@ -26,9 +26,7 @@ class ProductPublicTest extends TestCase
     {
         Product::factory()->count(2)->create(['is_active' => true]);
         Product::factory()->count(3)->create(['is_active' => false]);
-
         $response = $this->getJson('/api/products')->assertOk();
-
         $this->assertCount(2, $response->json('data'));
     }
 
@@ -36,19 +34,13 @@ class ProductPublicTest extends TestCase
     {
         Product::factory()->count(15)->create(['is_active' => true]);
 
-        $this->getJson('/api/products?per_page=5')
-            ->assertOk()
-            ->assertJsonPath('meta.per_page', 5);
+        $this->getJson('/api/products?per_page=5')->assertOk()->assertJsonPath('meta.per_page', 5);
     }
 
     public function test_listing_clamps_per_page_to_maximum(): void
     {
         Product::factory()->count(5)->create(['is_active' => true]);
-
-        // per_page > 60 doit être clampé à 60
-        $this->getJson('/api/products?per_page=999')
-            ->assertOk()
-            ->assertJsonPath('meta.per_page', 60);
+        $this->getJson('/api/products?per_page=999')->assertOk()->assertJsonPath('meta.per_page', 60);
     }
 
     public function test_listing_filters_by_category(): void
@@ -57,18 +49,14 @@ class ProductPublicTest extends TestCase
         $cat->slug = 't-shirts';
         $cat->type = 'clothing';
         $cat->save();
-
         $matchingProduct = Product::factory()->create(['is_active' => true]);
         $matchingProduct->categories()->attach($cat->id);
-
         Product::factory()->create(['is_active' => true]);
-
         $response = $this->getJson('/api/products?category=t-shirts')->assertOk();
-
         $this->assertCount(1, $response->json('data'));
     }
 
-    /* ── Show ──────────────────────────────────────────────────── */
+    // Show
 
     public function test_guest_can_view_product_by_slug(): void
     {

@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the orders, order_items, payments, and shipments tables. */
     public function up(): void
     {
-        // Commandes
+        // Orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -30,7 +31,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Paiements
+        // Payments
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
@@ -42,7 +43,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Expédition
+        // Shipping
         Schema::create('shipments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
@@ -54,6 +55,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('shipments');

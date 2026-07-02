@@ -11,25 +11,18 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 #[Group(name: 'Admin - Commandes', weight: 11)]
 class AdminOrderController extends Controller
 {
-    /**
-     * Tableau de bord — statistiques globales.
-     *
-     * Agrège produits, commandes (CA total, CA mensuel, par statut), stock (rupture, faible).
-     * Sert au dashboard d'accueil de l'admin panel.
-     */
+    /** Dashboard - global statistics */
     public function stats(): JsonResponse
     {
         $lowThreshold = 5;
 
-        // Stock par produit actif
-        $stockByProduct = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')
-            ->groupBy('product_id')
-            ->pluck('total_qty', 'product_id');
-
+        // Stock per active product
+        $stockByProduct = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')->groupBy('product_id')->pluck('total_qty', 'product_id');
         $activeProductIds = Product::where('is_active', true)->pluck('id');
 
         $outOfStock = $activeProductIds->filter(
@@ -51,13 +44,9 @@ class AdminOrderController extends Controller
             'orders' => [
                 'total' => Order::count(),
                 'this_week' => Order::where('created_at', '>=', now()->startOfWeek())->count(),
-                'by_status' => Order::selectRaw('order_status, count(*) as count')
-                    ->groupBy('order_status')
-                    ->pluck('count', 'order_status'),
+                'by_status' => Order::selectRaw('order_status, count(*) as count')->groupBy('order_status')->pluck('count', 'order_status'),
                 'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
-                'revenue_month' => (float) Order::where('payment_status', 'paid')
-                    ->where('created_at', '>=', now()->startOfMonth())
-                    ->sum('total_ttc'),
+                'revenue_month' => (float) Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
             ],
             'stock' => [
                 'out_of_stock' => $outOfStock,
@@ -67,7 +56,7 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Liste paginée des commandes (admin).
+     * Paginated list of orders (admin).
      *
      * @queryParam status string Filtre par statut : new, processing, shipped, delivered, canceled.
      * @queryParam search string Recherche par email/nom/prénom du client.
@@ -86,8 +75,7 @@ class AdminOrderController extends Controller
         if ($request->filled('search')) {
             $search = $request->query('search');
             $query->whereHas('user', function ($q) use ($search) {
-                $q->where('email', 'like', "%{$search}%")
-                    ->orWhere('firstname', 'like', "%{$search}%")
+                $q->where('email', 'like', "%{$search}%")->orWhere('firstname', 'like', "%{$search}%")
                     ->orWhere('lastname', 'like', "%{$search}%");
             });
         }
@@ -95,9 +83,7 @@ class AdminOrderController extends Controller
         return response()->json($query->paginate(20));
     }
 
-    /**
-     * Détail d'une commande (admin).
-     */
+    /** Order detail (admin). */
     public function show(Order $order): JsonResponse
     {
         $order->load([
@@ -113,14 +99,12 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Mettre à jour le statut d'une commande.
-     *
-     * Déclenche les emails de notification (`OrderStatusUpdated`) pour les transitions vers
-     * `shipped`, `delivered`, `canceled`. Chaque email est envoyé une seule fois (idempotence
-     * via `*_email_sent_at`).
+     * Update an order's status.
      *
      * @response 200 {"message": "Status updated", "order": {}}
      * @response 200 scenario="Aucun changement" {"message": "Status unchanged", "order": {}}
+     *
+     * @throws Throwable
      */
     public function updateStatus(Request $request, Order $order): JsonResponse
     {

@@ -7,16 +7,17 @@ use Illuminate\Http\Request;
 
 class AdminMiddleware
 {
+    /** Allow the request through only for authenticated admin users; otherwise return 401 (not logged in) or 403 (logged in, not admin). */
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
 
-        // si pas connecté => 401 (plus correct)
+        // Not logged in => 401
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // connecté mais pas admin => 403
+        // Logged in but not admin => 403
         if (! $user->isAdmin()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }

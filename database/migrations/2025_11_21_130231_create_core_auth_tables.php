@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the roles table and the user_roles pivot table. */
     public function up(): void
     {
         // roles
@@ -25,6 +26,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('user_roles');

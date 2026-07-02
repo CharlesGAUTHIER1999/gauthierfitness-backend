@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrderFactory extends Factory
 {
+    /** Define the default state for a fake order (random totals and statuses). */
     public function definition(): array
     {
         $totalHt = $this->faker->randomFloat(2, 10, 500);

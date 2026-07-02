@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the designs table for AI-generated product designs. */
     public function up(): void
     {
         Schema::create('designs', function (Blueprint $table) {
@@ -25,6 +26,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('designs');

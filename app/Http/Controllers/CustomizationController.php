@@ -13,10 +13,8 @@ use Illuminate\Http\Request;
 class CustomizationController extends Controller
 {
     /**
-     * Créer une session de personnalisation.
-     *
-     * Snapshot la configuration de design (texte, logo, couleurs, position) pour un produit
-     * customisable. La session est ensuite référencée par une ligne de panier puis par une commande.
+     * Create a customization session.
+     * Snapshots the design configuration (text, logo, colors, position) for a customizable product.
      *
      * @response 422 scenario="Produit non customisable" {"message": "This product is not customizable."}
      * @response 403 scenario="Design d'un autre utilisateur" {}
@@ -32,7 +30,6 @@ class CustomizationController extends Controller
         ]);
 
         $product = Product::findOrFail($data['product_id']);
-
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
 
         if (! empty($data['design_id'])) {
@@ -41,10 +38,7 @@ class CustomizationController extends Controller
             abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
         }
 
-        $option = ! empty($data['product_option_id'])
-            ? $product->options()->find($data['product_option_id'])
-            : null;
-
+        $option = ! empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
         $unit_price = $option?->price_ttc ?? $product->price_ttc;
 
         $session = CustomProductSession::create([
@@ -73,7 +67,7 @@ class CustomizationController extends Controller
     }
 
     /**
-     * Récupérer une session de personnalisation.
+     * Retrieve a customization session.
      *
      * @response 403 scenario="Session d'un autre utilisateur" {}
      */
@@ -95,10 +89,9 @@ class CustomizationController extends Controller
     }
 
     /**
-     * Mettre à jour une session de personnalisation.
-     *
-     * Permet de modifier la configuration, le design associé, l'image de preview et le statut.
-     * Les transitions de statut autorisées sont : `draft`, `ready`, `added_to_cart`, `ordered`.
+     * Update a customization session.
+     * Allows changing the configuration, the associated design, the preview image and the status.
+     * Allowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`.
      *
      * @response 403 scenario="Session d'un autre utilisateur" {}
      */
@@ -142,6 +135,7 @@ class CustomizationController extends Controller
         ]);
     }
 
+    // Abort with 403 unless the given user owns the resource.
     protected function authorizeOwner(int $ownerId, int $currentUserId): void
     {
         abort_if($ownerId !== $currentUserId, 403);

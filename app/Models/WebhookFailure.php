@@ -15,6 +15,7 @@ class WebhookFailure extends Model
         'retry_count',
     ];
 
+    /** Webhook event this failure is associated with. */
     public function event()
     {
         return $this->belongsTo(WebhookEvent::class, 'webhook_event_id');

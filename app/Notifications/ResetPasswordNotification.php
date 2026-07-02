@@ -10,13 +10,16 @@ class ResetPasswordNotification extends Notification
 {
     use Queueable;
 
+    /** Bind the password reset token to this notification. */
     public function __construct(public string $token) {}
 
+    /** Deliver this notification by mail only. */
     public function via($notifiable): array
     {
         return ['mail'];
     }
 
+    /** Build the password reset email with a link valid for 60 minutes. */
     public function toMail($notifiable): MailMessage
     {
         $url = config('app.front_url').'/reset-password?token='.$this->token.'&email='.urlencode($notifiable->email);

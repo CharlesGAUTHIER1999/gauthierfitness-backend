@@ -15,8 +15,6 @@ class Order extends Model
         'total_ttc',
         'payment_status',
         'order_status',
-
-        // ✅ email tracking columns
         'paid_email_sent_at',
         'shipped_email_sent_at',
         'delivered_email_sent_at',
@@ -30,21 +28,25 @@ class Order extends Model
         'canceled_email_sent_at' => 'datetime',
     ];
 
+    /** Items included in this order. */
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    /** Payment associated with this order. */
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
+    /** Shipment associated with this order. */
     public function shipment()
     {
         return $this->hasOne(Shipment::class);
     }
 
+    /** Customer who placed this order. */
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -19,11 +19,13 @@ class StockMovement extends Model
         'reason',
     ];
 
+    /** Stock lot this movement is recorded against. */
     public function lot()
     {
         return $this->belongsTo(StockLot::class, 'lot_id');
     }
 
+    /** Product this movement relates to. */
     public function product()
     {
         return $this->belongsTo(Product::class);

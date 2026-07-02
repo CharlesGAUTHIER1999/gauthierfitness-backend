@@ -13,11 +13,8 @@ use Illuminate\Support\Facades\DB;
 class ProductController extends Controller
 {
     /**
-     * Liste paginée des produits publics.
-     *
-     * Renvoie les produits actifs visibles sur la boutique. Les produits déclinés en variantes
-     * (couleur, taille) sont regroupés : un seul produit par groupe est retourné. Supporte le
-     * filtrage par genre, catégorie et tag.
+     * Paginated list of public products.
+     * Returns active products visible in the shop. Products with variants (color, size) are grouped
      *
      * @unauthenticated
      *
@@ -89,10 +86,8 @@ class ProductController extends Controller
     }
 
     /**
-     * Détail d'un produit par slug.
-     *
-     * Renvoie un produit avec toutes ses relations (images, catégories, options, lots de stock,
-     * variantes du groupe). Utilisé sur la page produit du frontend.
+     * Product detail by slug.
+     * Returns a product with all its relations (images, categories, options, stock lots, group variants).
      *
      * @unauthenticated
      *

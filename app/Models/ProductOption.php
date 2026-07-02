@@ -32,11 +32,13 @@ class ProductOption extends Model
         'is_active' => 'boolean',
     ];
 
+    /** Product this option belongs to. */
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** Stock lots associated with this option. */
     public function lots()
     {
         return $this->hasMany(StockLot::class, 'product_option_id');

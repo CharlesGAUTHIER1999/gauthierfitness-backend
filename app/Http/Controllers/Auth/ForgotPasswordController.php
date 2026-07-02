@@ -11,11 +11,9 @@ use Illuminate\Support\Facades\Password;
 class ForgotPasswordController extends Controller
 {
     /**
-     * Demande de réinitialisation de mot de passe.
-     *
-     * Envoie un email contenant un lien de réinitialisation si un compte existe pour cet email.
-     * Renvoie toujours le même message générique, que l'email existe ou non, pour éviter
-     * qu'un attaquant ne puisse déduire quels emails sont enregistrés (OWASP A01 - user enumeration).
+     * Password reset request.
+     * Sends an email with a reset link if an account exists for that email.
+     * Always returns the same generic message, whether the email exists or not
      *
      * @unauthenticated
      *

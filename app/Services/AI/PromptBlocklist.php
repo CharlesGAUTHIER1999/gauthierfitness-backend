@@ -4,16 +4,11 @@ namespace App\Services\AI;
 
 use Illuminate\Support\Str;
 
-/**
- * Filtre « politique de marque » : détecte dans un prompt les thèmes
- * explicitement interdits (armes, guerre, drogue, haine…) que la modération
- * générique d'OpenAI ne flague pas forcément. Comparaison par mot entier,
- * insensible à la casse et aux accents.
- */
+/** “Brand Policy” filter: detects topics in a prompt that are explicitly prohibited (weapons, war, drugs, hate). */
 class PromptBlocklist
 {
     /**
-     * Retourne la liste des termes interdits détectés dans le texte.
+     * List of forbidden terms detected in the given text.
      *
      * @return list<string>
      */

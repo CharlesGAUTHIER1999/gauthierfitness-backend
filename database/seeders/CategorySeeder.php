@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
+    /** Truncate categories and seed the root/child category tree. */
     public function run(): void
     {
-        // Désactivation temporaire des FK
+        // Temporarily disable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('product_category')->truncate();
         Category::truncate();

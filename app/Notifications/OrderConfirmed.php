@@ -11,13 +11,16 @@ class OrderConfirmed extends Notification
 {
     use Queueable;
 
+    /** Bind the confirmed order to this notification. */
     public function __construct(public Order $order) {}
 
+    /** Deliver this notification by mail only. */
     public function via($notifiable): array
     {
         return ['mail'];
     }
 
+    /** Build the order confirmation email, listing items and total. */
     public function toMail($notifiable): MailMessage
     {
         $order = $this->order->loadMissing(['items.product']);

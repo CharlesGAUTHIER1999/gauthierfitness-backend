@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the product_groups table. */
     public function up(): void
     {
         Schema::create('product_groups', function (Blueprint $table) {
@@ -13,15 +14,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('type')->nullable();
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained('categories')
-                ->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->timestamps();
             $table->index(['type', 'category_id']);
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('product_groups');

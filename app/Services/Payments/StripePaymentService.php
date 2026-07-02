@@ -10,6 +10,8 @@ use Stripe\Stripe;
 class StripePaymentService
 {
     /**
+     * Create a Stripe PaymentIntent for the given order's total amount.
+     *
      * @throws ApiErrorException
      */
     public function createPaymentIntent(Order $order): PaymentIntent

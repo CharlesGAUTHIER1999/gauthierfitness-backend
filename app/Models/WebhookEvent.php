@@ -22,6 +22,7 @@ class WebhookEvent extends Model
         'processed_at' => 'datetime',
     ];
 
+    /** Failures recorded while processing this webhook event. */
     public function failures()
     {
         return $this->hasMany(WebhookFailure::class);

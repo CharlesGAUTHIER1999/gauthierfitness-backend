@@ -10,9 +10,8 @@ use Illuminate\Http\Request;
 class LogoutController extends Controller
 {
     /**
-     * Déconnexion.
-     *
-     * Révoque le token Sanctum courant. L'appel suivant nécessitera un nouveau login.
+     * Logout.
+     * Revokes the current Sanctum token. The next call will require a new login.
      *
      * @response 200 scenario="Succès" {"message": "ok"}
      * @response 401 scenario="Token absent ou invalide" {"message": "Unauthenticated"}

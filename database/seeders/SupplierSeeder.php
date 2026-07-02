@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class SupplierSeeder extends Seeder
 {
+    /** Seed a fixed list of real-world suppliers. */
     public function run(): void
     {
         Supplier::create([

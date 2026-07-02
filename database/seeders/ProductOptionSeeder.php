@@ -10,6 +10,7 @@ use Throwable;
 
 class ProductOptionSeeder extends Seeder
 {
+    /** Truncate product options and seed size/format/capacity options per product category. */
     public function run(): void
     {
         $this->disableFk();
@@ -23,7 +24,7 @@ class ProductOptionSeeder extends Seeder
         foreach ($products as $product) {
             $root = $this->rootSlug($product);
 
-            // Equipments : pas d'option
+            // Equipments: no options
             if ($root === 'equipments') {
                 continue;
             }
@@ -107,6 +108,7 @@ class ProductOptionSeeder extends Seeder
         }
     }
 
+    /** Resolve the root category slug (parent slug if any, else the category's own slug). */
     private function rootSlug(Product $product): ?string
     {
         $cat = $product->categories->first();
@@ -117,6 +119,7 @@ class ProductOptionSeeder extends Seeder
         return $cat->parent?->slug ?? $cat->slug;
     }
 
+    /** Create a "size" option for each given size value. */
     private function seedSizes(int $productId, string $productSku, float $vat, array $sizes): void
     {
         $pos = 1;
@@ -132,6 +135,7 @@ class ProductOptionSeeder extends Seeder
         }
     }
 
+    /** Create a "capacity" option for each given code, using a custom or auto-generated label. */
     private function seedCapacities(int $productId, string $productSku, float $vat, array $codes, array $labels = []): void
     {
         $pos = 1;
@@ -149,6 +153,7 @@ class ProductOptionSeeder extends Seeder
         }
     }
 
+    /** Format a capacity code (e.g. "38L", "700ML") into a human-readable label. */
     private function prettyCapacityLabel(string $code): string
     {
         if (preg_match('/^(\d+)\s*L$/i', $code, $m)) {
@@ -161,6 +166,7 @@ class ProductOptionSeeder extends Seeder
         return $code;
     }
 
+    /** Extract a weight/volume format (kg, g, ml) from a product name, if present. */
     private function extractFormat(string $name): ?array
     {
         if (preg_match('/(\d+)\s*kg/i', $name, $m)) {
@@ -178,6 +184,7 @@ class ProductOptionSeeder extends Seeder
         return null;
     }
 
+    /** Build a unique SKU for an option by appending its code to the product SKU. */
     private function makeOptionSku(string $productSku, string $code): string
     {
         $sku = $productSku.'-'.strtoupper($code);
@@ -185,6 +192,7 @@ class ProductOptionSeeder extends Seeder
         return substr($sku, 0, 80);
     }
 
+    /** Persist a new ProductOption record from the given data array. */
     private function createOption(int $productId, array $data): void
     {
         ProductOption::create([
@@ -202,6 +210,7 @@ class ProductOptionSeeder extends Seeder
         ]);
     }
 
+    /** Disable foreign key checks, ignoring any error. */
     private function disableFk(): void
     {
         try {
@@ -210,6 +219,7 @@ class ProductOptionSeeder extends Seeder
         }
     }
 
+    /** Re-enable foreign key checks, ignoring any error. */
     private function enableFk(): void
     {
         try {

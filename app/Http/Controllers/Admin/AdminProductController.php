@@ -16,9 +16,7 @@ use Illuminate\Support\Str;
 class AdminProductController extends Controller
 {
     /**
-     * Liste paginée des produits (admin).
-     *
-     * Inclut les produits inactifs et permet la recherche/filtrage. Pagination fixe à 20/page.
+     * Paginated list of products (admin).
      *
      * @queryParam search string Recherche par nom ou SKU. Example: t-shirt
      * @queryParam is_active boolean Filtrer par statut actif. Example: true
@@ -51,9 +49,7 @@ class AdminProductController extends Controller
         return ProductResource::collection($query->paginate(20));
     }
 
-    /**
-     * Détail d'un produit (admin).
-     */
+    /** Product detail (admin). */
     public function show(Product $product): ProductResource
     {
         $product->load([
@@ -69,10 +65,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Créer un produit.
-     *
-     * Le slug est dérivé du nom et dédupliqué automatiquement (suffixe `-N` si conflit). Les
-     * options (taille, format, capacité) peuvent être passées en une seule requête.
+     * Create a product.
      *
      * @response 422 scenario="SKU déjà utilisé" {"message": "The sku has already been taken."}
      */
@@ -139,9 +132,8 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Mettre à jour un produit.
-     *
-     * Tous les champs sont optionnels (`sometimes`). Le slug n'est pas modifiable ici.
+     * Update a product.
+     * All fields are optional (`sometimes`). The slug cannot be changed here.
      */
     public function update(Request $request, Product $product): JsonResponse
     {
@@ -165,9 +157,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Supprimer un produit.
-     *
-     * Soft-delete si le modèle utilise `SoftDeletes`. Les commandes existantes conservent leur snapshot.
+     * Delete a product.
      *
      * @response 200 {"message": "Produit supprimé."}
      */
@@ -179,9 +169,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Activer / désactiver un produit.
-     *
-     * Bascule la valeur `is_active`. Renvoie l'état final.
+     * Activate / deactivate a product.
      *
      * @response 200 {"is_active": true}
      */

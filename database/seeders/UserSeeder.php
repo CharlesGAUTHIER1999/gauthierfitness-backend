@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    /** Create the admin/dev account, attach the admin role, and generate random users. */
     public function run(): void
     {
         // Admin/dev account
