@@ -24,14 +24,15 @@ use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /** Register bindings in the container, before providers are booted. */
     public function register(): void
     {
-        // Bind Stripe client via le container pour pouvoir le swap par un mock en tests.
         $this->app->singleton(StripeClient::class, function () {
             return new StripeClient(config('services.stripe.secret', env('STRIPE_SECRET')));
         });
     }
 
+    /** Bootstrap the app: register the API rate limiter and Scramble config. */
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
@@ -41,11 +42,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureScramble();
     }
 
-    /**
-     * Configure Scramble programmatically (here rather than in config/scramble.php)
-     * because SecurityScheme objects are not var_export-serializable, which would
-     * break `php artisan config:cache` in production.
-     */
+    /** Configure Scramble programmatically */
     private function configureScramble(): void
     {
         $authMiddlewarePatterns = ['auth', 'auth:*'];
@@ -60,17 +57,14 @@ class AppServiceProvider extends ServiceProvider
             })
             ->withOperationTransformers(function (OperationTransformers $transformers) use ($authMiddlewarePatterns) {
                 $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($authMiddlewarePatterns): void {
-                    $hasAuthMiddleware = collect($routeInfo->route->gatherMiddleware())
-                        ->some(fn (string $mw) => Str::is($authMiddlewarePatterns, $mw));
+                    $hasAuthMiddleware = collect($routeInfo->route->gatherMiddleware())->some(fn (string $mw) => Str::is($authMiddlewarePatterns, $mw));
 
                     if (! $hasAuthMiddleware) {
                         $operation->security = [];
                     }
                 });
 
-                // Scramble n'infère pas finement les réponses de la génération IA
-                // (succès en 201, et les rejets de modération en 422) : on les
-                // documente explicitement ici.
+                // Scramble doesn't finely infer the AI generation responses
                 $transformers->append(function (Operation $operation, RouteInfo $routeInfo): void {
                     if ($routeInfo->route->uri() === 'api/ai/designs/generate') {
                         $this->documentAiDesignResponses($operation);
@@ -79,20 +73,16 @@ class AppServiceProvider extends ServiceProvider
             });
     }
 
-    /**
-     * Documente explicitement les réponses de `POST /api/ai/designs/generate` :
-     * le succès 201 (design persisté) et le 422 de modération (prompt ou image
-     * rejetés). Le 200 inféré par défaut est retiré au profit du 201 réel.
-     */
+    /** Manually document the responses of `POST /api/ai/designs/generate` */
     private function documentAiDesignResponses(Operation $operation): void
     {
-        // Retire le 200 inféré : le succès réel est un 201.
+        // Real success status is 201
         $operation->responses = array_values(array_filter(
             $operation->responses ?? [],
             fn ($response) => ! ($response instanceof Response && (int) $response->code === 200)
         ));
 
-        // ── 201 : design généré, modéré et persisté ──────────────────────────
+        // 201 : design generated, moderated and persisted
         $asset = (new ObjectType)
             ->addProperty('id', new IntegerType)
             ->addProperty('type', (new StringType)->example('generated'))
@@ -121,7 +111,7 @@ class AppServiceProvider extends ServiceProvider
                 ->setContent('application/json', Schema::fromType($successBody))
         );
 
-        // ── 422 : contenu rejeté par la modération (écrase la réf générique) ──
+        // 422 : content rejected by moderation (overrides the generic ref)
         $moderationBody = (new ObjectType)
             ->addProperty('message', (new StringType)->example('Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.'))
             ->addProperty('reason', (new StringType)
@@ -144,7 +134,7 @@ class AppServiceProvider extends ServiceProvider
                 ->setContent('application/json', Schema::fromType($moderationBody))
         );
 
-        // ── 503 : fournisseur IA injoignable ou en erreur (timeout, 429, 5xx) ──
+        // 503 : AI provider unreachable or erroring (timeout, 429, 5xx)
         $unavailableBody = (new ObjectType)
             ->addProperty('message', (new StringType)->example('Le service de génération IA est temporairement indisponible. Veuillez réessayer dans un instant.'))
             ->setRequired(['message']);

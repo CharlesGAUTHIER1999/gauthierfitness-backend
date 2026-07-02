@@ -20,25 +20,21 @@ class AdminStockControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
     }
 
-    /* ── List (vue globale) ─────────────────────────────────────── */
+    // List (global view)
 
     public function test_admin_can_view_stock_list(): void
     {
         Sanctum::actingAs($this->admin);
         Product::factory()->count(2)->create();
-
-        $this->getJson('/api/admin/stock')
-            ->assertOk()
-            ->assertJsonStructure(['data' => [['id', 'name']]]);
+        $this->getJson('/api/admin/stock')->assertOk()->assertJsonStructure(['data' => [['id', 'name']]]);
     }
 
-    /* ── Index (par produit) ────────────────────────────────────── */
+    // Index (by product)
 
     public function test_admin_can_view_product_stock_detail(): void
     {
@@ -55,7 +51,7 @@ class AdminStockControllerTest extends TestCase
             ]);
     }
 
-    /* ── Store (réappro) ────────────────────────────────────────── */
+    // Store (restock)
 
     public function test_admin_can_add_stock(): void
     {
@@ -77,7 +73,6 @@ class AdminStockControllerTest extends TestCase
             'lot_number' => 'LOT-TEST-001',
         ]);
 
-        // Vérifier le mouvement 'in' créé automatiquement
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $product->id,
             'type' => 'in',
@@ -106,7 +101,7 @@ class AdminStockControllerTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    /* ── Adjust (correction) ────────────────────────────────────── */
+    // Adjust (correction)
 
     public function test_admin_can_adjust_lot(): void
     {
@@ -124,7 +119,7 @@ class AdminStockControllerTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('quantity', 15);
 
-        // Mouvement de correction avec delta -5
+        // Correction movement with delta -5
         $this->assertDatabaseHas('stock_movements', [
             'lot_id' => $lot->id,
             'type' => 'correction',
@@ -144,7 +139,7 @@ class AdminStockControllerTest extends TestCase
             ->assertJsonValidationErrors(['reason']);
     }
 
-    /* ── Movements history ──────────────────────────────────────── */
+    // Movements history
 
     public function test_admin_can_view_movement_history(): void
     {
@@ -156,7 +151,7 @@ class AdminStockControllerTest extends TestCase
             ->assertJsonStructure(['data', 'total', 'per_page']);
     }
 
-    /* ── Stock par option ───────────────────────────────────────── */
+    // Stock by option
 
     public function test_admin_can_add_stock_for_specific_option(): void
     {

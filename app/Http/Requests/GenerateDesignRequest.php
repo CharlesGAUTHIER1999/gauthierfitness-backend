@@ -6,11 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class GenerateDesignRequest extends FormRequest
 {
+    /** Only authenticated users may request an AI design generation. */
     public function authorize(): bool
     {
         return auth()->check();
     }
 
+    /** Validation rules for the AI design generation payload. */
     public function rules(): array
     {
         return [

@@ -505,6 +505,7 @@ class ProductSeeder extends Seeder
         ],
     ];
 
+    /** Return the customization flags (3D mode, text/image/AI options) for a given category slug. */
     private function customizationConfig(string $categorySlug): array
     {
         $isCustomizable =
@@ -531,6 +532,7 @@ class ProductSeeder extends Seeder
         ];
     }
 
+    /** Seed the full product catalogue with descriptions, pricing, categories, customization flags, and image galleries. */
     public function run(): void
     {
         $supplier = Supplier::inRandomOrder()->first();

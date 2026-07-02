@@ -22,21 +22,25 @@ class CartItem extends Model
         'quantity' => 'integer',
     ];
 
+    /** Cart this item belongs to. */
     public function cart(): BelongsTo
     {
         return $this->belongsTo(Cart::class);
     }
 
+    /** Product referenced by this cart item. */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** Selected product option for this cart item. */
     public function option(): BelongsTo
     {
         return $this->belongsTo(ProductOption::class, 'product_option_id');
     }
 
+    /** Custom product session associated with this cart item, if any. */
     public function customProductSession(): BelongsTo
     {
         return $this->belongsTo(CustomProductSession::class, 'custom_product_session_id');

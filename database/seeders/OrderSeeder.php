@@ -12,11 +12,12 @@ use Illuminate\Database\Seeder;
 
 class OrderSeeder extends Seeder
 {
+    /** Create a sample order (with item, payment, and shipment) for each existing user. */
     public function run(): void
     {
         $users = User::all();
 
-        // ✅ éviter crash si aucun produit
+        // Avoid crashing if no product exists
         $productsCount = Product::count();
         if ($productsCount === 0) {
             $this->command?->warn('OrderSeeder: aucun produit trouvé, skip.');
@@ -30,7 +31,6 @@ class OrderSeeder extends Seeder
             if (! $product) {
                 continue;
             }
-
             $unit = (float) ($product->price_ttc ?? 0);
             $qty = 1;
 
@@ -42,7 +42,7 @@ class OrderSeeder extends Seeder
                 'order_status' => 'delivered',
             ]);
 
-            // ✅ lot safe (pas de ->id sur null)
+            // Safe lot lookup
             $lotId = $product->lots()->inRandomOrder()->value('id');
 
             OrderItem::create([
@@ -62,10 +62,8 @@ class OrderSeeder extends Seeder
                 'status' => 'success',
             ]);
 
-            // ✅ address safe
-            $address = $user->address
-                ? trim($user->address.', '.($user->zip ?? '').' '.($user->city ?? ''))
-                : '10 Rue de la Paix, 75002 Paris';
+            // Safe address fallback
+            $address = $user->address ? trim($user->address.', '.($user->zip ?? '').' '.($user->city ?? '')) : '10 Rue de la Paix, 75002 Paris';
 
             Shipment::create([
                 'order_id' => $order->id,

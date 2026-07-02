@@ -7,9 +7,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    /** Transform the product into its public API representation. */
     public function toArray(Request $request): array
     {
-        // Fallback si mainImage/hoverImage pas chargés
+        // Fallback if mainImage/hoverImage relations aren't loaded
         $mainFromImages = $this->relationLoaded('images') ? $this->images->firstWhere('is_main', true) : null;
         $hoverFromImages = $this->relationLoaded('images') ? $this->images->firstWhere('is_main', false) : null;
 
@@ -30,21 +31,17 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'slug' => $this->slug,
-
             'name' => $this->name,
             'description' => $this->description,
             'price_ht' => $this->price_ht,
             'price_ttc' => $this->price_ttc,
             'vat' => $this->vat,
-
             'color_code' => $this->color_code,
             'color_label' => $this->color_label,
-
             'variant_type' => $variantType,
             'variant_name' => $variantName,
             'variant_value_code' => $this->color_code,
             'variant_value_label' => $this->color_label,
-
             'flavor_code' => $variantType === 'flavor' ? $this->color_code : null,
             'flavor_label' => $variantType === 'flavor' ? $this->color_label : null,
 
@@ -58,7 +55,7 @@ class ProductResource extends JsonResource
             'main_image' => $mainUrl,
             'hover_image' => $hoverUrl,
 
-            // Galerie complète (uniquement en détail quand images est chargé)
+            // Full gallery
             'images' => $this->whenLoaded('images', function () {
                 return $this->images
                     ->sortBy(function ($img) {
@@ -117,29 +114,20 @@ class ProductResource extends JsonResource
                 $this->relationLoaded('group') && $this->group && $this->group->relationLoaded('products'),
                 function () use ($variantType, $variantName) {
                     return $this->group->products->map(function ($p) use ($variantType, $variantName) {
-                        $img = $p->relationLoaded('mainImage')
-                            ? $p->mainImage
-                            : null;
-
-                        $url = is_object($img)
-                            ? $img->full_url
-                            : (is_string($img) ? asset('storage/'.ltrim($img, '/')) : null);
+                        $img = $p->relationLoaded('mainImage') ? $p->mainImage : null;
+                        $url = is_object($img) ? $img->full_url : (is_string($img) ? asset('storage/'.ltrim($img, '/')) : null);
 
                         return [
                             'id' => $p->id,
                             'slug' => $p->slug,
-
                             'color_code' => $p->color_code,
                             'color_label' => $p->color_label,
-
                             'variant_type' => $variantType,
                             'variant_name' => $variantName,
                             'variant_value_code' => $p->color_code,
                             'variant_value_label' => $p->color_label,
-
                             'flavor_code' => $variantType === 'flavor' ? $p->color_code : null,
                             'flavor_label' => $variantType === 'flavor' ? $p->color_label : null,
-
                             'thumb_url' => $url,
                         ];
                     })->values();
@@ -160,6 +148,7 @@ class ProductResource extends JsonResource
         ];
     }
 
+    /** Guess the variant type ("flavor" vs "color") from the product's rootcategory. */
     private function inferVariantTypeFromCategories(): ?string
     {
         if (! $this->relationLoaded('categories')) {

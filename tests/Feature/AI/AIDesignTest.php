@@ -22,7 +22,6 @@ class AIDesignTest extends TestCase
 
     private function fakeOpenAIOk(): void
     {
-        // 1x1 PNG transparent encodé en base64
         $pngBase64 = base64_encode(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
 
         Http::fake([

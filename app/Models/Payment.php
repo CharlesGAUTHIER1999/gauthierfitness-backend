@@ -22,6 +22,7 @@ class Payment extends Model
         'raw_payload' => 'array',
     ];
 
+    /** Order this payment is for. */
     public function order()
     {
         return $this->belongsTo(Order::class);

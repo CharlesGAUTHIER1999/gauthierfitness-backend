@@ -11,10 +11,8 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
     /**
-     * Historique des commandes de l'utilisateur.
-     *
-     * Renvoie toutes les commandes de l'utilisateur authentifié (les plus récentes en premier),
-     * avec leur paiement et livraison associés.
+     * Order history for the user.
+     * Returns all orders of the authenticated user (most recent first), with their associated payment and shipment.
      */
     public function index(Request $request): JsonResponse
     {
@@ -33,9 +31,8 @@ class OrderController extends Controller
     }
 
     /**
-     * Détail d'une commande.
-     *
-     * Vérifie que la commande appartient bien à l'utilisateur authentifié.
+     * Order detail.
+     * Verifies that the order actually belongs to the authenticated user.
      *
      * @response 404 scenario="Commande introuvable ou appartenant à un autre utilisateur" {}
      */
@@ -54,9 +51,9 @@ class OrderController extends Controller
     }
 
     /**
-     * Créer une commande (déprécié).
+     * Create an order (deprecated).
      *
-     * @deprecated Cet endpoint renvoie systématiquement 405. La création d'une commande passe par `POST /api/payment/intent` qui orchestre la création de la commande, du paiement Stripe et de la livraison en une seule transaction.
+     * @deprecated This endpoint always returns 405. Creating an order goes through `POST /api/payment/intent`, which orchestrates the creation of the order, the Stripe payment and the shipment in a single transaction.
      *
      * @response 405 {"message": "Use POST /payment/intent to create an order."}
      */

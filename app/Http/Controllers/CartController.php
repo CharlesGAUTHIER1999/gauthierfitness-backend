@@ -14,12 +14,7 @@ use Illuminate\Support\Str;
 #[Group(name: 'Panier', weight: 3)]
 class CartController extends Controller
 {
-    /**
-     * Récupérer le panier de l'utilisateur courant.
-     *
-     * Crée un panier vide à la volée si l'utilisateur n'en a pas encore. Renvoie chaque ligne
-     * avec ses snapshots de prix, variantes (couleur/taille/goût) et personnalisation éventuelle.
-     */
+    /** Retrieve the current user's cart. */
     public function show(Request $request)
     {
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
@@ -35,11 +30,7 @@ class CartController extends Controller
     }
 
     /**
-     * Ajouter un produit au panier.
-     *
-     * Vérifie le stock avant ajout. Si une session de personnalisation est passée, celle-ci doit
-     * appartenir à l'utilisateur et matcher le produit ; son statut passe alors à `added_to_cart`.
-     * Sinon, la ligne existante (même produit + même option) est incrémentée.
+     * Add a product to the cart.
      *
      * @response 422 scenario="Stock insuffisant" {"message": "Stock insuffisant"}
      * @response 403 scenario="Session de personnalisation d'un autre utilisateur" {}
@@ -47,9 +38,7 @@ class CartController extends Controller
     public function add(AddToCartRequest $request)
     {
         $data = $request->validated();
-
         $qty = (int) ($data['quantity'] ?? 1);
-
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
 
         $stock = StockLot::where('product_id', $data['product_id'])
@@ -65,7 +54,6 @@ class CartController extends Controller
 
         if ($customSessionId) {
             $session = CustomProductSession::findOrFail($customSessionId);
-
             abort_unless((int) $session->user_id === (int) $request->user()->id, 403);
             abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
 
@@ -96,7 +84,7 @@ class CartController extends Controller
     }
 
     /**
-     * Mettre à jour la quantité d'une ligne du panier.
+     * Update the quantity of a cart line.
      *
      * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
      */
@@ -115,9 +103,7 @@ class CartController extends Controller
     }
 
     /**
-     * Supprimer une ligne du panier.
-     *
-     * Si la ligne référence une session de personnalisation, celle-ci repasse en `ready` (libérée).
+     * Remove a cart line.
      *
      * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
      */
@@ -136,6 +122,7 @@ class CartController extends Controller
         return $this->show($request);
     }
 
+    // Build the JSON-friendly cart representation
     private function formatCart(Cart $cart): array
     {
         $items = $cart->items->map(function ($item) {
@@ -170,9 +157,7 @@ class CartController extends Controller
                 'custom_product_session_id' => $customSession?->id,
                 'is_customized' => (bool) $customSession,
                 'name' => $product->name,
-                'image' => $customSession?->preview_image_path
-                    ? $this->publicImageUrl($customSession->preview_image_path)
-                    : ($this->publicImageUrl($product->main_image) ?? '/placeholder.jpg'),
+                'image' => $customSession?->preview_image_path ? $this->publicImageUrl($customSession->preview_image_path) : ($this->publicImageUrl($product->main_image) ?? '/placeholder.jpg'),
                 'quantity' => (int) $item->quantity,
                 'unit_price' => round((float) $unit, 2),
                 'line_total' => round((float) $unit * (int) $item->quantity, 2),
@@ -180,17 +165,8 @@ class CartController extends Controller
                 'variant_value' => $variantValue ?: null,
                 'size' => $sizeLabel,
                 'delivery_text' => 'Délai de livraison : 4–7 jours ouvrés',
-                'option' => $option ? [
-                    'id' => $option->id,
-                    'label' => $option->label ?? $option->code,
-                    'type' => $option->type,
-                ] : null,
-                'customization' => $customSession ? [
-                    'status' => $customSession->status,
-                    'preview_image_path' => $this->publicImageUrl($customSession->preview_image_path),
-                    'configuration' => $customSession->configuration,
-                    'design_id' => $customSession->design_id,
-                ] : null,
+                'option' => $option ? ['id' => $option->id, 'label' => $option->label ?? $option->code, 'type' => $option->type] : null,
+                'customization' => $customSession ? ['status' => $customSession->status, 'preview_image_path' => $this->publicImageUrl($customSession->preview_image_path), 'configuration' => $customSession->configuration, 'design_id' => $customSession->design_id] : null,
             ];
         });
 
@@ -204,18 +180,16 @@ class CartController extends Controller
         ];
     }
 
+    // Resolve a stored path to a public URL
     private function publicImageUrl(?string $path): ?string
     {
         if (! $path) {
             return null;
         }
-
         if (Str::startsWith($path, ['http://', 'https://'])) {
             return $path;
         }
-
         $path = ltrim($path, '/');
-
         if (Str::startsWith($path, 'storage/')) {
             return url('/'.$path);
         }

@@ -23,6 +23,7 @@ class Shipment extends Model
         'status',
     ];
 
+    /** Order this shipment is for. */
     public function order()
     {
         return $this->belongsTo(Order::class);

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Adds paid/shipped/delivered/canceled email-sent timestamp columns to orders. */
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
@@ -16,6 +17,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {

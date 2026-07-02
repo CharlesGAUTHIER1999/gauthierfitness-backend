@@ -10,6 +10,7 @@ use Throwable;
 
 class StockSeeder extends Seeder
 {
+    /** Truncate stock lots and generate lots for every product (per option if applicable). */
     public function run(): void
     {
         $this->disableFk();
@@ -42,6 +43,7 @@ class StockSeeder extends Seeder
         }
     }
 
+    /** Resolve the root category slug (parent slug if any, else the category's own slug). */
     private function rootSlug(Product $product): ?string
     {
         $cat = $product->categories->first();
@@ -52,6 +54,7 @@ class StockSeeder extends Seeder
         return $cat->parent?->slug ?? $cat->slug;
     }
 
+    /** Insert a given number of random stock lots for a product (and optional variant). */
     private function createLots(int $productId, ?int $optionId, bool $isNutrition, int $lotsCount = 2): void
     {
         $now = now();
@@ -73,6 +76,7 @@ class StockSeeder extends Seeder
         }
     }
 
+    /** Disable foreign key checks, ignoring any error. */
     private function disableFk(): void
     {
         try {
@@ -81,6 +85,7 @@ class StockSeeder extends Seeder
         }
     }
 
+    /** Re-enable foreign key checks, ignoring any error. */
     private function enableFk(): void
     {
         try {

@@ -6,12 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the users, password_reset_tokens, and sessions tables. */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-
-            // Tes champs métier
             $table->string('firstname', 100);
             $table->string('lastname', 100);
             $table->string('email')->unique();
@@ -22,8 +21,6 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('city', 120)->nullable();
             $table->string('zip', 10)->nullable();
-
-            // Champs Laravel standard
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
@@ -45,6 +42,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('sessions');

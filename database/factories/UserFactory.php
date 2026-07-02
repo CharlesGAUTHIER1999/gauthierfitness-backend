@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class UserFactory extends Factory
 {
+    /** Define the default state for a fake user (identity, credentials, address). */
     public function definition(): array
     {
         return [
@@ -17,13 +18,10 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
-
             'phone' => fake()->optional()->phoneNumber(),
             'is_b2b' => false,
             'company_name' => null,
-
-            // ✅ IMPORTANT : adresse non-null
-            'address' => fake()->streetAddress(),
+            'address' => fake()->streetAddress(), // Address must not be null
             'city' => fake()->city(),
             'zip' => fake()->postcode(),
         ];

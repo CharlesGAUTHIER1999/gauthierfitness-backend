@@ -14,10 +14,13 @@ class ContactMessageMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
+     * Store the submitted contact form data.
+     *
      * @param  array{name: string, email: string, subject: ?string, message: string}  $data
      */
     public function __construct(public array $data) {}
 
+    /** Build the envelope: subject line and reply-to set to the sender. */
     public function envelope(): Envelope
     {
         $subject = $this->data['subject'] ?? null;
@@ -28,6 +31,7 @@ class ContactMessageMail extends Mailable
         );
     }
 
+    /** Render the contact message using the "emails.contact" view. */
     public function content(): Content
     {
         return new Content(

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the product_options table (size/format/capacity variants with their own pricing and SKU). */
     public function up(): void
     {
         Schema::create('product_options', function (Blueprint $table) {
@@ -27,6 +28,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('product_options');

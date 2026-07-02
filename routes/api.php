@@ -20,7 +20,7 @@ use App\Http\Controllers\StripeController;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Health check public, utilisé par le script `infra/deploy-prod.sh` et les sondes de supervision.
+ * Public health check, used by the `infra/deploy-prod.sh` script and monitoring probes.
  *
  * @unauthenticated
  *
@@ -31,15 +31,12 @@ Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app(
 // Public auth
 Route::post('/login', LoginController::class)->name('login');
 Route::post('/register', RegisterController::class)->name('register');
-Route::post('/forgot-password', ForgotPasswordController::class)
-    ->middleware('throttle:5,1')
-    ->name('password.email');
+Route::post('/forgot-password', ForgotPasswordController::class)->middleware('throttle:5,1')->name('password.email');
 Route::post('/reset-password', ResetPasswordController::class)->name('password.reset');
 
 // Public data
 Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{slug}', [ProductController::class, 'show'])
-    ->where('slug', '[A-Za-z0-9\-]+');
+Route::get('/products/{slug}', [ProductController::class, 'show'])->where('slug', '[A-Za-z0-9\-]+');
 
 // Stripe webhook (public)
 Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
@@ -49,7 +46,6 @@ Route::post('/contact', ContactController::class)->middleware('throttle:5,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-
     Route::get('/me', VerificationController::class)->name('me');
     Route::post('/logout', LogoutController::class)->name('logout');
 
@@ -82,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     /**
-     * Ping admin — vérifie que le middleware `admin` accepte bien l'utilisateur.
+     * Admin ping
      *
      * @response 200 {"ok": true}
      * @response 403 {"message": "Forbidden"}

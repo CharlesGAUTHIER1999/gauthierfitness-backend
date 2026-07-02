@@ -21,23 +21,25 @@ class ProductImage extends Model
 
     protected $appends = ['full_url'];
 
+    /** Product this image belongs to. */
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** Returns the absolute public URL of the image. */
     public function getFullUrlAttribute(): ?string
     {
         if (! $this->url) {
             return null;
         }
 
-        // Si c'est déjà une URL absolue
+        // If it's already an absolute URL
         if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://')) {
             return $this->url;
         }
 
-        // Génère l’URL publique correcte : /storage/products/...
+        // Generate the correct public URL: /storage/products/...
         return asset('storage/'.ltrim($this->url, '/'));
     }
 }

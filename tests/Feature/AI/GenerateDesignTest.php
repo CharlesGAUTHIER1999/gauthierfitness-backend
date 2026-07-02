@@ -14,9 +14,9 @@ class GenerateDesignTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ENDPOINT = '/api/ai/designs/generate';
+    private const string ENDPOINT = '/api/ai/designs/generate';
 
-    private const VALID_PROMPT = 'Un motif graphique sportif et dynamique pour un t-shirt de fitness';
+    private const string VALID_PROMPT = 'Un motif graphique sportif et dynamique pour un t-shirt de fitness';
 
     private function aiProduct(): Product
     {
@@ -26,7 +26,7 @@ class GenerateDesignTest extends TestCase
         ]);
     }
 
-    /** Réponse de modération OpenAI (non flaggée par défaut). */
+    /** OpenAI moderation response (not flagged by default). */
     private function moderationResponse(bool $flagged = false, array $categories = []): array
     {
         return ['results' => [[
@@ -35,13 +35,13 @@ class GenerateDesignTest extends TestCase
         ]]];
     }
 
-    /** Réponse de génération d'image OpenAI. */
+    /** OpenAI image generation response. */
     private function imageResponse(): array
     {
         return ['data' => [['b64_json' => base64_encode('fake-image-bytes')]]];
     }
 
-    /* ── Auth ──────────────────────────────────────────────────── */
+    // Auth
 
     public function test_unauthenticated_user_cannot_generate_design(): void
     {
@@ -51,7 +51,7 @@ class GenerateDesignTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    /* ── Garde-fous produit ────────────────────────────────────── */
+    // Product guardrails
 
     public function test_rejects_product_that_does_not_allow_ai(): void
     {
@@ -71,7 +71,7 @@ class GenerateDesignTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /* ── Happy path ────────────────────────────────────────────── */
+    // Happy path
 
     public function test_generates_design_when_content_is_clean(): void
     {
@@ -113,11 +113,10 @@ class GenerateDesignTest extends TestCase
             'status' => 'success',
         ]);
 
-        // L'image a bien été écrite sur le disque public.
         $this->assertNotEmpty(Storage::disk('public')->allFiles('designs'));
     }
 
-    /* ── Modération du prompt ──────────────────────────────────── */
+    // Prompt moderation
 
     public function test_rejects_flagged_prompt_before_generating_image(): void
     {
@@ -139,7 +138,6 @@ class GenerateDesignTest extends TestCase
             ->assertJsonPath('reason', 'prompt_flagged')
             ->assertJsonPath('categories', ['violence']);
 
-        // Aucune image ne doit être générée si le prompt est rejeté.
         Http::assertNotSent(fn ($request) => str_contains($request->url(), '/images/generations'));
 
         $this->assertDatabaseHas('prompt_histories', [
@@ -149,16 +147,14 @@ class GenerateDesignTest extends TestCase
         $this->assertDatabaseEmpty('designs');
     }
 
-    /* ── Modération de l'image générée ─────────────────────────── */
+    // Generated image moderation
 
     public function test_rejects_flagged_generated_image(): void
     {
         Storage::fake('public');
 
         Http::fake([
-            'api.openai.com/v1/moderations' => Http::sequence()
-                ->push($this->moderationResponse(flagged: false))                          // prompt OK
-                ->push($this->moderationResponse(flagged: true, categories: ['sexual' => true])), // image flaggée
+            'api.openai.com/v1/moderations' => Http::sequence()->push($this->moderationResponse(flagged: false))->push($this->moderationResponse(flagged: true, categories: ['sexual' => true])),
             'api.openai.com/v1/images/generations' => Http::response($this->imageResponse()),
         ]);
 
@@ -177,16 +173,15 @@ class GenerateDesignTest extends TestCase
             'user_id' => $user->id,
             'status' => 'rejected_image',
         ]);
-        // Image flaggée : ni design ni fichier persisté.
         $this->assertDatabaseEmpty('designs');
         $this->assertEmpty(Storage::disk('public')->allFiles('designs'));
     }
 
-    /* ── Indisponibilité du fournisseur IA ─────────────────────── */
+    // AI provider unavailability
 
     public function test_returns_503_when_ai_provider_fails(): void
     {
-        // OpenAI répond 429 (quota/rate-limit) → 503 propre, pas une 500.
+        // OpenAI responds with 429 (quota/rate-limit)
         Http::fake([
             'api.openai.com/v1/moderations' => Http::response(
                 ['error' => ['message' => 'Too Many Requests']],
@@ -206,11 +201,11 @@ class GenerateDesignTest extends TestCase
         $this->assertDatabaseEmpty('designs');
     }
 
-    /* ── Blocklist de marque ───────────────────────────────────── */
+    // Brand blocklist
 
     public function test_rejects_prompt_matching_brand_blocklist(): void
     {
-        Http::fake(); // aucun appel OpenAI ne doit partir
+        Http::fake();
 
         $user = User::factory()->create();
         $product = $this->aiProduct();
@@ -223,7 +218,6 @@ class GenerateDesignTest extends TestCase
             ->assertJsonPath('reason', 'prompt_blocked')
             ->assertJsonPath('categories', ['arme']);
 
-        // La blocklist court-circuite avant tout appel à OpenAI.
         Http::assertNothingSent();
 
         $this->assertDatabaseHas('prompt_histories', [
@@ -233,11 +227,10 @@ class GenerateDesignTest extends TestCase
         $this->assertDatabaseEmpty('designs');
     }
 
-    /* ── Seuil de score custom (plus strict qu'OpenAI) ─────────── */
+    // Custom score threshold (stricter than OpenAI)
 
     public function test_flags_prompt_when_score_exceeds_custom_threshold(): void
     {
-        // OpenAI ne flague pas (flagged=false) mais le score dépasse notre seuil.
         Http::fake([
             'api.openai.com/v1/moderations' => Http::response(['results' => [[
                 'flagged' => false,
@@ -262,7 +255,7 @@ class GenerateDesignTest extends TestCase
         $this->assertDatabaseEmpty('designs');
     }
 
-    /* ── Refus du générateur d'images (gpt-image-1, 400) ───────── */
+    // Image generator refusal (gpt-image-1, 400)
 
     public function test_rejects_when_image_provider_refuses_prompt(): void
     {

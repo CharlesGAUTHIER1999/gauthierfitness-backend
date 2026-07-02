@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /** Creates the loyalty, support, webhook, GDPR (privacy), and audit_logs tables. */
     public function up(): void
     {
-        // fidélité
+        // loyalty
         Schema::create('loyalty_point_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
@@ -61,7 +62,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // RGPD
+        // GDPR
         Schema::create('privacy_exports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -88,6 +89,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('audit_logs');

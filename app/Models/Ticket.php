@@ -11,6 +11,7 @@ class Ticket extends Model
 
     protected $fillable = ['user_id', 'subject', 'status'];
 
+    /** Messages exchanged within this ticket. */
     public function messages()
     {
         return $this->hasMany(TicketMessage::class);

@@ -59,13 +59,12 @@ class ContactTest extends TestCase
             'message' => 'Spam content.',
         ];
 
-        // 5 requêtes OK
+        // 5 requests OK
         for ($i = 0; $i < 5; $i++) {
             $this->postJson('/api/contact', $payload)->assertOk();
         }
 
-        // La 6e est throttlée
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(429);
+        // The 6th one gets throttled
+        $this->postJson('/api/contact', $payload)->assertStatus(429);
     }
 }
