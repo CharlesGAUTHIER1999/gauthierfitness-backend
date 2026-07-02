@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Route;
 
 /**
  * Public health check, used by the `infra/deploy-prod.sh` script and monitoring probes.
+ *
  * @unauthenticated
+ *
  * @response 200 {"status": "ok", "env": "production"}
  */
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'env' => app()->environment()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
 Route::post('/login', LoginController::class)->name('login');
@@ -77,10 +79,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     /**
      * Admin ping
+     *
      * @response 200 {"ok": true}
      * @response 403 {"message": "Forbidden"}
      */
-    Route::get('/ping', fn() => response()->json(['ok' => true]));
+    Route::get('/ping', fn () => response()->json(['ok' => true]));
     Route::get('/stats', [AdminOrderController::class, 'stats']);
 
     // Products

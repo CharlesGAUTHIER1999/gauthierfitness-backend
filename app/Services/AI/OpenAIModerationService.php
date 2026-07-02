@@ -11,7 +11,9 @@ class OpenAIModerationService
 {
     /**
      * Moderates a text prompt
+     *
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     public function moderateText(string $text): array
@@ -23,7 +25,9 @@ class OpenAIModerationService
 
     /**
      * Moderates an image provided in base64 format (sent as a data URL to the API)
+     *
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     public function moderateImage(string $base64, string $mimeType = 'image/png'): array
@@ -36,6 +40,7 @@ class OpenAIModerationService
     /**
      * @param  array<int, array<string, mixed>>  $input
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     private function moderate(array $input): array

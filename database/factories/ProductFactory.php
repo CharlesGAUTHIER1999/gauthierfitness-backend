@@ -19,7 +19,7 @@ class ProductFactory extends Factory
         return [
             'supplier_id' => Supplier::inRandomOrder()->first()?->id ?? Supplier::factory(),
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->randomNumber(5),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->randomNumber(5),
             'description' => $this->faker->paragraph(),
             'price_ht' => $price_ht,
             'price_ttc' => $price_ttc,

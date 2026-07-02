@@ -19,11 +19,11 @@ class ProductResource extends JsonResource
 
         $mainUrl = is_object($main)
             ? $main->full_url
-            : (is_string($main) ? asset('storage/' . ltrim($main, '/')) : null);
+            : (is_string($main) ? asset('storage/'.ltrim($main, '/')) : null);
 
         $hoverUrl = is_object($hover)
             ? $hover->full_url
-            : (is_string($hover) ? asset('storage/' . ltrim($hover, '/')) : null);
+            : (is_string($hover) ? asset('storage/'.ltrim($hover, '/')) : null);
 
         $variantType = $this->group?->type ?: $this->inferVariantTypeFromCategories();
         $variantName = $variantType === 'flavor' ? 'Goûts' : 'Couleurs';
@@ -45,7 +45,7 @@ class ProductResource extends JsonResource
             'flavor_code' => $variantType === 'flavor' ? $this->color_code : null,
             'flavor_label' => $variantType === 'flavor' ? $this->color_label : null,
 
-            'group' => $this->whenLoaded('group', fn() => [
+            'group' => $this->whenLoaded('group', fn () => [
                 'id' => $this->group?->id,
                 'name' => $this->group?->name,
                 'slug' => $this->group?->slug,
@@ -59,24 +59,24 @@ class ProductResource extends JsonResource
             'images' => $this->whenLoaded('images', function () {
                 return $this->images
                     ->sortBy(function ($img) {
-                        return ((int)($img->position ?? 0)) * 1000000 + (int)$img->id;
+                        return ((int) ($img->position ?? 0)) * 1000000 + (int) $img->id;
                     })
                     ->values()
-                    ->map(fn($img) => [
+                    ->map(fn ($img) => [
                         'id' => $img->id,
                         'url' => $img->full_url,
-                        'is_main' => (bool)$img->is_main,
-                        'position' => (int)($img->position ?? 0),
+                        'is_main' => (bool) $img->is_main,
+                        'position' => (int) ($img->position ?? 0),
                     ]);
             }),
 
-            'supplier' => $this->whenLoaded('supplier', fn() => [
+            'supplier' => $this->whenLoaded('supplier', fn () => [
                 'id' => $this->supplier?->id,
                 'name' => $this->supplier?->name,
             ]),
 
             'categories' => $this->whenLoaded('categories', function () {
-                return $this->categories->map(fn($cat) => [
+                return $this->categories->map(fn ($cat) => [
                     'id' => $cat->id,
                     'name' => $cat->name,
                     'slug' => $cat->slug,
@@ -91,22 +91,22 @@ class ProductResource extends JsonResource
             }),
 
             'options' => $this->whenLoaded('options', function () {
-                return $this->options->map(fn($o) => [
+                return $this->options->map(fn ($o) => [
                     'id' => $o->id,
                     'type' => $o->type,
                     'code' => $o->code,
                     'label' => $o->label,
-                    'stock_qty' => (int)($o->stock_qty ?? 0),
-                    'in_stock' => ((int)($o->stock_qty ?? 0)) > 0,
+                    'stock_qty' => (int) ($o->stock_qty ?? 0),
+                    'in_stock' => ((int) ($o->stock_qty ?? 0)) > 0,
                 ])->values();
             }),
 
             'lots' => $this->whenLoaded('lots', function () {
-                return $this->lots->map(fn($lot) => [
+                return $this->lots->map(fn ($lot) => [
                     'id' => $lot->id,
                     'label' => $lot->lot_number,
-                    'quantity' => (int)$lot->quantity,
-                    'in_stock' => (int)$lot->quantity > 0,
+                    'quantity' => (int) $lot->quantity,
+                    'in_stock' => (int) $lot->quantity > 0,
                 ])->values();
             }),
 
@@ -115,7 +115,7 @@ class ProductResource extends JsonResource
                 function () use ($variantType, $variantName) {
                     return $this->group->products->map(function ($p) use ($variantType, $variantName) {
                         $img = $p->relationLoaded('mainImage') ? $p->mainImage : null;
-                        $url = is_object($img) ? $img->full_url : (is_string($img) ? asset('storage/' . ltrim($img, '/')) : null);
+                        $url = is_object($img) ? $img->full_url : (is_string($img) ? asset('storage/'.ltrim($img, '/')) : null);
 
                         return [
                             'id' => $p->id,
@@ -134,16 +134,16 @@ class ProductResource extends JsonResource
                 }
             ),
 
-            'is_customizable' => (bool)$this->is_customizable,
+            'is_customizable' => (bool) $this->is_customizable,
 
             'customization' => [
                 'mode' => $this->customization_mode,
-                'text' => (bool)$this->allow_text_customization,
-                'image' => (bool)$this->allow_image_upload,
-                'ai' => (bool)$this->allow_ai_generation,
+                'text' => (bool) $this->allow_text_customization,
+                'image' => (bool) $this->allow_image_upload,
+                'ai' => (bool) $this->allow_ai_generation,
             ],
 
-            'is_active' => (bool)$this->is_active,
+            'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
         ];
     }
@@ -151,12 +151,12 @@ class ProductResource extends JsonResource
     /** Guess the variant type ("flavor" vs "color") from the product's rootcategory. */
     private function inferVariantTypeFromCategories(): ?string
     {
-        if (!$this->relationLoaded('categories')) {
+        if (! $this->relationLoaded('categories')) {
             return null;
         }
 
         $cat = $this->categories->first();
-        if (!$cat) {
+        if (! $cat) {
             return null;
         }
 

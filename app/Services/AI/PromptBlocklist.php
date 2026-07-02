@@ -9,6 +9,7 @@ class PromptBlocklist
 {
     /**
      * List of forbidden terms detected in the given text.
+     *
      * @return list<string>
      */
     public function matches(string $text): array
@@ -24,7 +25,7 @@ class PromptBlocklist
                 continue;
             }
 
-            if (preg_match('/\b' . preg_quote($needle, '/') . '\b/u', $normalized)) {
+            if (preg_match('/\b'.preg_quote($needle, '/').'\b/u', $normalized)) {
                 $matched[] = $term;
             }
         }

@@ -21,18 +21,19 @@ class AIDesignController extends Controller
 {
     /**
      * Generate a design via OpenAI from a text prompt.
+     *
      * @throws AiServiceUnavailableException if OpenAI is unreachable or errors out (rendered as 503)
+     *
      * @response 422 scenario="Produit ne supporte pas l'IA" {"message": "AI generation is not allowed for this product."}
      * @response 422 scenario="Prompt rejeté par la modération" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
      * @response 422 scenario="Image rejetée par la modération" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
      */
     public function __invoke(
-        GenerateDesignRequest   $request,
-        OpenAIImageService      $images,
+        GenerateDesignRequest $request,
+        OpenAIImageService $images,
         OpenAIModerationService $moderation,
-        PromptBlocklist         $blocklist
-    ): JsonResponse
-    {
+        PromptBlocklist $blocklist
+    ): JsonResponse {
 
         $product = Product::findOrFail($request->validated('product_id'));
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
@@ -44,7 +45,7 @@ class AIDesignController extends Controller
         // 1 - "Brand policy" blocklist, before any API call.
         $bannedTerms = $blocklist->matches($prompt);
 
-        if (!empty($bannedTerms)) {
+        if (! empty($bannedTerms)) {
             PromptHistory::create([
                 'user_id' => $userId,
                 'prompt' => $prompt,

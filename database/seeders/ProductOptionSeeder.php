@@ -112,7 +112,7 @@ class ProductOptionSeeder extends Seeder
     private function rootSlug(Product $product): ?string
     {
         $cat = $product->categories->first();
-        if (!$cat) {
+        if (! $cat) {
             return null;
         }
 
@@ -157,10 +157,10 @@ class ProductOptionSeeder extends Seeder
     private function prettyCapacityLabel(string $code): string
     {
         if (preg_match('/^(\d+)\s*L$/i', $code, $m)) {
-            return $m[1] . ' L';
+            return $m[1].' L';
         }
         if (preg_match('/^(\d+)\s*ML$/i', $code, $m)) {
-            return $m[1] . ' ml';
+            return $m[1].' ml';
         }
 
         return $code;
@@ -170,15 +170,15 @@ class ProductOptionSeeder extends Seeder
     private function extractFormat(string $name): ?array
     {
         if (preg_match('/(\d+)\s*kg/i', $name, $m)) {
-            return ['code' => strtolower($m[1] . 'kg'), 'label' => $m[1] . ' kg'];
+            return ['code' => strtolower($m[1].'kg'), 'label' => $m[1].' kg'];
         }
 
         if (preg_match('/(\d+)\s*g/i', $name, $m)) {
-            return ['code' => strtolower($m[1] . 'g'), 'label' => $m[1] . ' g'];
+            return ['code' => strtolower($m[1].'g'), 'label' => $m[1].' g'];
         }
 
         if (preg_match('/(\d+)\s*ml/i', $name, $m)) {
-            return ['code' => strtolower($m[1] . 'ml'), 'label' => $m[1] . ' ml'];
+            return ['code' => strtolower($m[1].'ml'), 'label' => $m[1].' ml'];
         }
 
         return null;
@@ -187,7 +187,7 @@ class ProductOptionSeeder extends Seeder
     /** Build a unique SKU for an option by appending its code to the product SKU. */
     private function makeOptionSku(string $productSku, string $code): string
     {
-        $sku = $productSku . '-' . strtoupper($code);
+        $sku = $productSku.'-'.strtoupper($code);
 
         return substr($sku, 0, 80);
     }

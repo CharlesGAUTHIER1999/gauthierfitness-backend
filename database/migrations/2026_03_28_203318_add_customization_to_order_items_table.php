@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /** Adds the custom_product_session_id link and customization snapshot/preview columns to order_items. */
     public function up(): void
     {
@@ -20,7 +21,7 @@ return new class extends Migration {
     {
         Schema::table('order_items', function (Blueprint $table) {
             $table->dropForeign(['custom_product_session_id']);
-            $table->dropColumn(['custom_product_session_id', 'customization_snapshot', 'customization_preview_path',]);
+            $table->dropColumn(['custom_product_session_id', 'customization_snapshot', 'customization_preview_path']);
         });
     }
 };

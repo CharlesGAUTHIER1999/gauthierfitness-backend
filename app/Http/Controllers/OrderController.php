@@ -33,6 +33,7 @@ class OrderController extends Controller
     /**
      * Order detail.
      * Verifies that the order actually belongs to the authenticated user.
+     *
      * @response 404 scenario="Commande introuvable ou appartenant à un autre utilisateur" {}
      */
     public function show(Request $request, Order $order): JsonResponse
@@ -51,7 +52,9 @@ class OrderController extends Controller
 
     /**
      * Create an order (deprecated).
+     *
      * @deprecated This endpoint always returns 405. Creating an order goes through `POST /api/payment/intent`, which orchestrates the creation of the order, the Stripe payment and the shipment in a single transaction.
+     *
      * @response 405 {"message": "Use POST /payment/intent to create an order."}
      */
     public function store(): JsonResponse

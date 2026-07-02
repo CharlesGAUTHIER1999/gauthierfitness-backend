@@ -35,7 +35,7 @@ class User extends Authenticatable implements CanResetPasswordContract
     /** Returns the user's full name. */
     public function getNameAttribute(): string
     {
-        return trim(($this->firstname ?? '') . ' ' . ($this->lastname ?? ''));
+        return trim(($this->firstname ?? '').' '.($this->lastname ?? ''));
     }
 
     /** Roles assigned to this user. */

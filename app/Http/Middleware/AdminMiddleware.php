@@ -13,12 +13,12 @@ class AdminMiddleware
         $user = $request->user();
 
         // Not logged in => 401
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         // Logged in but not admin => 403
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 

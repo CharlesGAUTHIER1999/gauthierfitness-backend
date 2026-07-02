@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /** Adds group/color fields to products and a product_option_id link to stock_lots, stock_movements, and reservations. */
     public function up(): void
     {

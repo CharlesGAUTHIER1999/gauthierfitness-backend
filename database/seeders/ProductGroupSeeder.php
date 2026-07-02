@@ -237,12 +237,12 @@ class ProductGroupSeeder extends Seeder
             [$categorySlug, $productName] = explode('|', $productKey, 2);
 
             $base = $this->findProductByCategoryAndName($categorySlug, $productName);
-            if (!$base) {
+            if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::updateOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $productName)],
+                ['slug' => Str::slug($categorySlug.'-'.$productName)],
                 ['name' => $productName, 'type' => 'flavor']
             );
 
@@ -262,16 +262,16 @@ class ProductGroupSeeder extends Seeder
 
             $main0 = $baseUrls[0] ?? null;
             if ($main0) {
-                $this->replaceProductImages((int)$base->id, [$main0, $main0]);
+                $this->replaceProductImages((int) $base->id, [$main0, $main0]);
             }
 
             foreach (array_slice($flavors, 1) as $idx => $flavor) {
                 $i = $idx + 1;
-                $newId = $this->cloneProductVariant((int)$base->id, (int)$group->id, $flavor['code'], $flavor['label']);
+                $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $flavor['code'], $flavor['label']);
 
                 $main = $baseUrls[$i] ?? $baseUrls[0] ?? null;
                 if ($newId && $main) {
-                    $this->replaceProductImages((int)$newId, [$main, $main]);
+                    $this->replaceProductImages((int) $newId, [$main, $main]);
                 }
             }
         }
@@ -284,12 +284,12 @@ class ProductGroupSeeder extends Seeder
             [$categorySlug, $productName] = explode('|', $productKey, 2);
 
             $base = $this->findProductByCategoryAndName($categorySlug, $productName);
-            if (!$base) {
+            if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $productName)],
+                ['slug' => Str::slug($categorySlug.'-'.$productName)],
                 ['name' => $productName, 'type' => 'color']
             );
 
@@ -314,28 +314,28 @@ class ProductGroupSeeder extends Seeder
                 $firstCode = $colors[0]['code'];
                 $urlsBase = $this->sliceUrls($baseUrls, $slicesByCode[$firstCode] ?? []);
 
-                if (!empty($urlsBase)) {
-                    $this->replaceProductImages((int)$base->id, $urlsBase);
+                if (! empty($urlsBase)) {
+                    $this->replaceProductImages((int) $base->id, $urlsBase);
                 }
 
                 foreach (array_slice($colors, 1) as $color) {
-                    $newId = $this->cloneProductVariant((int)$base->id, (int)$group->id, $color['code'], $color['label']);
-                    if (!$newId) {
+                    $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
+                    if (! $newId) {
                         continue;
                     }
 
                     $urls = $this->sliceUrls($baseUrls, $slicesByCode[$color['code']] ?? []);
-                    if (!empty($urls)) {
-                        $this->replaceProductImages((int)$newId, $urls);
+                    if (! empty($urls)) {
+                        $this->replaceProductImages((int) $newId, $urls);
                     } else {
-                        $this->copyImagesFromBase((int)$base->id, (int)$newId);
+                        $this->copyImagesFromBase((int) $base->id, (int) $newId);
                     }
                 }
             } else {
                 foreach (array_slice($colors, 1) as $color) {
-                    $newId = $this->cloneProductVariant((int)$base->id, (int)$group->id, $color['code'], $color['label']);
+                    $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
                     if ($newId) {
-                        $this->copyImagesFromBase((int)$base->id, (int)$newId);
+                        $this->copyImagesFromBase((int) $base->id, (int) $newId);
                     }
                 }
             }
@@ -346,15 +346,15 @@ class ProductGroupSeeder extends Seeder
         $allProducts = Product::with('categories')->get();
 
         foreach ($allProducts as $product) {
-            $categorySlug = $this->firstCategorySlug((int)$product->id) ?? 'default';
-            $productKey = $categorySlug . '|' . $product->name;
+            $categorySlug = $this->firstCategorySlug((int) $product->id) ?? 'default';
+            $productKey = $categorySlug.'|'.$product->name;
 
             if (in_array($productKey, $handledKeys, true)) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug . '-' . $product->name)],
+                ['slug' => Str::slug($categorySlug.'-'.$product->name)],
                 ['name' => $product->name, 'type' => null]
             );
 
@@ -379,13 +379,13 @@ class ProductGroupSeeder extends Seeder
     /** Check whether every color variant has a defined image-index slice. */
     private function hasSlicesForAllVariants(?array $slicesByCode, array $colors): bool
     {
-        if (!$slicesByCode || !is_array($slicesByCode)) {
+        if (! $slicesByCode || ! is_array($slicesByCode)) {
             return false;
         }
 
         foreach ($colors as $c) {
             $code = $c['code'] ?? null;
-            if (!$code || !array_key_exists($code, $slicesByCode)) {
+            if (! $code || ! array_key_exists($code, $slicesByCode)) {
                 return false;
             }
         }
@@ -411,13 +411,13 @@ class ProductGroupSeeder extends Seeder
     private function cloneProductVariant(int $baseProductId, int $groupId, string $variantCode, string $variantLabel): int
     {
         $base = DB::table('products')->where('id', $baseProductId)->first();
-        if (!$base) {
+        if (! $base) {
             return 0;
         }
 
         $now = now();
-        $slug = $this->makeSlug((string)$base->slug, $variantCode);
-        $sku = $this->makeSku((string)$base->sku, $variantCode);
+        $slug = $this->makeSlug((string) $base->slug, $variantCode);
+        $sku = $this->makeSku((string) $base->sku, $variantCode);
 
         $newId = DB::table('products')->insertGetId([
             'supplier_id' => $base->supplier_id,
@@ -459,7 +459,7 @@ class ProductGroupSeeder extends Seeder
             ]);
         }
 
-        return (int)$newId;
+        return (int) $newId;
     }
 
     /** Delete a product's existing images and insert the given URLs as its new gallery. */
@@ -509,8 +509,8 @@ class ProductGroupSeeder extends Seeder
             DB::table('product_images')->insert([
                 'product_id' => $newProductId,
                 'url' => $img->url,
-                'is_main' => (bool)$img->is_main,
-                'position' => (int)$img->position,
+                'is_main' => (bool) $img->is_main,
+                'position' => (int) $img->position,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -520,27 +520,27 @@ class ProductGroupSeeder extends Seeder
     /** Build a unique SKU for a variant by truncating the base SKU and appending variant + random suffix. */
     private function makeSku(string $baseSku, string $variantCode): string
     {
-        $max = (int)($this->skuMax ?? 80);
+        $max = (int) ($this->skuMax ?? 80);
 
         // Keep part of the base SKU + variant + random suffix to guarantee uniqueness
         $variant = strtoupper(Str::slug($variantCode));
-        $random = '-' . rand(1000, 9999);
+        $random = '-'.rand(1000, 9999);
 
         // Reserve room for "-VARIANT-1234"
-        $suffix = '-' . $variant . $random;
+        $suffix = '-'.$variant.$random;
         $keep = max(1, $max - strlen($suffix));
 
-        return substr($baseSku, 0, $keep) . $suffix;
+        return substr($baseSku, 0, $keep).$suffix;
     }
 
     /** Build a unique slug for a variant by truncating the base slug and appending the variant code. */
     private function makeSlug(string $baseSlug, string $variantCode): string
     {
-        $max = (int)($this->slugMax ?? 255);
-        $suffix = '-' . Str::slug($variantCode);
+        $max = (int) ($this->slugMax ?? 255);
+        $suffix = '-'.Str::slug($variantCode);
         $keep = max(1, $max - strlen($suffix));
 
-        return substr($baseSlug, 0, $keep) . $suffix;
+        return substr($baseSlug, 0, $keep).$suffix;
     }
 
     /** Look up a column's max character length from information_schema, falling back to a default. */
@@ -557,7 +557,7 @@ class ProductGroupSeeder extends Seeder
                 [$table, $column]
             );
 
-            $len = isset($row->len) ? (int)$row->len : 0;
+            $len = isset($row->len) ? (int) $row->len : 0;
 
             return $len > 0 ? $len : $default;
         } catch (Throwable $e) {

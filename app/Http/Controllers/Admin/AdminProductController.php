@@ -17,6 +17,7 @@ class AdminProductController extends Controller
 {
     /**
      * Paginated list of products (admin).
+     *
      * @queryParam search string Recherche par nom ou SKU. Example: t-shirt
      * @queryParam is_active boolean Filtrer par statut actif. Example: true
      * @queryParam is_customizable boolean Filtrer les produits customisables. Example: true
@@ -65,6 +66,7 @@ class AdminProductController extends Controller
 
     /**
      * Create a product.
+     *
      * @response 422 scenario="SKU déjà utilisé" {"message": "The sku has already been taken."}
      */
     public function store(Request $request): JsonResponse
@@ -125,6 +127,7 @@ class AdminProductController extends Controller
         }
 
         $product->load('options');
+
         return response()->json(new ProductResource($product), 201);
     }
 
@@ -149,26 +152,31 @@ class AdminProductController extends Controller
         ]);
 
         $product->update($data);
+
         return response()->json(new ProductResource($product->fresh()));
     }
 
     /**
      * Delete a product.
+     *
      * @response 200 {"message": "Produit supprimé."}
      */
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
+
         return response()->json(['message' => 'Produit supprimé.']);
     }
 
     /**
      * Activate / deactivate a product.
+     *
      * @response 200 {"is_active": true}
      */
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
+
         return response()->json(['is_active' => $product->is_active]);
     }
 }

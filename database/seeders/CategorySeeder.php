@@ -73,7 +73,7 @@ class CategorySeeder extends Seeder
             foreach ($config['children'] as $childSlug) {
                 Category::create([
                     'name' => ucfirst(str_replace('-', ' ', $childSlug)),
-                    'slug' => $root . '-' . $childSlug,
+                    'slug' => $root.'-'.$childSlug,
                     'type' => $config['type'],
                     'parent_id' => $rootCategory->id,
                     'position' => 0,

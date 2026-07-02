@@ -13,7 +13,9 @@ class ContactController extends Controller
 {
     /**
      * Send a contact message.
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Message envoyé" {"message": "Message envoyé. Nous te répondrons rapidement."}
      * @response 429 scenario="Trop de requêtes (throttle)" {"message": "Too Many Attempts."}
      */

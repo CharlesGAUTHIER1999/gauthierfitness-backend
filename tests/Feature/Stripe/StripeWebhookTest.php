@@ -34,7 +34,7 @@ class StripeWebhookTest extends TestCase
     private function signedHeaders(string $payload): array
     {
         $timestamp = time();
-        $signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
         $signature = hash_hmac('sha256', $signedPayload, $this->secret);
 
         return [
@@ -53,13 +53,13 @@ class StripeWebhookTest extends TestCase
             'type' => 'payment_intent.succeeded',
             'data' => [
                 'object' => [
-                    'id' => 'pi_' . uniqid(),
+                    'id' => 'pi_'.uniqid(),
                     'object' => 'payment_intent',
                     'amount' => 5000,
                     'currency' => 'eur',
                     'metadata' => [
-                        'order_id' => (string)$orderId,
-                        'payment_id' => (string)$paymentId,
+                        'order_id' => (string) $orderId,
+                        'payment_id' => (string) $paymentId,
                     ],
                 ],
             ],
@@ -76,11 +76,11 @@ class StripeWebhookTest extends TestCase
             'type' => 'payment_intent.payment_failed',
             'data' => [
                 'object' => [
-                    'id' => 'pi_' . uniqid(),
+                    'id' => 'pi_'.uniqid(),
                     'object' => 'payment_intent',
                     'metadata' => [
-                        'order_id' => (string)$orderId,
-                        'payment_id' => (string)$paymentId,
+                        'order_id' => (string) $orderId,
+                        'payment_id' => (string) $paymentId,
                     ],
                 ],
             ],
@@ -331,7 +331,7 @@ class StripeWebhookTest extends TestCase
     {
         $out = [];
         foreach ($headers as $k => $v) {
-            $out['HTTP_' . str_replace('-', '_', strtoupper($k))] = $v;
+            $out['HTTP_'.str_replace('-', '_', strtoupper($k))] = $v;
         }
 
         return $out;

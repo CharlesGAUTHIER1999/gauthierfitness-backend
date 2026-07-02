@@ -14,7 +14,9 @@ class ForgotPasswordController extends Controller
      * Password reset request.
      * Sends an email with a reset link if an account exists for that email.
      * Always returns the same generic message, whether the email exists or not
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Succès" {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
      * @response 422 scenario="Validation" {"message": "The email field is required.", "errors": {"email": ["The email field is required."]}}
      * @response 429 scenario="Trop de tentatives" {"message": "Too Many Attempts."}

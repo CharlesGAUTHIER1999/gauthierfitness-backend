@@ -57,7 +57,7 @@ class StockDecrementTest extends TestCase
 
         $this->assertNotNull($availableLot);
 
-        $deducted = min($availableLot->quantity, (int)$item->quantity);
+        $deducted = min($availableLot->quantity, (int) $item->quantity);
         $availableLot->decrement('quantity', $deducted);
 
         StockMovement::create([

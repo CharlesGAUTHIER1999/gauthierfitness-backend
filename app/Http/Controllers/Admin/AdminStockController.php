@@ -18,6 +18,7 @@ class AdminStockController extends Controller
     /**
      * Global stock view: all products with their total quantity.
      * Returns a paginated list of products (25/page) with the sum of their lot quantities
+     *
      * @queryParam search string Recherche par nom ou SKU. Example: protéine
      */
     public function list(Request $request): JsonResponse
@@ -44,7 +45,7 @@ class AdminStockController extends Controller
      */
     public function index(Product $product): JsonResponse
     {
-        $product->load(['options' => fn($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
+        $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
         ]);
 
         // Lots without an option (global stock / product without variants)
@@ -67,7 +68,7 @@ class AdminStockController extends Controller
                 'option_code' => $option->code,
                 'option_label' => $option->label,
                 'option_type' => $option->type,
-                'total_qty' => (int)$lots->sum('quantity'),
+                'total_qty' => (int) $lots->sum('quantity'),
                 'lots' => $lots,
             ];
         });
@@ -76,7 +77,7 @@ class AdminStockController extends Controller
             'product_id' => $product->id,
             'product_name' => $product->name,
             'global_stock' => [
-                'total_qty' => (int)$globalLots->sum('quantity'),
+                'total_qty' => (int) $globalLots->sum('quantity'),
                 'lots' => $globalLots,
             ],
             'option_stocks' => $optionStocks,
@@ -85,7 +86,9 @@ class AdminStockController extends Controller
 
     /**
      * Create a new lot (restock).
+     *
      * @response 422 scenario="Date d'expiration passée" {"message": "The expiration date field must be a date after today."}
+     *
      * @throws Throwable
      */
     public function store(Request $request, Product $product): JsonResponse
@@ -114,7 +117,7 @@ class AdminStockController extends Controller
                 'user_id' => auth()->id(),
                 'type' => 'in',
                 'quantity' => $data['quantity'],
-                'reason' => 'Réapprovisionnement admin — lot ' . $lot->lot_number,
+                'reason' => 'Réapprovisionnement admin — lot '.$lot->lot_number,
             ]);
 
             return response()->json($lot->load('option'), 201);
@@ -124,6 +127,7 @@ class AdminStockController extends Controller
     /**
      * Manually adjust a lot's quantity.
      * Computes the delta (`new_quantity - old_quantity`) and logs the difference
+     *
      * @throws Throwable
      */
     public function adjust(Request $request, StockLot $lot): JsonResponse

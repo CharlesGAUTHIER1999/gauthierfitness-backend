@@ -15,6 +15,7 @@ class GenerateDesignTest extends TestCase
     use RefreshDatabase;
 
     private const string ENDPOINT = '/api/ai/designs/generate';
+
     private const string VALID_PROMPT = 'Un motif graphique sportif et dynamique pour un t-shirt de fitness';
 
     private function aiProduct(): Product
@@ -137,7 +138,7 @@ class GenerateDesignTest extends TestCase
             ->assertJsonPath('reason', 'prompt_flagged')
             ->assertJsonPath('categories', ['violence']);
 
-        Http::assertNotSent(fn($request) => str_contains($request->url(), '/images/generations'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/images/generations'));
 
         $this->assertDatabaseHas('prompt_histories', [
             'user_id' => $user->id,
@@ -250,7 +251,7 @@ class GenerateDesignTest extends TestCase
             ->assertJsonPath('reason', 'prompt_flagged')
             ->assertJsonPath('categories', ['violence']);
 
-        Http::assertNotSent(fn($request) => str_contains($request->url(), '/images/generations'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/images/generations'));
         $this->assertDatabaseEmpty('designs');
     }
 

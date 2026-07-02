@@ -14,7 +14,9 @@ class RegisterController extends Controller
     /**
      * Register a new user.
      * Creates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately.
+     *
      * @unauthenticated
+     *
      * @response 201 scenario="Compte créé" { "token": "2|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "user": { "id": 12, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "is_admin": false } }
      * @response 422 scenario="Email déjà utilisé" {"message": "The email has already been taken."}
      */

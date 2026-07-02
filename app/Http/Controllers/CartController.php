@@ -31,21 +31,22 @@ class CartController extends Controller
 
     /**
      * Add a product to the cart.
+     *
      * @response 422 scenario="Stock insuffisant" {"message": "Stock insuffisant"}
      * @response 403 scenario="Session de personnalisation d'un autre utilisateur" {}
      */
     public function add(AddToCartRequest $request)
     {
         $data = $request->validated();
-        $qty = (int)($data['quantity'] ?? 1);
+        $qty = (int) ($data['quantity'] ?? 1);
         $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
 
         $stock = StockLot::where('product_id', $data['product_id'])
-            ->when($data['product_option_id'] ?? null, fn($q) => $q->where('product_option_id', $data['product_option_id'])
+            ->when($data['product_option_id'] ?? null, fn ($q) => $q->where('product_option_id', $data['product_option_id'])
             )
             ->sum('quantity');
 
-        if ($qty > (int)$stock) {
+        if ($qty > (int) $stock) {
             return response()->json(['message' => 'Stock insuffisant'], 422);
         }
 
@@ -53,8 +54,8 @@ class CartController extends Controller
 
         if ($customSessionId) {
             $session = CustomProductSession::findOrFail($customSessionId);
-            abort_unless((int)$session->user_id === (int)$request->user()->id, 403);
-            abort_unless((int)$session->product_id === (int)$data['product_id'], 422, 'Customization session does not match product.');
+            abort_unless((int) $session->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
 
             $item = CartItem::create([
                 'cart_id' => $cart->id,
@@ -75,7 +76,7 @@ class CartController extends Controller
                 'custom_product_session_id' => null,
             ]);
 
-            $item->quantity = ((int)$item->quantity) + $qty;
+            $item->quantity = ((int) $item->quantity) + $qty;
             $item->save();
         }
 
@@ -84,6 +85,7 @@ class CartController extends Controller
 
     /**
      * Update the quantity of a cart line.
+     *
      * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
      */
     public function update(Request $request, CartItem $item)
@@ -94,13 +96,15 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $item->quantity = (int)$data['quantity'];
+        $item->quantity = (int) $data['quantity'];
         $item->save();
+
         return $this->show($request);
     }
 
     /**
      * Remove a cart line.
+     *
      * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
      */
     public function destroy(Request $request, CartItem $item)
@@ -114,6 +118,7 @@ class CartController extends Controller
         }
 
         $item->delete();
+
         return $this->show($request);
     }
 
@@ -132,7 +137,7 @@ class CartController extends Controller
 
             $variantType = $product->group?->type;
 
-            if (!$variantType) {
+            if (! $variantType) {
                 $cat = $product->categories?->first();
                 $root = $cat?->parent?->slug ?? $cat?->slug;
                 $variantType = $root === 'nutrition' ? 'flavor' : 'color';
@@ -150,26 +155,26 @@ class CartController extends Controller
                 'id' => $item->id,
                 'product_id' => $item->product_id,
                 'custom_product_session_id' => $customSession?->id,
-                'is_customized' => (bool)$customSession,
+                'is_customized' => (bool) $customSession,
                 'name' => $product->name,
                 'image' => $customSession?->preview_image_path ? $this->publicImageUrl($customSession->preview_image_path) : ($this->publicImageUrl($product->main_image) ?? '/placeholder.jpg'),
-                'quantity' => (int)$item->quantity,
-                'unit_price' => round((float)$unit, 2),
-                'line_total' => round((float)$unit * (int)$item->quantity, 2),
+                'quantity' => (int) $item->quantity,
+                'unit_price' => round((float) $unit, 2),
+                'line_total' => round((float) $unit * (int) $item->quantity, 2),
                 'variant_title' => $variantValue ? $variantTitle : null,
                 'variant_value' => $variantValue ?: null,
                 'size' => $sizeLabel,
                 'delivery_text' => 'Délai de livraison : 4–7 jours ouvrés',
-                'option' => $option ? ['id' => $option->id, 'label' => $option->label ?? $option->code, 'type' => $option->type,] : null,
-                'customization' => $customSession ? ['status' => $customSession->status, 'preview_image_path' => $this->publicImageUrl($customSession->preview_image_path), 'configuration' => $customSession->configuration, 'design_id' => $customSession->design_id,] : null,
+                'option' => $option ? ['id' => $option->id, 'label' => $option->label ?? $option->code, 'type' => $option->type] : null,
+                'customization' => $customSession ? ['status' => $customSession->status, 'preview_image_path' => $this->publicImageUrl($customSession->preview_image_path), 'configuration' => $customSession->configuration, 'design_id' => $customSession->design_id] : null,
             ];
         });
 
-        $subtotal = (float)$items->sum('line_total');
+        $subtotal = (float) $items->sum('line_total');
 
         return [
             'items' => $items->values(),
-            'count' => (int)$items->sum('quantity'),
+            'count' => (int) $items->sum('quantity'),
             'subtotal' => round($subtotal, 2),
             'currency' => 'EUR',
         ];
@@ -178,10 +183,17 @@ class CartController extends Controller
     // Resolve a stored path to a public URL
     private function publicImageUrl(?string $path): ?string
     {
-        if (!$path) return null;
-        if (Str::startsWith($path, ['http://', 'https://'])) return $path;
+        if (! $path) {
+            return null;
+        }
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
         $path = ltrim($path, '/');
-        if (Str::startsWith($path, 'storage/')) return url('/' . $path);
-        return url('/storage/' . $path);
+        if (Str::startsWith($path, 'storage/')) {
+            return url('/'.$path);
+        }
+
+        return url('/storage/'.$path);
     }
 }

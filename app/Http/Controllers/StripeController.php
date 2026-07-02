@@ -26,17 +26,19 @@ class StripeController extends Controller
 {
     /**
      * Create a Stripe PaymentIntent for the current cart
+     *
      * @response 200 scenario="PaymentIntent créé" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
      * @response 400 scenario="Panier vide" {"message": "Panier vide"}
      * @response 401 scenario="Non authentifié" {"message": "Unauthenticated"}
      * @response 422 scenario="Données de livraison invalides" {"message": "The shipping.zip field is required."}
+     *
      * @throws Throwable
      */
     public function createPaymentIntent(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
@@ -77,16 +79,16 @@ class StripeController extends Controller
             foreach ($cartItems as $ci) {
                 $product = $ci->product;
 
-                if (!$product) {
+                if (! $product) {
                     abort(422, 'Produit introuvable dans le panier.');
                 }
 
                 $unitTtc = $ci->customProductSession?->unit_price_snapshot ?? $ci->option?->price_ttc ?? $product->price_ttc;
                 $unitHt = $ci->option?->price_ht ?? $product->price_ht;
-                $qty = (int)$ci->quantity;
+                $qty = (int) $ci->quantity;
 
-                $totalTtc += ((float)$unitTtc) * $qty;
-                $totalHt += ((float)$unitHt) * $qty;
+                $totalTtc += ((float) $unitTtc) * $qty;
+                $totalHt += ((float) $unitHt) * $qty;
             }
 
             $totalTtc = round($totalTtc, 2);
@@ -117,12 +119,12 @@ class StripeController extends Controller
             // 4) Items
             foreach ($cartItems as $ci) {
                 $product = $ci->product;
-                if (!$product) {
+                if (! $product) {
                     abort(422, 'Produit introuvable dans le panier.');
                 }
 
                 $unitTtc = $ci->option?->price_ttc ?? $product->price_ttc;
-                $qty = (int)$ci->quantity;
+                $qty = (int) $ci->quantity;
 
                 $customSession = $ci->customProductSession;
 
@@ -131,7 +133,7 @@ class StripeController extends Controller
                     'product_id' => $ci->product_id,
                     'product_option_id' => $ci->product_option_id,
                     'custom_product_session_id_on_cart_item' => $ci->custom_product_session_id,
-                    'custom_session_loaded' => (bool)$customSession,
+                    'custom_session_loaded' => (bool) $customSession,
                     'custom_session_id' => $customSession?->id,
                     'custom_session_configuration' => $customSession?->configuration,
                     'custom_session_preview_image_path' => $customSession?->preview_image_path,
@@ -143,9 +145,9 @@ class StripeController extends Controller
                     'product_option_id' => $ci->product_option_id,
                     'custom_product_session_id' => $customSession?->id,
                     'lot_id' => null,
-                    'unit_price' => round((float)$unitTtc, 2),
+                    'unit_price' => round((float) $unitTtc, 2),
                     'quantity' => $qty,
-                    'total' => round(((float)$unitTtc) * $qty, 2),
+                    'total' => round(((float) $unitTtc) * $qty, 2),
                     'customization_snapshot' => $customSession?->configuration,
                     'customization_preview_path' => $customSession?->preview_image_path,
                 ]);
@@ -163,15 +165,15 @@ class StripeController extends Controller
 
             // 6) Stripe PaymentIntent
             $intent = $stripe->paymentIntents->create([
-                'amount' => (int)round($totalTtc * 100),
+                'amount' => (int) round($totalTtc * 100),
                 'currency' => 'eur',
                 // 'automatic_payment_methods' => ['enabled' => true],
                 'payment_method_types' => ['card'],
                 'description' => "Commande #$order->id",
                 'metadata' => [
-                    'order_id' => (string)$order->id,
-                    'user_id' => (string)$user->id,
-                    'payment_id' => (string)$payment->id,
+                    'order_id' => (string) $order->id,
+                    'user_id' => (string) $user->id,
+                    'payment_id' => (string) $payment->id,
                 ],
             ]);
 
@@ -193,7 +195,9 @@ class StripeController extends Controller
      * Stripe webhook - payment events
      * Endpoint called by Stripe (not by the frontend).
      * Verifies the `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Événement traité" {"status": "success"}
      * @response 200 scenario="Événement déjà traité (idempotence)" {"status": "already_processed"}
      * @response 400 scenario="Signature invalide" {"error": "Invalid signature"}
@@ -212,7 +216,7 @@ class StripeController extends Controller
         }
 
         $provider = 'stripe';
-        $providerEventId = (string)$event->id;
+        $providerEventId = (string) $event->id;
 
         // idempotency
         try {
@@ -259,7 +263,7 @@ class StripeController extends Controller
                         }
 
                         // confirmation email (idempotent)
-                        if ($order->user && !$order->paid_email_sent_at) {
+                        if ($order->user && ! $order->paid_email_sent_at) {
                             $order->user->notify(new OrderConfirmed($order));
                             $order->paid_email_sent_at = now();
                             $order->save();
@@ -270,8 +274,8 @@ class StripeController extends Controller
                             $lot = StockLot::where('product_id', $item->product_id)
                                 ->when(
                                     $item->product_option_id,
-                                    fn($q) => $q->where('product_option_id', $item->product_option_id),
-                                    fn($q) => $q->whereNull('product_option_id')
+                                    fn ($q) => $q->where('product_option_id', $item->product_option_id),
+                                    fn ($q) => $q->whereNull('product_option_id')
                                 )
                                 ->where('quantity', '>', 0)
                                 ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
@@ -279,7 +283,7 @@ class StripeController extends Controller
                                 ->first();
 
                             if ($lot) {
-                                $deducted = min($lot->quantity, (int)$item->quantity);
+                                $deducted = min($lot->quantity, (int) $item->quantity);
                                 $lot->decrement('quantity', $deducted);
 
                                 StockMovement::create([

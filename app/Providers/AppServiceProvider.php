@@ -57,9 +57,9 @@ class AppServiceProvider extends ServiceProvider
             })
             ->withOperationTransformers(function (OperationTransformers $transformers) use ($authMiddlewarePatterns) {
                 $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($authMiddlewarePatterns): void {
-                    $hasAuthMiddleware = collect($routeInfo->route->gatherMiddleware())->some(fn(string $mw) => Str::is($authMiddlewarePatterns, $mw));
+                    $hasAuthMiddleware = collect($routeInfo->route->gatherMiddleware())->some(fn (string $mw) => Str::is($authMiddlewarePatterns, $mw));
 
-                    if (!$hasAuthMiddleware) {
+                    if (! $hasAuthMiddleware) {
                         $operation->security = [];
                     }
                 });
@@ -79,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         // Real success status is 201
         $operation->responses = array_values(array_filter(
             $operation->responses ?? [],
-            fn($response) => !($response instanceof Response && (int)$response->code === 200)
+            fn ($response) => ! ($response instanceof Response && (int) $response->code === 200)
         ));
 
         // 201 : design generated, moderated and persisted
@@ -126,9 +126,9 @@ class AppServiceProvider extends ServiceProvider
         $operation->addResponse(
             Response::make(422)
                 ->setDescription(
-                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant " .
-                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; " .
-                    'image générée rejetée par la modération (`reason: image_flagged`). ' .
+                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant ".
+                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; ".
+                    'image générée rejetée par la modération (`reason: image_flagged`). '.
                     'Les erreurs de validation du formulaire renvoient également un 422.'
                 )
                 ->setContent('application/json', Schema::fromType($moderationBody))

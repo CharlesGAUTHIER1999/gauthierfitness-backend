@@ -90,7 +90,7 @@ class PasswordResetTest extends TestCase
         $this->assertTrue(Hash::check('NewPassword123!', $user->fresh()->password));
 
         // Old token revoked
-        $this->withHeader('Authorization', 'Bearer ' . explode('|', $oldToken)[1])
+        $this->withHeader('Authorization', 'Bearer '.explode('|', $oldToken)[1])
             ->getJson('/api/me')
             ->assertUnauthorized();
 

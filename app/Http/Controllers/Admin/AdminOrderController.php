@@ -26,11 +26,12 @@ class AdminOrderController extends Controller
         $activeProductIds = Product::where('is_active', true)->pluck('id');
 
         $outOfStock = $activeProductIds->filter(
-            fn($id) => ($stockByProduct[$id] ?? 0) == 0
+            fn ($id) => ($stockByProduct[$id] ?? 0) == 0
         )->count();
 
         $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
             $qty = $stockByProduct[$id] ?? 0;
+
             return $qty > 0 && $qty < $lowThreshold;
         })->count();
 
@@ -44,8 +45,8 @@ class AdminOrderController extends Controller
                 'total' => Order::count(),
                 'this_week' => Order::where('created_at', '>=', now()->startOfWeek())->count(),
                 'by_status' => Order::selectRaw('order_status, count(*) as count')->groupBy('order_status')->pluck('count', 'order_status'),
-                'revenue' => (float)Order::where('payment_status', 'paid')->sum('total_ttc'),
-                'revenue_month' => (float)Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
+                'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue_month' => (float) Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
             ],
             'stock' => [
                 'out_of_stock' => $outOfStock,
@@ -56,6 +57,7 @@ class AdminOrderController extends Controller
 
     /**
      * Paginated list of orders (admin).
+     *
      * @queryParam status string Filtre par statut : new, processing, shipped, delivered, canceled.
      * @queryParam search string Recherche par email/nom/prénom du client.
      */
@@ -77,6 +79,7 @@ class AdminOrderController extends Controller
                     ->orWhere('lastname', 'like', "%{$search}%");
             });
         }
+
         return response()->json($query->paginate(20));
     }
 
@@ -97,8 +100,10 @@ class AdminOrderController extends Controller
 
     /**
      * Update an order's status.
+     *
      * @response 200 {"message": "Status updated", "order": {}}
      * @response 200 scenario="Aucun changement" {"message": "Status unchanged", "order": {}}
+     *
      * @throws Throwable
      */
     public function updateStatus(Request $request, Order $order): JsonResponse
@@ -120,19 +125,19 @@ class AdminOrderController extends Controller
             $user = $order->user;
 
             if ($user) {
-                if ($newStatus === 'shipped' && !$order->shipped_email_sent_at) {
+                if ($newStatus === 'shipped' && ! $order->shipped_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'shipped'));
                     $order->shipped_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'delivered' && !$order->delivered_email_sent_at) {
+                if ($newStatus === 'delivered' && ! $order->delivered_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'delivered'));
                     $order->delivered_email_sent_at = now();
                     $order->save();
                 }
 
-                if ($newStatus === 'canceled' && !$order->canceled_email_sent_at) {
+                if ($newStatus === 'canceled' && ! $order->canceled_email_sent_at) {
                     $user->notify(new OrderStatusUpdated($order, 'canceled'));
                     $order->canceled_email_sent_at = now();
                     $order->save();

@@ -14,7 +14,7 @@ class SupplierFactory extends Factory
 
         return [
             'name' => $name,
-            'slug' => Str::slug($name) . '-' . $this->faker->unique()->randomNumber(4),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->randomNumber(4),
             'address' => $this->faker->address(),
             'contact_email' => $this->faker->unique()->companyEmail(),
             'phone' => $this->faker->phoneNumber(),

@@ -16,7 +16,9 @@ class ResetPasswordController extends Controller
      * Password reset.
      * Verifies the token received by email and changes the password.
      * All existing Sanctum tokens are revoked: the user must log in again everywhere after a reset.
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Succès" {"message": "Mot de passe réinitialisé avec succès."}
      * @response 422 scenario="Token invalide ou expiré" {"message": "This password reset token is invalid."}
      */

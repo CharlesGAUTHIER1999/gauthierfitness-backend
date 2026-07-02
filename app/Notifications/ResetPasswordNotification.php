@@ -11,9 +11,7 @@ class ResetPasswordNotification extends Notification
     use Queueable;
 
     /** Bind the password reset token to this notification. */
-    public function __construct(public string $token)
-    {
-    }
+    public function __construct(public string $token) {}
 
     /** Deliver this notification by mail only. */
     public function via($notifiable): array
@@ -24,7 +22,7 @@ class ResetPasswordNotification extends Notification
     /** Build the password reset email with a link valid for 60 minutes. */
     public function toMail($notifiable): MailMessage
     {
-        $url = config('app.front_url') . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
+        $url = config('app.front_url').'/reset-password?token='.$this->token.'&email='.urlencode($notifiable->email);
 
         return (new MailMessage)
             ->subject('Réinitialisation de votre mot de passe — Gauthier Fitness')
