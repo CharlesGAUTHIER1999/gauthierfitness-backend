@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class ProductFactory extends Factory
 {
+    /** Define the default state for a fake product, including pricing and identifiers. */
     public function definition(): array
     {
         $price_ht = $this->faker->randomFloat(2, 5, 200);
@@ -18,7 +19,7 @@ class ProductFactory extends Factory
         return [
             'supplier_id' => Supplier::inRandomOrder()->first()?->id ?? Supplier::factory(),
             'name' => $name,
-            'slug' => Str::slug($name).'-'.$this->faker->unique()->randomNumber(5),
+            'slug' => Str::slug($name) . '-' . $this->faker->unique()->randomNumber(5),
             'description' => $this->faker->paragraph(),
             'price_ht' => $price_ht,
             'price_ttc' => $price_ttc,

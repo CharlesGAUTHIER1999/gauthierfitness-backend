@@ -8,11 +8,13 @@ use Illuminate\Validation\Validator;
 
 class AddToCartRequest extends FormRequest
 {
+    /** Only authenticated users may add items to the cart. */
     public function authorize(): bool
     {
         return auth()->check();
     }
 
+    /** Base validation rules for the add-to-cart payload. */
     public function rules(): array
     {
         return [
@@ -23,32 +25,26 @@ class AddToCartRequest extends FormRequest
         ];
     }
 
+    /** Cross-field checks : the customization session (if any) must belong to the current user and match the selected product/option. */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             $session_id = $this->input('custom_product_session_id');
-
-            if (! $session_id) {
-                return;
-            }
-
+            if (!$session_id) return;
             $session = CustomProductSession::find($session_id);
+            if (!$session) return;
 
-            if (! $session) {
-                return;
-            }
-
-            if ((int) $session->user_id !== (int) $this->user()->id) {
+            if ((int)$session->user_id !== (int)$this->user()->id) {
                 $validator->errors()->add('custom_product_session_id', 'This customization session does not belong to you.');
             }
 
-            if ((int) $session->product_id !== (int) $this->input('product_id')) {
+            if ((int)$session->product_id !== (int)$this->input('product_id')) {
                 $validator->errors()->add('custom_product_session_id', 'Customization session does not match the selected product.');
             }
 
             if (
                 $this->filled('product_option_id') &&
-                (int) $session->product_option_id !== (int) $this->input('product_option_id')
+                (int)$session->product_option_id !== (int)$this->input('product_option_id')
             ) {
                 $validator->errors()->add('product_option_id', 'Selected option does not match the customization session.');
             }

@@ -6,18 +6,12 @@ use App\Exceptions\AiServiceUnavailableException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-/**
- * Vérifie qu'un contenu (texte ou image) respecte les règles de contenu via
- * l'API Moderation d'OpenAI (`omni-moderation-latest`), qui détecte notamment
- * la haine, le harcèlement, la violence, le contenu sexuel et l'automutilation.
- */
+/** Checks whether content (text or images) complies with content guidelines using OpenAI's Moderation API */
 class OpenAIModerationService
 {
     /**
-     * Modère un prompt texte.
-     *
+     * Moderates a text prompt
      * @return array{flagged: bool, categories: list<string>, payload: array}
-     *
      * @throws AiServiceUnavailableException
      */
     public function moderateText(string $text): array
@@ -28,10 +22,8 @@ class OpenAIModerationService
     }
 
     /**
-     * Modère une image fournie en base64 (envoyée en data URL à l'API).
-     *
+     * Moderates an image provided in base64 format (sent as a data URL to the API)
      * @return array{flagged: bool, categories: list<string>, payload: array}
-     *
      * @throws AiServiceUnavailableException
      */
     public function moderateImage(string $base64, string $mimeType = 'image/png'): array
@@ -44,7 +36,6 @@ class OpenAIModerationService
     /**
      * @param  array<int, array<string, mixed>>  $input
      * @return array{flagged: bool, categories: list<string>, payload: array}
-     *
      * @throws AiServiceUnavailableException
      */
     private function moderate(array $input): array
@@ -68,13 +59,10 @@ class OpenAIModerationService
 
         $threshold = (float) config('ai.moderation.threshold', 0.10);
 
-        // Catégories signalées par OpenAI (booléen `true`)...
-        $flaggedByOpenAi = collect($result['categories'] ?? [])
-            ->filter(fn ($flagged) => $flagged === true)
+        // Categories flagged by OpenAI (boolean `true`)
+        $flaggedByOpenAi = collect($result['categories'] ?? [])->filter(fn ($flagged) => $flagged === true)
             ->keys();
 
-        // ...complétées par celles dont le score dépasse notre seuil custom
-        // (plus strict que les seuils par défaut d'OpenAI).
         $overThreshold = collect($result['category_scores'] ?? [])
             ->filter(fn ($score) => (float) $score >= $threshold)
             ->keys();
@@ -82,7 +70,7 @@ class OpenAIModerationService
         $categories = $flaggedByOpenAi->merge($overThreshold)->unique()->values()->all();
 
         return [
-            'flagged' => (bool) ($result['flagged'] ?? false) || $overThreshold->isNotEmpty(),
+            'flagged' => ($result['flagged'] ?? false) || $overThreshold->isNotEmpty(),
             'categories' => $categories,
             'payload' => $result,
         ];

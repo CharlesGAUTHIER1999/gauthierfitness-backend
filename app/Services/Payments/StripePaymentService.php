@@ -10,6 +10,7 @@ use Stripe\Stripe;
 class StripePaymentService
 {
     /**
+     * Create a Stripe PaymentIntent for the given order's total amount.
      * @throws ApiErrorException
      */
     public function createPaymentIntent(Order $order): PaymentIntent
@@ -17,7 +18,7 @@ class StripePaymentService
         Stripe::setApiKey(config('services.stripe.secret'));
 
         return PaymentIntent::create([
-            'amount' => (int) round($order->total_amount * 100),
+            'amount' => (int)round($order->total_amount * 100),
             'currency' => strtolower($order->currency ?? 'eur'),
             'metadata' => [
                 'order_id' => $order->id,

@@ -9,6 +9,7 @@ use Illuminate\Database\Seeder;
 
 class SupportSeeder extends Seeder
 {
+    /** Create a sample support ticket with an initial message for the first 5 users. */
     public function run(): void
     {
         $users = User::query()->take(5)->get();

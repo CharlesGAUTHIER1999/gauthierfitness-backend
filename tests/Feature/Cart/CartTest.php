@@ -16,7 +16,7 @@ class CartTest extends TestCase
 {
     use RefreshDatabase;
 
-    /* ── Show ──────────────────────────────────────────────────── */
+    // Show
 
     public function test_authenticated_user_can_view_empty_cart(): void
     {
@@ -39,15 +39,12 @@ class CartTest extends TestCase
     {
         $user = User::factory()->create();
         Sanctum::actingAs($user);
-
         $this->assertDatabaseMissing('carts', ['user_id' => $user->id]);
-
         $this->getJson('/api/cart')->assertOk();
-
         $this->assertDatabaseHas('carts', ['user_id' => $user->id]);
     }
 
-    /* ── Add ───────────────────────────────────────────────────── */
+    // Add
 
     public function test_authenticated_user_can_add_product_to_cart(): void
     {
@@ -95,12 +92,9 @@ class CartTest extends TestCase
         $user = User::factory()->create();
         $product = Product::factory()->create();
         StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 100]);
-
         Sanctum::actingAs($user);
-
         $this->postJson('/api/cart/items', ['product_id' => $product->id, 'quantity' => 1]);
         $this->postJson('/api/cart/items', ['product_id' => $product->id, 'quantity' => 2]);
-
         $this->assertDatabaseCount('cart_items', 1);
         $this->assertDatabaseHas('cart_items', [
             'product_id' => $product->id,
@@ -134,7 +128,7 @@ class CartTest extends TestCase
             'custom_product_session_id' => $session->id,
         ]);
 
-        // La session passe à added_to_cart
+        // The session transitions to added_to_cart
         $this->assertDatabaseHas('custom_product_sessions', [
             'id' => $session->id,
             'status' => 'added_to_cart',
@@ -164,7 +158,7 @@ class CartTest extends TestCase
         ])->assertStatus(422);
     }
 
-    /* ── Update ────────────────────────────────────────────────── */
+    // Update
 
     public function test_user_can_update_cart_item_quantity(): void
     {
@@ -180,10 +174,7 @@ class CartTest extends TestCase
         ]);
 
         Sanctum::actingAs($user);
-
-        $this->patchJson("/api/cart/items/{$item->id}", ['quantity' => 5])
-            ->assertOk();
-
+        $this->patchJson("/api/cart/items/{$item->id}", ['quantity' => 5])->assertOk();
         $this->assertDatabaseHas('cart_items', ['id' => $item->id, 'quantity' => 5]);
     }
 
@@ -201,12 +192,10 @@ class CartTest extends TestCase
         ]);
 
         Sanctum::actingAs($user);
-
-        $this->patchJson("/api/cart/items/{$item->id}", ['quantity' => 5])
-            ->assertNotFound();
+        $this->patchJson("/api/cart/items/{$item->id}", ['quantity' => 5])->assertNotFound();
     }
 
-    /* ── Destroy ───────────────────────────────────────────────── */
+    // Destroy
 
     public function test_user_can_remove_cart_item(): void
     {
@@ -221,9 +210,7 @@ class CartTest extends TestCase
         ]);
 
         Sanctum::actingAs($user);
-
         $this->deleteJson("/api/cart/items/{$item->id}")->assertOk();
-
         $this->assertDatabaseMissing('cart_items', ['id' => $item->id]);
     }
 
@@ -248,10 +235,8 @@ class CartTest extends TestCase
         ]);
 
         Sanctum::actingAs($user);
-
         $this->deleteJson("/api/cart/items/{$item->id}")->assertOk();
 
-        // La session repasse à 'ready'
         $this->assertDatabaseHas('custom_product_sessions', [
             'id' => $session->id,
             'status' => 'ready',

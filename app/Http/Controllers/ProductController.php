@@ -13,14 +13,9 @@ use Illuminate\Support\Facades\DB;
 class ProductController extends Controller
 {
     /**
-     * Liste paginée des produits publics.
-     *
-     * Renvoie les produits actifs visibles sur la boutique. Les produits déclinés en variantes
-     * (couleur, taille) sont regroupés : un seul produit par groupe est retourné. Supporte le
-     * filtrage par genre, catégorie et tag.
-     *
+     * Paginated list of public products.
+     * Returns active products visible in the shop. Products with variants (color, size) are grouped
      * @unauthenticated
-     *
      * @queryParam per_page integer Nombre de produits par page (1–60, défaut 12). Example: 24
      * @queryParam gender string Slug d'une catégorie genre (ex: "homme", "femme"). Example: homme
      * @queryParam category string Slug d'une catégorie (ex: "t-shirts"). Example: t-shirts
@@ -31,7 +26,7 @@ class ProductController extends Controller
         $defaultPerPage = 12;
         $maxPerPage = 60;
 
-        $perPage = (int) $request->query('per_page', $defaultPerPage);
+        $perPage = (int)$request->query('per_page', $defaultPerPage);
         $perPage = max(1, min($perPage, $maxPerPage));
 
         $query = Product::active()
@@ -52,16 +47,16 @@ class ProductController extends Controller
             ]);
 
         if ($request->filled('gender')) {
-            $gender = (string) $request->query('gender');
+            $gender = (string)$request->query('gender');
 
             $query->whereHas('categories', function ($q) use ($gender) {
                 $q->where('slug', $gender)
-                    ->orWhere('slug', 'like', $gender.'-%');
+                    ->orWhere('slug', 'like', $gender . '-%');
             });
         }
 
         if ($request->filled('category')) {
-            $category = (string) $request->query('category');
+            $category = (string)$request->query('category');
 
             $query->whereHas('categories', function ($q) use ($category) {
                 $q->where('slug', $category);
@@ -69,7 +64,7 @@ class ProductController extends Controller
         }
 
         if ($request->filled('tag')) {
-            $tag = (string) $request->query('tag');
+            $tag = (string)$request->query('tag');
 
             if ($tag === 'new') {
                 $query->orderByDesc('created_at')
@@ -89,15 +84,10 @@ class ProductController extends Controller
     }
 
     /**
-     * Détail d'un produit par slug.
-     *
-     * Renvoie un produit avec toutes ses relations (images, catégories, options, lots de stock,
-     * variantes du groupe). Utilisé sur la page produit du frontend.
-     *
+     * Product detail by slug.
+     * Returns a product with all its relations (images, categories, options, stock lots, group variants).
      * @unauthenticated
-     *
      * @urlParam slug string required Slug du produit (URL-safe). Example: t-shirt-fitness-noir
-     *
      * @response 404 scenario="Produit introuvable" {"message": "No query results for model [App\\Models\\Product]."}
      */
     public function show(string $slug): ProductResource

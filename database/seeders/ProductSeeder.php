@@ -505,6 +505,7 @@ class ProductSeeder extends Seeder
         ],
     ];
 
+    /** Return the customization flags (3D mode, text/image/AI options) for a given category slug. */
     private function customizationConfig(string $categorySlug): array
     {
         $isCustomizable =
@@ -531,6 +532,7 @@ class ProductSeeder extends Seeder
         ];
     }
 
+    /** Seed the full product catalogue with descriptions, pricing, categories, customization flags, and image galleries. */
     public function run(): void
     {
         $supplier = Supplier::inRandomOrder()->first();
@@ -792,9 +794,7 @@ class ProductSeeder extends Seeder
         foreach ($catalogue as $root => $categories) {
             foreach ($categories as $categorySlug => $products) {
                 $category = Category::where('slug', $categorySlug)->first();
-                if (! $category) {
-                    continue;
-                }
+                if (!$category) continue;
 
                 $imagesMap = match ($root) {
                     'equipments' => $this->equipments_images,
@@ -814,12 +814,12 @@ class ProductSeeder extends Seeder
                     $product = Product::create([
                         'supplier_id' => $supplier->id,
                         'name' => $name,
-                        'slug' => Str::slug($categorySlug.'-'.$name).'-'.rand(100, 999),
+                        'slug' => Str::slug($categorySlug . '-' . $name) . '-' . rand(100, 999),
                         'description' => $description,
                         'price_ht' => $priceHt,
                         'price_ttc' => $priceTtc,
                         'vat' => $vat,
-                        'sku' => substr(strtoupper(Str::slug($name)), 0, 70).'-'.rand(1000, 9999),
+                        'sku' => substr(strtoupper(Str::slug($name)), 0, 70) . '-' . rand(1000, 9999),
                         'attributes' => null,
                         'is_active' => true,
                         'is_customizable' => $customization['is_customizable'],
@@ -832,9 +832,7 @@ class ProductSeeder extends Seeder
                     $product->categories()->attach($category->id);
 
                     $images = $imagesMap[$categorySlug][$productType] ?? null;
-                    if (! $images) {
-                        continue;
-                    }
+                    if (!$images) continue;
 
                     $gallery = array_values(array_unique(array_filter(array_merge(
                         [$images['main'] ?? null, $images['hover'] ?? null],
@@ -844,7 +842,7 @@ class ProductSeeder extends Seeder
                     foreach ($gallery as $i => $path) {
                         ProductImage::create([
                             'product_id' => $product->id,
-                            'url' => 'products/'.$path,
+                            'url' => 'products/' . $path,
                             'is_main' => $i === 0,
                             'position' => $i,
                         ]);

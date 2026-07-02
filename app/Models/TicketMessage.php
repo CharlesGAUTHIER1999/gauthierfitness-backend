@@ -16,11 +16,13 @@ class TicketMessage extends Model
         'message',
     ];
 
+    /** Ticket this message belongs to. */
     public function ticket()
     {
         return $this->belongsTo(Ticket::class);
     }
 
+    /** User who sent this message. */
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');

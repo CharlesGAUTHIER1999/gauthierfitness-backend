@@ -13,13 +13,10 @@ use Illuminate\Support\Facades\Password;
 class ResetPasswordController extends Controller
 {
     /**
-     * Réinitialisation du mot de passe.
-     *
-     * Vérifie le token reçu par email et change le mot de passe. Tous les tokens Sanctum
-     * existants sont révoqués : l'utilisateur doit se reconnecter partout après un reset.
-     *
+     * Password reset.
+     * Verifies the token received by email and changes the password.
+     * All existing Sanctum tokens are revoked: the user must log in again everywhere after a reset.
      * @unauthenticated
-     *
      * @response 200 scenario="Succès" {"message": "Mot de passe réinitialisé avec succès."}
      * @response 422 scenario="Token invalide ou expiré" {"message": "This password reset token is invalid."}
      */

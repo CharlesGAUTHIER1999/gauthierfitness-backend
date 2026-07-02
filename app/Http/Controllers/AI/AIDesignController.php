@@ -16,48 +16,35 @@ use App\Services\AI\PromptBlocklist;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 
-#[Group(name: 'IA — Génération de designs', weight: 5)]
+#[Group(name: 'IA - Génération de designs', weight: 5)]
 class AIDesignController extends Controller
 {
     /**
-     * Générer un design via OpenAI à partir d'un prompt texte.
-     *
-     * Le contenu est filtré à deux niveaux par `OpenAIModerationService` : le prompt
-     * est modéré **avant** toute génération (pour ne pas dépenser un appel sur une
-     * demande abusive), puis l'image générée est modérée **avant** d'être stockée.
-     * En cas de rejet, rien n'est persisté hormis une trace dans `prompt_histories`.
-     * Le produit cible doit être customisable (`is_customizable`) et autoriser l'IA
-     * (`allow_ai_generation`).
-     *
-     * @throws AiServiceUnavailableException si OpenAI est injoignable ou en erreur (rendu en 503)
-     *
+     * Generate a design via OpenAI from a text prompt.
+     * @throws AiServiceUnavailableException if OpenAI is unreachable or errors out (rendered as 503)
      * @response 422 scenario="Produit ne supporte pas l'IA" {"message": "AI generation is not allowed for this product."}
      * @response 422 scenario="Prompt rejeté par la modération" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
      * @response 422 scenario="Image rejetée par la modération" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
      */
     public function __invoke(
-        GenerateDesignRequest $request,
-        OpenAIImageService $images,
+        GenerateDesignRequest   $request,
+        OpenAIImageService      $images,
         OpenAIModerationService $moderation,
-        PromptBlocklist $blocklist
-    ): JsonResponse {
+        PromptBlocklist         $blocklist
+    ): JsonResponse
+    {
 
         $product = Product::findOrFail($request->validated('product_id'));
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
         abort_unless($product->allow_ai_generation, 422, 'AI generation is not allowed for this product.');
-
         $prompt = $request->validated('prompt');
         $userId = $request->user()->id;
-
-        // La chaîne d'appels OpenAI synchrones (modération + génération + modération
-        // de l'image) peut dépasser le max_execution_time PHP par défaut (30 s) :
-        // on l'étend pour cette requête uniquement.
         set_time_limit(180);
 
-        // 1) Blocklist « politique de marque » (armes, guerre, drogue…) — locale, avant tout appel API.
+        // 1 - "Brand policy" blocklist, before any API call.
         $bannedTerms = $blocklist->matches($prompt);
 
-        if (! empty($bannedTerms)) {
+        if (!empty($bannedTerms)) {
             PromptHistory::create([
                 'user_id' => $userId,
                 'prompt' => $prompt,
@@ -73,7 +60,7 @@ class AIDesignController extends Controller
             ], 422);
         }
 
-        // 2) Modération du prompt — avant toute génération d'image.
+        // 2 - Prompt moderation, before any image generation.
         $promptCheck = $moderation->moderateText($prompt);
 
         if ($promptCheck['flagged']) {
@@ -92,8 +79,7 @@ class AIDesignController extends Controller
             ], 422);
         }
 
-        // 3) Génération de l'image (non stockée à ce stade).
-        //    Un refus de gpt-image-1 (400) est un rejet de contenu, pas une panne.
+        // 3 - Image generation (not stored at this stage)
         try {
             $generated = $images->generate($prompt);
         } catch (AiContentRejectedException) {
@@ -110,7 +96,7 @@ class AIDesignController extends Controller
             ], 422);
         }
 
-        // 4) Modération de l'image générée — avant tout stockage.
+        // 4 - Moderation of the generated image, before any storage
         $imageCheck = $moderation->moderateImage($generated['b64']);
 
         if ($imageCheck['flagged']) {
@@ -129,7 +115,7 @@ class AIDesignController extends Controller
             ], 422);
         }
 
-        // 5) Contenu validé : on stocke et on persiste.
+        // 5 - Content validated
         $stored = $images->store($generated['b64'], 'fitness_design');
 
         $design = Design::create([

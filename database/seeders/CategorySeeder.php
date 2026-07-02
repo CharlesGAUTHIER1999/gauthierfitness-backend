@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
+    /** Truncate categories and seed the root/child category tree. */
     public function run(): void
     {
-        // Désactivation temporaire des FK
+        // Temporarily disable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('product_category')->truncate();
         Category::truncate();
@@ -72,7 +73,7 @@ class CategorySeeder extends Seeder
             foreach ($config['children'] as $childSlug) {
                 Category::create([
                     'name' => ucfirst(str_replace('-', ' ', $childSlug)),
-                    'slug' => $root.'-'.$childSlug,
+                    'slug' => $root . '-' . $childSlug,
                     'type' => $config['type'],
                     'parent_id' => $rootCategory->id,
                     'position' => 0,

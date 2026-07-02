@@ -12,13 +12,8 @@ use Illuminate\Support\Facades\Mail;
 class ContactController extends Controller
 {
     /**
-     * Envoyer un message de contact.
-     *
-     * Envoie un email à l'adresse support configurée (`mail.support_address`). Cet endpoint est
-     * **rate-limité à 5 requêtes/minute par IP** pour limiter les abus.
-     *
+     * Send a contact message.
      * @unauthenticated
-     *
      * @response 200 scenario="Message envoyé" {"message": "Message envoyé. Nous te répondrons rapidement."}
      * @response 429 scenario="Trop de requêtes (throttle)" {"message": "Too Many Attempts."}
      */

@@ -58,16 +58,19 @@ class Product extends Model
 
     /* ================= RELATIONS ================= */
 
+    /** Supplier providing this product. */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
     }
 
+    /** Product group (e.g. color variants) this product belongs to. */
     public function group()
     {
         return $this->belongsTo(ProductGroup::class, 'group_id');
     }
 
+    /** Other product variants sharing the same group, ordered by color. */
     public function variants()
     {
         return $this->hasMany(Product::class, 'group_id', 'group_id')
@@ -75,16 +78,19 @@ class Product extends Model
             ->orderBy('color_code');
     }
 
+    /** Categories this product is assigned to. */
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'product_category');
     }
 
+    /** All images for this product, ordered by position. */
     public function images()
     {
         return $this->hasMany(ProductImage::class)->orderBy('position')->orderBy('id');
     }
 
+    /** Primary (main) image of this product. */
     public function mainImage()
     {
         return $this->hasOne(ProductImage::class)
@@ -93,6 +99,7 @@ class Product extends Model
             ->orderBy('id');
     }
 
+    /** Secondary (hover) image of this product. */
     public function hoverImage()
     {
         return $this->hasOne(ProductImage::class)
@@ -101,26 +108,31 @@ class Product extends Model
             ->orderBy('id');
     }
 
+    /** Selectable options for this product, ordered by position. */
     public function options()
     {
         return $this->hasMany(ProductOption::class)->orderBy('position');
     }
 
+    /** Stock lots for this product. */
     public function lots()
     {
         return $this->hasMany(StockLot::class);
     }
 
+    /** Cart items referencing this product. */
     public function cartItems()
     {
         return $this->hasMany(CartItem::class);
     }
 
+    /** Designs created for this product. */
     public function designs()
     {
         return $this->hasMany(Design::class);
     }
 
+    /** Customization sessions created for this product. */
     public function customizationSessions()
     {
         return $this->hasMany(CustomProductSession::class);
@@ -128,6 +140,7 @@ class Product extends Model
 
     /* ================= ACCESSORS ================= */
 
+    /** Returns the URL of the product's main image. */
     public function getMainImageAttribute(): ?string
     {
         return $this->images
@@ -135,6 +148,7 @@ class Product extends Model
             ?->url;
     }
 
+    /** Returns the URL of the product's hover image. */
     public function getHoverImageAttribute(): ?string
     {
         return $this->images
@@ -144,6 +158,7 @@ class Product extends Model
 
     /* ================= SCOPES ================= */
 
+    /** Scopes the query to only active products. */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

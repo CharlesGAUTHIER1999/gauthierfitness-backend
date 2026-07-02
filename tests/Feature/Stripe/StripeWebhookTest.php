@@ -10,6 +10,7 @@ use App\Models\StockLot;
 use App\Models\User;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -29,13 +30,11 @@ class StripeWebhookTest extends TestCase
         Notification::fake();
     }
 
-    /**
-     * Forge la signature Stripe attendue (algo HMAC officiel).
-     */
+    /** Builds the expected Stripe signature (official HMAC algorithm). */
     private function signedHeaders(string $payload): array
     {
         $timestamp = time();
-        $signedPayload = $timestamp.'.'.$payload;
+        $signedPayload = $timestamp . '.' . $payload;
         $signature = hash_hmac('sha256', $signedPayload, $this->secret);
 
         return [
@@ -54,13 +53,13 @@ class StripeWebhookTest extends TestCase
             'type' => 'payment_intent.succeeded',
             'data' => [
                 'object' => [
-                    'id' => 'pi_'.uniqid(),
+                    'id' => 'pi_' . uniqid(),
                     'object' => 'payment_intent',
                     'amount' => 5000,
                     'currency' => 'eur',
                     'metadata' => [
-                        'order_id' => (string) $orderId,
-                        'payment_id' => (string) $paymentId,
+                        'order_id' => (string)$orderId,
+                        'payment_id' => (string)$paymentId,
                     ],
                 ],
             ],
@@ -77,18 +76,18 @@ class StripeWebhookTest extends TestCase
             'type' => 'payment_intent.payment_failed',
             'data' => [
                 'object' => [
-                    'id' => 'pi_'.uniqid(),
+                    'id' => 'pi_' . uniqid(),
                     'object' => 'payment_intent',
                     'metadata' => [
-                        'order_id' => (string) $orderId,
-                        'payment_id' => (string) $paymentId,
+                        'order_id' => (string)$orderId,
+                        'payment_id' => (string)$paymentId,
                     ],
                 ],
             ],
         ]);
     }
 
-    /* ── Signature ─────────────────────────────────────────────── */
+    // Signature
 
     public function test_webhook_rejects_invalid_signature(): void
     {
@@ -105,7 +104,7 @@ class StripeWebhookTest extends TestCase
         )->assertStatus(400);
     }
 
-    /* ── Succès paiement ───────────────────────────────────────── */
+    // Payment success
 
     public function test_payment_intent_succeeded_marks_order_as_paid(): void
     {
@@ -148,6 +147,9 @@ class StripeWebhookTest extends TestCase
         ]);
     }
 
+    /**
+     * @throws Exception
+     */
     public function test_payment_intent_succeeded_sends_confirmation_email_once(): void
     {
         $user = User::factory()->create();
@@ -239,7 +241,7 @@ class StripeWebhookTest extends TestCase
         ]);
     }
 
-    /* ── Idempotence ───────────────────────────────────────────── */
+    // Idempotence
 
     public function test_duplicate_event_returns_already_processed(): void
     {
@@ -254,7 +256,7 @@ class StripeWebhookTest extends TestCase
 
         $payload = $this->buildSucceededPayload('evt_dup_42', $order->id, $payment->id);
 
-        // 1er appel : traite (timestamp t1)
+        // 1st call: processes it (timestamp t1)
         $headers1 = array_merge(
             ['CONTENT_TYPE' => 'application/json'],
             $this->convertHeadersForCall($this->signedHeaders($payload))
@@ -263,7 +265,7 @@ class StripeWebhookTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'success');
 
-        // Vérifie qu'un WebhookEvent a bien été créé et marqué comme processed
+        // Verifies a WebhookEvent was created and marked as processed
         $this->assertDatabaseHas('webhook_events', [
             'provider' => 'stripe',
             'provider_event_id' => 'evt_dup_42',
@@ -271,7 +273,7 @@ class StripeWebhookTest extends TestCase
         $we = WebhookEvent::where('provider_event_id', 'evt_dup_42')->first();
         $this->assertNotNull($we->processed_at, 'processed_at devrait être set après le 1er appel');
 
-        // 2e appel : nouvelle signature (timestamp différent) mais MÊME event_id Stripe
+        // 2nd call: new signature (different timestamp) but SAME Stripe event_id
         sleep(1);
         $headers2 = array_merge(
             ['CONTENT_TYPE' => 'application/json'],
@@ -281,11 +283,11 @@ class StripeWebhookTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'already_processed');
 
-        // Un seul WebhookEvent en base
+        // Only a single WebhookEvent in the database
         $this->assertDatabaseCount('webhook_events', 1);
     }
 
-    /* ── Échec paiement ────────────────────────────────────────── */
+    // Payment failure
 
     public function test_payment_intent_failed_marks_payment_and_order_failed(): void
     {
@@ -323,13 +325,13 @@ class StripeWebhookTest extends TestCase
         ]);
     }
 
-    /* ── Helpers ───────────────────────────────────────────────── */
+    // Helpers
 
     private function convertHeadersForCall(array $headers): array
     {
         $out = [];
         foreach ($headers as $k => $v) {
-            $out['HTTP_'.str_replace('-', '_', strtoupper($k))] = $v;
+            $out['HTTP_' . str_replace('-', '_', strtoupper($k))] = $v;
         }
 
         return $out;

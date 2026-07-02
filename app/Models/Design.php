@@ -28,21 +28,25 @@ class Design extends Model
         'configuration' => 'array',
     ];
 
+    /** Owner of this design. */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** Product this design is created for. */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** Product option this design is created for. */
     public function productOption(): BelongsTo
     {
         return $this->belongsTo(ProductOption::class);
     }
 
+    /** Generated assets belonging to this design. */
     public function assets(): HasMany
     {
         return $this->hasMany(DesignAsset::class);

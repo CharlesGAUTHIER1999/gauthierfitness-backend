@@ -4,8 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
+    /** Adds the provider_event_id column and a unique (provider, provider_event_id) constraint to webhook_events. */
     public function up(): void
     {
         Schema::table('webhook_events', function (Blueprint $table) {
@@ -14,6 +14,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::table('webhook_events', function (Blueprint $table) {

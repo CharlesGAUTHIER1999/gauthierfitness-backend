@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -21,12 +22,14 @@ class PasswordResetTest extends TestCase
         RateLimiter::clear('throttle:5,1');
     }
 
-    /* ── Forgot password ───────────────────────────────────────── */
+    // Forgot password
 
+    /**
+     * @throws Exception
+     */
     public function test_user_can_request_password_reset_link(): void
     {
         Notification::fake();
-
         $user = User::factory()->create(['email' => 'reset@test.fr']);
 
         $this->postJson('/api/forgot-password', ['email' => 'reset@test.fr'])
@@ -64,7 +67,7 @@ class PasswordResetTest extends TestCase
             ->assertStatus(429);
     }
 
-    /* ── Reset password ────────────────────────────────────────── */
+    // Reset password
 
     public function test_user_can_reset_password_with_valid_token(): void
     {
@@ -86,12 +89,12 @@ class PasswordResetTest extends TestCase
 
         $this->assertTrue(Hash::check('NewPassword123!', $user->fresh()->password));
 
-        // Ancien token révoqué
-        $this->withHeader('Authorization', 'Bearer '.explode('|', $oldToken)[1])
+        // Old token revoked
+        $this->withHeader('Authorization', 'Bearer ' . explode('|', $oldToken)[1])
             ->getJson('/api/me')
             ->assertUnauthorized();
 
-        // Nouveau mot de passe permet de se reconnecter
+        // New password allows logging back in
         $this->postJson('/api/login', [
             'email' => 'reset2@test.fr',
             'password' => 'NewPassword123!',

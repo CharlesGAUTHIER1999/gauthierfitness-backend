@@ -12,9 +12,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Teste la décrémentation automatique du stock lors d'une vente.
- * Ce comportement est déclenché par le webhook Stripe (payment_intent.succeeded).
- * Ce test le vérifie directement en simulant la logique FIFO.
+ * Tests automatic stock decrement when a sale occurs.
+ * This behavior is triggered by the Stripe webhook (payment_intent.succeeded).
+ * This test verifies it directly by simulating the FIFO logic.
  */
 class StockDecrementTest extends TestCase
 {
@@ -47,7 +47,7 @@ class StockDecrementTest extends TestCase
             'total' => 89.97,
         ]);
 
-        // Act — simule la logique du webhook (FIFO)
+        // Act — simulates the webhook logic (FIFO)
         $availableLot = StockLot::where('product_id', $item->product_id)
             ->whereNull('product_option_id')
             ->where('quantity', '>', 0)
@@ -57,7 +57,7 @@ class StockDecrementTest extends TestCase
 
         $this->assertNotNull($availableLot);
 
-        $deducted = min($availableLot->quantity, (int) $item->quantity);
+        $deducted = min($availableLot->quantity, (int)$item->quantity);
         $availableLot->decrement('quantity', $deducted);
 
         StockMovement::create([
@@ -95,7 +95,7 @@ class StockDecrementTest extends TestCase
         $customer = User::factory()->create();
         $product = Product::factory()->create();
 
-        // Lot expirant en dernier
+        // Lot expiring last
         StockLot::factory()->create([
             'product_id' => $product->id,
             'lot_number' => 'LOT-LATE',
@@ -103,7 +103,7 @@ class StockDecrementTest extends TestCase
             'expiration_date' => now()->addYear(),
         ]);
 
-        // Lot expirant en premier (doit être utilisé)
+        // Lot expiring first (should be used)
         $firstLot = StockLot::factory()->create([
             'product_id' => $product->id,
             'lot_number' => 'LOT-EARLY',
@@ -125,7 +125,7 @@ class StockDecrementTest extends TestCase
     {
         $product = Product::factory()->create();
 
-        // Aucun lot disponible
+        // No lot available
         $result = StockLot::where('product_id', $product->id)
             ->where('quantity', '>', 0)
             ->first();

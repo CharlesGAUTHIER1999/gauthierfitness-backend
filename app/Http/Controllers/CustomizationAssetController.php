@@ -12,11 +12,8 @@ use Illuminate\Support\Str;
 class CustomizationAssetController extends Controller
 {
     /**
-     * Uploader un logo (PNG/JPG/JPEG/WebP, ≤ 3 Mo).
-     *
-     * Stocke le fichier dans `storage/app/public/customization/logos/{user_id}/` et renvoie l'URL
-     * publique servie via le disque `public`. Utilisé par l'éditeur de personnalisation 2D.
-     *
+     * Upload a logo (PNG/JPG/JPEG/WebP, ≤ 3 MB).
+     * Stores the file in `storage/app/public/customization/logos/{user_id}/`
      * @response 422 scenario="Fichier invalide" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadLogo(Request $request): JsonResponse
@@ -31,13 +28,10 @@ class CustomizationAssetController extends Controller
         ]);
 
         $file = $data['file'];
-
         $user = $request->user();
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-
-        $directory = 'customization/logos/'.$user->id;
-        $filename = Str::uuid()->toString().'.'.$extension;
-
+        $directory = 'customization/logos/' . $user->id;
+        $filename = Str::uuid()->toString() . '.' . $extension;
         $storedPath = $file->storeAs($directory, $filename, 'public');
 
         return response()->json([
@@ -53,10 +47,8 @@ class CustomizationAssetController extends Controller
     }
 
     /**
-     * Uploader une image de personnalisation (PNG/JPG/JPEG/WebP, ≤ 5 Mo).
-     *
-     * Stocke le fichier dans `storage/app/public/customization/images/{user_id}/`.
-     *
+     * Upload a customization image (PNG/JPG/JPEG/WebP, ≤ 5 MB).
+     * Stores the file in `storage/app/public/customization/images/{user_id}/`
      * @response 422 scenario="Fichier invalide" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadImage(Request $request): JsonResponse
@@ -71,13 +63,10 @@ class CustomizationAssetController extends Controller
         ]);
 
         $file = $data['file'];
-
         $user = $request->user();
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-
-        $directory = 'customization/images/'.$user->id;
-        $filename = Str::uuid()->toString().'.'.$extension;
-
+        $directory = 'customization/images/' . $user->id;
+        $filename = Str::uuid()->toString() . '.' . $extension;
         $storedPath = $file->storeAs($directory, $filename, 'public');
 
         return response()->json([

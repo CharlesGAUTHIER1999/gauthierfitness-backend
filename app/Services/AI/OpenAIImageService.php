@@ -11,12 +11,8 @@ use Illuminate\Support\Facades\Storage;
 class OpenAIImageService
 {
     /**
-     * Génère une image via OpenAI et retourne son contenu base64 SANS l'écrire
-     * sur disque. La persistance est volontairement séparée (voir `store()`) afin
-     * de pouvoir modérer l'image générée avant tout stockage.
-     *
+     * Generates an image using OpenAI and returns its base64-encoded content WITHOUT writing it to disk.
      * @return array{b64: string, payload: array}
-     *
      * @throws AiContentRejectedException si le prompt est refusé par gpt-image-1 (400)
      * @throws AiServiceUnavailableException si le service est injoignable ou en panne
      */
@@ -35,20 +31,14 @@ class OpenAIImageService
         }
 
         if ($response->failed()) {
-            // gpt-image-1 refuse les prompts contraires à sa politique avec un 400 :
-            // c'est un rejet de contenu, pas une panne de service.
-            if ($response->status() === 400) {
-                throw new AiContentRejectedException('OpenAI image generation rejected the prompt: '.$response->body());
-            }
-
-            throw new AiServiceUnavailableException('OpenAI image generation failed: '.$response->body());
+            if ($response->status() === 400) throw new AiContentRejectedException('OpenAI image generation rejected the prompt: ' . $response->body());
+            throw new AiServiceUnavailableException('OpenAI image generation failed: ' . $response->body());
         }
 
         $payload = $response->json();
-
         $base64 = $payload['data'][0]['b64_json'] ?? null;
 
-        if (! $base64) {
+        if (!$base64) {
             throw new AiServiceUnavailableException('No image returned by OpenAI.');
         }
 
@@ -59,15 +49,13 @@ class OpenAIImageService
     }
 
     /**
-     * Écrit une image base64 sur le disque public et retourne son chemin + URL.
-     *
+     * Writes a base64-encoded image to the public disk and returns its path and URL.
      * @return array{path: string, url: string}
      */
     public function store(string $base64, string $filenamePrefix = 'design'): array
     {
         $binary = base64_decode($base64);
-        $path = 'designs/'.uniqid($filenamePrefix.'_').'.png';
-
+        $path = 'designs/' . uniqid($filenamePrefix . '_') . '.png';
         Storage::disk('public')->put($path, $binary);
 
         return [

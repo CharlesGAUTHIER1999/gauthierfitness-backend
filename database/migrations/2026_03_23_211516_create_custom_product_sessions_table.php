@@ -4,8 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
+    /** Creates the custom_product_sessions table used to track in-progress product customizations. */
     public function up(): void
     {
         Schema::create('custom_product_sessions', function (Blueprint $table) {
@@ -20,6 +20,7 @@ return new class extends Migration
         });
     }
 
+    /** Reverts this migration. */
     public function down(): void
     {
         Schema::dropIfExists('custom_product_sessions');
