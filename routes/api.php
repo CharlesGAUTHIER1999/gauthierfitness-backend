@@ -44,16 +44,16 @@ Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
 // Contact Form (public)
 Route::post('/contact', ContactController::class)->middleware('throttle:5,1');
 
+// Cart (public: works for both guests, via X-Guest-Cart-Token, and authenticated users)
+Route::get('/cart', [CartController::class, 'show']);
+Route::post('/cart/items', [CartController::class, 'add']);
+Route::patch('/cart/items/{item}', [CartController::class, 'update']);
+Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', VerificationController::class)->name('me');
     Route::post('/logout', LogoutController::class)->name('logout');
-
-    // Cart
-    Route::get('/cart', [CartController::class, 'show']);
-    Route::post('/cart/items', [CartController::class, 'add']);
-    Route::patch('/cart/items/{item}', [CartController::class, 'update']);
-    Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
 
     // Checkout
     Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent']);

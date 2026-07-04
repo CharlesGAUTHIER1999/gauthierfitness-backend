@@ -14,10 +14,13 @@ use Illuminate\Support\Str;
 #[Group(name: 'Panier', weight: 3)]
 class CartController extends Controller
 {
-    /** Retrieve the current user's cart. */
+    /**
+     * Retrieve the current cart — the authenticated user's cart, or a guest cart
+     * identified by the X-Guest-Cart-Token header.
+     */
     public function show(Request $request)
     {
-        $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
+        $cart = $this->resolveCart($request);
 
         $cart->load([
             'items.product.group',
@@ -39,7 +42,7 @@ class CartController extends Controller
     {
         $data = $request->validated();
         $qty = (int) ($data['quantity'] ?? 1);
-        $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
+        $cart = $this->resolveCart($request);
 
         $stock = StockLot::where('product_id', $data['product_id'])
             ->when($data['product_option_id'] ?? null, fn ($q) => $q->where('product_option_id', $data['product_option_id'])
@@ -54,7 +57,7 @@ class CartController extends Controller
 
         if ($customSessionId) {
             $session = CustomProductSession::findOrFail($customSessionId);
-            abort_unless((int) $session->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $session->user_id === (int) $request->user('sanctum')->id, 403);
             abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
 
             $item = CartItem::create([
@@ -90,7 +93,7 @@ class CartController extends Controller
      */
     public function update(Request $request, CartItem $item)
     {
-        abort_unless($item->cart->user_id === $request->user()->id, 404);
+        abort_unless($this->ownsCart($request, $item->cart), 404);
 
         $data = $request->validate([
             'quantity' => ['required', 'integer', 'min:1'],
@@ -109,7 +112,7 @@ class CartController extends Controller
      */
     public function destroy(Request $request, CartItem $item)
     {
-        abort_unless($item->cart->user_id === $request->user()->id, 404);
+        abort_unless($this->ownsCart($request, $item->cart), 404);
 
         if ($item->customProductSession) {
             $item->customProductSession->update([
@@ -120,6 +123,35 @@ class CartController extends Controller
         $item->delete();
 
         return $this->show($request);
+    }
+
+    /**
+     * Resolves the cart for this request: the authenticated user's cart, or a
+     * guest cart keyed by the X-Guest-Cart-Token header. Aborts with 400 if
+     * neither is available.
+     */
+    private function resolveCart(Request $request): Cart
+    {
+        if ($user = $request->user('sanctum')) {
+            return Cart::firstOrCreate(['user_id' => $user->id]);
+        }
+
+        $guestToken = $request->header('X-Guest-Cart-Token');
+        abort_if(! $guestToken, 400, 'Missing guest cart identifier');
+
+        return Cart::firstOrCreate(['guest_token' => $guestToken]);
+    }
+
+    // Whether the current request (user or guest) owns the given cart
+    private function ownsCart(Request $request, Cart $cart): bool
+    {
+        if ($user = $request->user('sanctum')) {
+            return (int) $cart->user_id === (int) $user->id;
+        }
+
+        $guestToken = $request->header('X-Guest-Cart-Token');
+
+        return $guestToken && $cart->guest_token === $guestToken;
     }
 
     // Build the JSON-friendly cart representation

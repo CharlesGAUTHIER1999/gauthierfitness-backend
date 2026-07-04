@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartMergeService;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 #[Group(name: 'Authentification', weight: 1)]
 class RegisterController extends Controller
 {
+    public function __construct(private CartMergeService $cartMergeService) {}
+
     /**
      * Register a new user.
      * Creates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately.
@@ -35,6 +38,8 @@ class RegisterController extends Controller
             'email' => strtolower($request->email),
             'password' => Hash::make($request->password),
         ]);
+
+        $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
 
         $token = $user->createToken('react')->plainTextToken;
 
