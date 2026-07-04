@@ -24,7 +24,7 @@
             "name": "Customisation"
         },
         {
-            "name": "IA \u2014 G\u00e9n\u00e9ration de designs"
+            "name": "IA - G\u00e9n\u00e9ration de designs"
         },
         {
             "name": "Commandes"
@@ -54,8 +54,7 @@
         "/login": {
             "post": {
                 "operationId": "login",
-                "description": "Authenticates a user via email/password and returns a Sanctum token.\nThe previous token named \"react\" is revoked to limit the session to a single active device.",
-                "summary": "User login",
+                "summary": "User login.\nAuthenticates a user via email/password and returns a Sanctum token.\nThe previous token named \"react\" is revoked to limit the session to a single active device",
                 "tags": [
                     "Authentification"
                 ],
@@ -71,6 +70,9 @@
                                         "format": "email"
                                     },
                                     "password": {
+                                        "type": "string"
+                                    },
+                                    "guest_cart_token": {
                                         "type": "string"
                                     }
                                 },
@@ -104,8 +106,7 @@
         "/register": {
             "post": {
                 "operationId": "register",
-                "description": "Creates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately.",
-                "summary": "Register a new user",
+                "summary": "Register a new user.\nCreates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately",
                 "tags": [
                     "Authentification"
                 ],
@@ -129,6 +130,9 @@
                                     "password": {
                                         "type": "string",
                                         "minLength": 6
+                                    },
+                                    "guest_cart_token": {
+                                        "type": "string"
                                     }
                                 },
                                 "required": [
@@ -163,8 +167,7 @@
         "/forgot-password": {
             "post": {
                 "operationId": "password.email",
-                "description": "Sends an email with a reset link if an account exists for that email.\nAlways returns the same generic message, whether the email exists or not, to prevent\nan attacker from inferring which emails are registered (OWASP A01 - user enumeration).",
-                "summary": "Password reset request",
+                "summary": "Password reset request.\nSends an email with a reset link if an account exists for that email.\nAlways returns the same generic message, whether the email exists or not",
                 "tags": [
                     "Authentification"
                 ],
@@ -209,8 +212,7 @@
         "/reset-password": {
             "post": {
                 "operationId": "password.reset",
-                "description": "Verifies the token received by email and changes the password. All existing Sanctum\ntokens are revoked: the user must log in again everywhere after a reset.",
-                "summary": "Password reset",
+                "summary": "Password reset.\nVerifies the token received by email and changes the password.\nAll existing Sanctum tokens are revoked: the user must log in again everywhere after a reset",
                 "tags": [
                     "Authentification"
                 ],
@@ -269,8 +271,7 @@
         "/me": {
             "get": {
                 "operationId": "me",
-                "description": "Returns the authenticated user with their roles. Used by the frontend to hydrate the\nstore and check whether the token is still valid on application startup.",
-                "summary": "Current user profile",
+                "summary": "Current user profile.\nReturns the authenticated user with their roles.\nUsed by the frontend to hydrate the store and check whether the token is still valid on application startup",
                 "tags": [
                     "Authentification"
                 ],
@@ -295,8 +296,7 @@
         "/logout": {
             "post": {
                 "operationId": "logout",
-                "description": "Revokes the current Sanctum token. The next call will require a new login.",
-                "summary": "Logout",
+                "summary": "Logout.\nRevokes the current Sanctum token. The next call will require a new login",
                 "tags": [
                     "Authentification"
                 ],
@@ -321,8 +321,7 @@
         "/products": {
             "get": {
                 "operationId": "product.index",
-                "description": "Returns active products visible in the shop. Products with variants\n(color, size) are grouped: only one product per group is returned. Supports\nfiltering by gender, category and tag.",
-                "summary": "Paginated list of public products",
+                "summary": "Paginated list of public products.\nReturns active products visible in the shop. Products with variants (color, size) are grouped",
                 "tags": [
                     "Catalogue"
                 ],
@@ -473,8 +472,7 @@
         "/products/{slug}": {
             "get": {
                 "operationId": "product.show",
-                "description": "Returns a product with all its relations (images, categories, options, stock lots,\ngroup variants). Used on the frontend product page.",
-                "summary": "Product detail by slug",
+                "summary": "Product detail by slug.\nReturns a product with all its relations (images, categories, options, stock lots, group variants)",
                 "tags": [
                     "Catalogue"
                 ],
@@ -507,8 +505,7 @@
         "/cart": {
             "get": {
                 "operationId": "cart.show",
-                "description": "Creates an empty cart on the fly if the user doesn't have one yet. Returns each line\nwith its price snapshots, variants (color/size/flavor) and any customization.",
-                "summary": "Retrieve the current user's cart",
+                "summary": "Retrieve the current cart \u2014 the authenticated user's cart, or a guest cart\nidentified by the X-Guest-Cart-Token header",
                 "tags": [
                     "Panier"
                 ],
@@ -677,17 +674,14 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/cart/items": {
             "post": {
                 "operationId": "cart.add",
-                "description": "Checks stock before adding. If a customization session is passed, it must\nbelong to the user and match the product; its status then moves to `added_to_cart`.\nOtherwise, the existing line (same product + same option) is incremented.",
                 "summary": "Add a product to the cart",
                 "tags": [
                     "Panier"
@@ -715,15 +709,30 @@
                         }
                     },
                     "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "example": ""
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/cart/items/{item}": {
@@ -780,15 +789,12 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             },
             "delete": {
                 "operationId": "cart.destroy",
-                "description": "If the line references a customization session, it goes back to `ready` (released).",
                 "summary": "Remove a cart line",
                 "tags": [
                     "Panier"
@@ -818,18 +824,15 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/customization/sessions": {
             "post": {
                 "operationId": "customization.store",
-                "description": "Snapshots the design configuration (text, logo, colors, position) for a customizable\nproduct. The session is then referenced by a cart line and later by an order.",
-                "summary": "Create a customization session",
+                "summary": "Create a customization session.\nSnapshots the design configuration (text, logo, colors, position) for a customizable product",
                 "tags": [
                     "Customisation"
                 ],
@@ -959,8 +962,7 @@
             },
             "patch": {
                 "operationId": "customization.update",
-                "description": "Allows changing the configuration, the associated design, the preview image and the status.\nAllowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`.",
-                "summary": "Update a customization session",
+                "summary": "Update a customization session.\nAllows changing the configuration, the associated design, the preview image and the status.\nAllowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`",
                 "tags": [
                     "Customisation"
                 ],
@@ -1066,8 +1068,7 @@
         "/customization/assets/logo": {
             "post": {
                 "operationId": "customizationAsset.uploadLogo",
-                "description": "Stores the file in `storage/app/public/customization/logos/{user_id}/` and returns the\npublic URL served via the `public` disk. Used by the 2D customization editor.",
-                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB)",
+                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB).\nStores the file in `storage/app/public/customization/logos/{user_id}/`",
                 "tags": [
                     "Customisation"
                 ],
@@ -1116,8 +1117,7 @@
         "/customization/assets/image": {
             "post": {
                 "operationId": "customizationAsset.uploadImage",
-                "description": "Stores the file in `storage/app/public/customization/images/{user_id}/`.",
-                "summary": "Upload a customization image (PNG/JPG/JPEG/WebP, \u2264 5 MB)",
+                "summary": "Upload a customization image (PNG/JPG/JPEG/WebP, \u2264 5 MB).\nStores the file in `storage/app/public/customization/images/{user_id}/`",
                 "tags": [
                     "Customisation"
                 ],
@@ -1166,10 +1166,9 @@
         "/ai/designs/generate": {
             "post": {
                 "operationId": "ai.aIDesign",
-                "description": "Content is filtered at two levels by `OpenAIModerationService`: the prompt\nis moderated **before** any generation (to avoid spending a call on an\nabusive request), then the generated image is moderated **before** being stored.\nOn rejection, nothing is persisted except a trace in `prompt_histories`.\nThe target product must be customizable (`is_customizable`) and allow AI\n(`allow_ai_generation`).",
                 "summary": "Generate a design via OpenAI from a text prompt",
                 "tags": [
-                    "IA \u2014 G\u00e9n\u00e9ration de designs"
+                    "IA - G\u00e9n\u00e9ration de designs"
                 ],
                 "requestBody": {
                     "required": true,
@@ -1329,8 +1328,7 @@
         "/orders": {
             "get": {
                 "operationId": "order.index",
-                "description": "Returns all orders of the authenticated user (most recent first), with their\nassociated payment and shipment.",
-                "summary": "Order history for the user",
+                "summary": "Order history for the user.\nReturns all orders of the authenticated user (most recent first), with their associated payment and shipment",
                 "tags": [
                     "Commandes"
                 ],
@@ -1382,8 +1380,7 @@
         "/orders/{order}": {
             "get": {
                 "operationId": "order.show",
-                "description": "Verifies that the order actually belongs to the authenticated user.",
-                "summary": "Order detail",
+                "summary": "Order detail.\nVerifies that the order actually belongs to the authenticated user",
                 "tags": [
                     "Commandes"
                 ],
@@ -1422,8 +1419,7 @@
         "/stripe/webhook": {
             "post": {
                 "operationId": "stripe.webhook",
-                "description": "Endpoint called by Stripe (not by the frontend). Verifies the `Stripe-Signature` header\nagainst `STRIPE_WEBHOOK_SECRET`, deduplicates via the `webhook_events` table (idempotency),\nthen processes the event:\n- `payment_intent.succeeded` \u2192 marks the payment and order as paid, clears the cart,\n  sends the confirmation email and decrements stock FIFO (earliest-expiring lot first).\n- `payment_intent.payment_failed` \u2192 marks the payment and order as `failed`.",
-                "summary": "Stripe webhook \u2014 payment events",
+                "summary": "Stripe webhook - payment events\nEndpoint called by Stripe (not by the frontend).\nVerifies the `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`",
                 "tags": [
                     "Paiement"
                 ],
@@ -1446,7 +1442,6 @@
         "/payment/intent": {
             "post": {
                 "operationId": "stripe.createPaymentIntent",
-                "description": "Full checkout cycle: validates the shipping address, computes the pre-tax/total totals from\nthe price snapshots, creates the order, the shipment, the order lines and a Payment\nin `pending` status, then creates a Stripe PaymentIntent in EUR. The returned `client_secret`\nlets the frontend confirm the payment client-side. The final status is updated by the webhook\n`POST /api/stripe/webhook`.",
                 "summary": "Create a Stripe PaymentIntent for the current cart",
                 "tags": [
                     "Paiement"
@@ -1527,7 +1522,6 @@
         "/contact": {
             "post": {
                 "operationId": "contact",
-                "description": "Sends an email to the configured support address (`mail.support_address`). This endpoint\nis **rate-limited to 5 requests/minute per IP** to limit abuse.",
                 "summary": "Send a contact message",
                 "tags": [
                     "Contact"
@@ -1591,7 +1585,6 @@
         "/admin/products": {
             "get": {
                 "operationId": "adminProduct.index",
-                "description": "Includes inactive products and supports search/filtering. Fixed pagination at 20/page.",
                 "summary": "Paginated list of products (admin)",
                 "tags": [
                     "Admin - Produits"
@@ -1766,7 +1759,6 @@
             },
             "post": {
                 "operationId": "adminProduct.store",
-                "description": "The slug is derived from the name and automatically deduplicated (`-N` suffix on\nconflict). Options (size, format, capacity) can be passed in a single request.",
                 "summary": "Create a product",
                 "tags": [
                     "Admin - Produits"
@@ -1949,8 +1941,7 @@
             },
             "patch": {
                 "operationId": "adminProduct.update",
-                "description": "All fields are optional (`sometimes`). The slug cannot be changed here.",
-                "summary": "Update a product",
+                "summary": "Update a product.\nAll fields are optional (`sometimes`). The slug cannot be changed here",
                 "tags": [
                     "Admin - Produits"
                 ],
@@ -2047,7 +2038,6 @@
             },
             "delete": {
                 "operationId": "adminProduct.destroy",
-                "description": "Soft-deletes if the model uses `SoftDeletes`. Existing orders keep their snapshot.",
                 "summary": "Delete a product",
                 "tags": [
                     "Admin - Produits"
@@ -2087,7 +2077,6 @@
         "/admin/products/{product}/toggle-active": {
             "patch": {
                 "operationId": "adminProduct.toggleActive",
-                "description": "Toggles the `is_active` value. Returns the final state.",
                 "summary": "Activate / deactivate a product",
                 "tags": [
                     "Admin - Produits"
@@ -2127,8 +2116,7 @@
         "/admin/stats": {
             "get": {
                 "operationId": "adminOrder.stats",
-                "description": "Aggregates products, orders (total revenue, monthly revenue, by status), stock (out of\nstock, low stock). Used by the admin panel home dashboard.",
-                "summary": "Dashboard \u2014 global statistics",
+                "summary": "Dashboard - global statistics",
                 "tags": [
                     "Admin - Commandes"
                 ],
@@ -2419,7 +2407,6 @@
         "/admin/orders/{order}/status": {
             "patch": {
                 "operationId": "adminOrder.updateStatus",
-                "description": "Triggers notification emails (`OrderStatusUpdated`) for transitions to\n`shipped`, `delivered`, `canceled`. Each email is sent only once (idempotency\nvia `*_email_sent_at`).",
                 "summary": "Update an order's status",
                 "tags": [
                     "Admin - Commandes"
@@ -2487,8 +2474,7 @@
         "/admin/stock": {
             "get": {
                 "operationId": "adminStock.list",
-                "description": "Returns a paginated list of products (25/page) with the sum of their lot quantities\n(`stock_qty`). Search by name/SKU is supported.",
-                "summary": "Global stock view: all products with their total quantity",
+                "summary": "Global stock view: all products with their total quantity.\nReturns a paginated list of products (25/page) with the sum of their lot quantities",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -2634,8 +2620,7 @@
         "/admin/products/{product}/stock": {
             "get": {
                 "operationId": "adminStock.index",
-                "description": "Returns lots grouped into two blocks: `global_stock` (lots without an option) and\n`option_stocks` (lots per variant). Lots are sorted FIFO (nearest expiration first).",
-                "summary": "Stock detail for a product",
+                "summary": "Stock detail for a product.\nReturns lots grouped into two blocks: `global_stock` (lots without an option) and\n`option_stocks` (lots per variant). Lots are sorted FIFO (nearest expiration first)",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -2743,7 +2728,6 @@
             },
             "post": {
                 "operationId": "adminStock.store",
-                "description": "Logs the stock entry in `stock_movements` with `type=in`. The expiration date must be\nstrictly in the future (or null for non-perishable products).",
                 "summary": "Create a new lot (restock)",
                 "tags": [
                     "Admin \u2014 Stock"
@@ -2823,8 +2807,7 @@
         "/admin/stock/lots/{lot}/adjust": {
             "patch": {
                 "operationId": "adminStock.adjust",
-                "description": "Computes the delta (`new_quantity - old_quantity`) and logs the difference in\n`stock_movements` with `type=correction` and the provided reason. Used to handle\nbreakage, inventory counts, or error corrections.",
-                "summary": "Manually adjust a lot's quantity",
+                "summary": "Manually adjust a lot's quantity.\nComputes the delta (`new_quantity - old_quantity`) and logs the difference",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -2889,8 +2872,7 @@
         "/admin/products/{product}/stock/movements": {
             "get": {
                 "operationId": "adminStock.movements",
-                "description": "Returns all `stock_movements` (in, out, corrections) linked to the product,\n30 per page, most recent first.",
-                "summary": "Paginated history of a product's stock movements",
+                "summary": "Paginated history of a product's stock movements.\nReturns all `stock_movements` (in, out, corrections) linked to the product, 30 per page, most recent first",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -3059,7 +3041,7 @@
         },
         "/admin/ping": {
             "get": {
-                "summary": "Admin ping \u2014 checks that the `admin` middleware accepts the user",
+                "summary": "Admin ping",
                 "responses": {
                     "200": {
                         "description": "",
@@ -3520,7 +3502,7 @@
                     },
                     "images": {
                         "type": "array",
-                        "description": "Full gallery (only present on the detail view, when images is loaded)",
+                        "description": "Full gallery",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -3969,6 +3951,25 @@
                     }
                 }
             },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
             "AuthenticationException": {
                 "description": "Unauthenticated",
                 "content": {
@@ -3990,25 +3991,6 @@
             },
             "AuthorizationException": {
                 "description": "Authorization error",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "ModelNotFoundException": {
-                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {
