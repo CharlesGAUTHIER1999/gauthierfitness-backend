@@ -8,10 +8,10 @@ use Illuminate\Validation\Validator;
 
 class AddToCartRequest extends FormRequest
 {
-    /** Only authenticated users may add items to the cart. */
+    /** Guests and authenticated users alike may add items to the cart. */
     public function authorize(): bool
     {
-        return auth()->check();
+        return true;
     }
 
     /** Base validation rules for the add-to-cart payload. */
@@ -33,12 +33,20 @@ class AddToCartRequest extends FormRequest
             if (! $session_id) {
                 return;
             }
+
+            $user = $this->user('sanctum');
+            if (! $user) {
+                $validator->errors()->add('custom_product_session_id', 'A customization session requires being logged in.');
+
+                return;
+            }
+
             $session = CustomProductSession::find($session_id);
             if (! $session) {
                 return;
             }
 
-            if ((int) $session->user_id !== (int) $this->user()->id) {
+            if ((int) $session->user_id !== (int) $user->id) {
                 $validator->errors()->add('custom_product_session_id', 'This customization session does not belong to you.');
             }
 

@@ -30,9 +30,9 @@ class CartTest extends TestCase
             ->assertJsonPath('subtotal', 0);
     }
 
-    public function test_unauthenticated_user_cannot_view_cart(): void
+    public function test_request_without_auth_or_guest_token_returns_400(): void
     {
-        $this->getJson('/api/cart')->assertUnauthorized();
+        $this->getJson('/api/cart')->assertStatus(400);
     }
 
     public function test_show_creates_cart_if_missing(): void

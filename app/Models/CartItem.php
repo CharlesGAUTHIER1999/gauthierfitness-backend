@@ -22,6 +22,12 @@ class CartItem extends Model
         'quantity' => 'integer',
     ];
 
+    /**
+     * Bumps the parent cart's updated_at whenever a line changes, so it reflects
+     * this cart's real last activity (used by the abandonment purge).
+     */
+    protected $touches = ['cart'];
+
     /** Cart this item belongs to. */
     public function cart(): BelongsTo
     {
