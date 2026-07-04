@@ -9,6 +9,9 @@ RUN apk add --no-cache \
         icu-dev \
         oniguruma-dev \
         libzip-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
         mysql-client \
         postgresql-client \
         autoconf \
@@ -16,12 +19,17 @@ RUN apk add --no-cache \
         make
 
 # PHP extensions
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-jpeg --with-freetype \
+    && docker-php-ext-install \
         pdo \
         pdo_mysql \
         intl \
         mbstring \
-        zip
+        zip \
+        gd
+
+# PCOV for test coverage reports (local dev image only)
+RUN pecl install pcov && docker-php-ext-enable pcov
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
