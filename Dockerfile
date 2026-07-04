@@ -69,6 +69,12 @@ RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 # SQLite for in-memory tests
 RUN apk add --no-cache sqlite-dev && docker-php-ext-install pdo_sqlite
 
+# PCOV for test coverage reports (dev/testing only — never shipped in the production stage)
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install pcov \
+    && docker-php-ext-enable pcov \
+    && apk del .build-deps
+
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
