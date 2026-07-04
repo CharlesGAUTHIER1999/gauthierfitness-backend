@@ -37,6 +37,7 @@ class AddToCartRequest extends FormRequest
             $user = $this->user('sanctum');
             if (! $user) {
                 $validator->errors()->add('custom_product_session_id', 'A customization session requires being logged in.');
+
                 return;
             }
 
