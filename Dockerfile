@@ -44,6 +44,7 @@ RUN docker-php-ext-install \
 
 # PHP config
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/www-pool-tuning.conf /usr/local/etc/php-fpm.d/zz-www-pool-tuning.conf
 
 WORKDIR /var/www/html
 
