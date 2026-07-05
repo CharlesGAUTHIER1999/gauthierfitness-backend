@@ -29,7 +29,7 @@ class RegisterController extends Controller
             'firstname' => 'required|string',
             'lastname' => 'required|string',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
+            'password' => ['required', 'min:6', 'confirmed'],
         ]);
 
         $user = User::create([

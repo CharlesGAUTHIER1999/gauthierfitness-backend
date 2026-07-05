@@ -4,8 +4,8 @@ namespace Tests\Feature\Contact;
 
 use App\Mail\ContactMessageMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class ContactTest extends TestCase
@@ -16,7 +16,10 @@ class ContactTest extends TestCase
     {
         parent::setUp();
         Mail::fake();
-        RateLimiter::clear('throttle:5,1');
+        // RateLimiter::clear('throttle:5,1') was a no-op: that string isn't the
+        // real signature the throttle middleware hashes, so hits leaked across
+        // tests hitting the same route/IP. Flushing the cache actually resets it.
+        Cache::flush();
     }
 
     public function test_guest_can_send_contact_message(): void
