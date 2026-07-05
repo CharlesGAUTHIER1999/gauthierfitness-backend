@@ -6,10 +6,10 @@ use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -19,7 +19,10 @@ class PasswordResetTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        RateLimiter::clear('throttle:5,1');
+        // RateLimiter::clear('throttle:5,1') was a no-op: that string isn't the
+        // real signature the throttle middleware hashes, so hits leaked across
+        // tests hitting the same route/IP. Flushing the cache actually resets it.
+        Cache::flush();
     }
 
     // Forgot password

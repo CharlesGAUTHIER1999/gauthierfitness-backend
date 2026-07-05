@@ -19,6 +19,7 @@ public/storage
 /.phpunit.cache
 .phpactor.json
 /auth.json
+coverage.xml
 
 /.fleet
 /.idea
