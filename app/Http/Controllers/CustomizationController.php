@@ -12,6 +12,16 @@ use Illuminate\Http\Request;
 #[Group(name: 'Customisation', weight: 4)]
 class CustomizationController extends Controller
 {
+    private const SESSION_RELATIONS = [
+        'product.group',
+        'product.categories',
+        'product.images',
+        'product.mainImage',
+        'product.hoverImage',
+        'productOption',
+        'design',
+    ];
+
     /**
      * Create a customization session.
      * Snapshots the design configuration (text, logo, colors, position) for a customizable product.
@@ -54,15 +64,7 @@ class CustomizationController extends Controller
 
         return response()->json([
             'message' => 'Customization session created.',
-            'data' => $session->load([
-                'product.group',
-                'product.categories',
-                'product.images',
-                'product.mainImage',
-                'product.hoverImage',
-                'productOption',
-                'design',
-            ]),
+            'data' => $session->load(self::SESSION_RELATIONS),
         ], 201);
     }
 
@@ -76,15 +78,7 @@ class CustomizationController extends Controller
         $this->authorizeOwner($customizationSession->user_id, request()->user()->id);
 
         return response()->json([
-            'data' => $customizationSession->load([
-                'product.group',
-                'product.categories',
-                'product.images',
-                'product.mainImage',
-                'product.hoverImage',
-                'productOption',
-                'design',
-            ]),
+            'data' => $customizationSession->load(self::SESSION_RELATIONS),
         ]);
     }
 
@@ -123,15 +117,7 @@ class CustomizationController extends Controller
 
         return response()->json([
             'message' => 'Customization session updated.',
-            'data' => $customizationSession->fresh([
-                'product.group',
-                'product.categories',
-                'product.images',
-                'product.mainImage',
-                'product.hoverImage',
-                'productOption',
-                'design',
-            ]),
+            'data' => $customizationSession->fresh(self::SESSION_RELATIONS),
         ]);
     }
 

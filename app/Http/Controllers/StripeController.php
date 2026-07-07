@@ -10,13 +10,14 @@ use App\Models\StockLot;
 use App\Models\StockMovement;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
+use App\Services\Pricing\CartPricingCalculator;
+use App\Services\Stock\StockAllocator;
 use Dedoc\Scramble\Attributes\Group;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 use Throwable;
@@ -59,13 +60,6 @@ class StripeController extends Controller
             ->with(['product', 'option', 'customProductSession'])
             ->get();
 
-        Log::info('PAYMENT_INTENT_CART_CHECK', [
-            'user_id' => $user->id,
-            'cart_id' => $cart->id,
-            'items_count' => $cartItems->count(),
-            'cart_items_ids' => $cartItems->pluck('id')->all(),
-        ]);
-
         if ($cartItems->isEmpty()) {
             return response()->json(['message' => 'Panier vide'], 400);
         }
@@ -75,6 +69,7 @@ class StripeController extends Controller
         return DB::transaction(function () use ($user, $cartItems, $data, $stripe) {
             $totalTtc = 0.0;
             $totalHt = 0.0;
+            $pricedItems = [];
 
             foreach ($cartItems as $ci) {
                 $product = $ci->product;
@@ -83,16 +78,22 @@ class StripeController extends Controller
                     abort(422, 'Produit introuvable dans le panier.');
                 }
 
-                $unitTtc = $ci->customProductSession?->unit_price_snapshot ?? $ci->option?->price_ttc ?? $product->price_ttc;
-                $unitHt = $ci->option?->price_ht ?? $product->price_ht;
+                $unitTtc = CartPricingCalculator::unitPrice(
+                    $ci->customProductSession?->unit_price_snapshot,
+                    $ci->option?->price_ttc,
+                    (float) $product->price_ttc
+                );
+                $unitHt = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float) $product->price_ht);
                 $qty = (int) $ci->quantity;
 
-                $totalTtc += ((float) $unitTtc) * $qty;
-                $totalHt += ((float) $unitHt) * $qty;
+                $totalTtc += CartPricingCalculator::lineTotal($unitTtc, $qty);
+                $totalHt += CartPricingCalculator::lineTotal($unitHt, $qty);
+
+                $pricedItems[] = ['cartItem' => $ci, 'product' => $product, 'unitTtc' => $unitTtc, 'qty' => $qty];
             }
 
-            $totalTtc = round($totalTtc, 2);
-            $totalHt = round($totalHt, 2);
+            $totalTtc = CartPricingCalculator::round($totalTtc);
+            $totalHt = CartPricingCalculator::round($totalHt);
 
             // 2) Order
             $order = Order::create([
@@ -117,27 +118,13 @@ class StripeController extends Controller
             ]);
 
             // 4) Items
-            foreach ($cartItems as $ci) {
-                $product = $ci->product;
-                if (! $product) {
-                    abort(422, 'Produit introuvable dans le panier.');
-                }
-
-                $unitTtc = $ci->option?->price_ttc ?? $product->price_ttc;
-                $qty = (int) $ci->quantity;
+            foreach ($pricedItems as $priced) {
+                $ci = $priced['cartItem'];
+                $product = $priced['product'];
+                $unitTtc = $priced['unitTtc'];
+                $qty = $priced['qty'];
 
                 $customSession = $ci->customProductSession;
-
-                Log::info('ORDER_ITEM_CUSTOM_DEBUG', [
-                    'cart_item_id' => $ci->id,
-                    'product_id' => $ci->product_id,
-                    'product_option_id' => $ci->product_option_id,
-                    'custom_product_session_id_on_cart_item' => $ci->custom_product_session_id,
-                    'custom_session_loaded' => (bool) $customSession,
-                    'custom_session_id' => $customSession?->id,
-                    'custom_session_configuration' => $customSession?->configuration,
-                    'custom_session_preview_image_path' => $customSession?->preview_image_path,
-                ]);
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -167,7 +154,6 @@ class StripeController extends Controller
             $intent = $stripe->paymentIntents->create([
                 'amount' => (int) round($totalTtc * 100),
                 'currency' => 'eur',
-                // 'automatic_payment_methods' => ['enabled' => true],
                 'payment_method_types' => ['card'],
                 'description' => "Commande #$order->id",
                 'metadata' => [
@@ -283,7 +269,7 @@ class StripeController extends Controller
                                 ->first();
 
                             if ($lot) {
-                                $deducted = min($lot->quantity, (int) $item->quantity);
+                                $deducted = StockAllocator::deduction($lot->quantity, (int) $item->quantity);
                                 $lot->decrement('quantity', $deducted);
 
                                 StockMovement::create([
@@ -300,15 +286,6 @@ class StripeController extends Controller
                         }
                     }
                 });
-
-                Log::info('STRIPE_WEBHOOK_RECEIVED', ['type' => $event->type]);
-
-                // Inside succeeded:
-                Log::info('STRIPE_PI_SUCCEEDED', [
-                    'order_id' => $orderId,
-                    'payment_id' => $paymentId,
-                ]);
-
             }
 
             if ($event->type === 'payment_intent.payment_failed') {

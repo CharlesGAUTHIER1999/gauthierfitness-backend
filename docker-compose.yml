@@ -26,10 +26,10 @@ services:
     image: mysql:8.0
     container_name: gf_backend_db
     environment:
-      MYSQL_DATABASE: gauthier_fitness
-      MYSQL_USER: charlesgauthier
-      MYSQL_PASSWORD: "Bordeaux2025@"
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "3308:3306"
     volumes:

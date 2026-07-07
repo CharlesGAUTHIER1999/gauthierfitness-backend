@@ -11,6 +11,12 @@ class Ticket extends Model
 
     protected $fillable = ['user_id', 'subject', 'status'];
 
+    /** Customer who opened this ticket. */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     /** Messages exchanged within this ticket. */
     public function messages()
     {

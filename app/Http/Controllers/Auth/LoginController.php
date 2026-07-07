@@ -49,19 +49,7 @@ class LoginController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => $this->userPayload($user),
+            'user' => $user->authPayload(),
         ]);
-    }
-
-    // Build the public-facing user payload returned to the frontend.
-    private function userPayload(User $user): array
-    {
-        return [
-            'id' => $user->id,
-            'firstname' => $user->firstname,
-            'lastname' => $user->lastname,
-            'email' => $user->email,
-            'is_admin' => $user->isAdmin(),
-        ];
     }
 }

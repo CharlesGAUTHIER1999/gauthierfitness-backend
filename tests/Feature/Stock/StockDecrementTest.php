@@ -11,18 +11,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * Tests automatic stock decrement when a sale occurs.
- * This behavior is triggered by the Stripe webhook (payment_intent.succeeded).
- * This test verifies it directly by simulating the FIFO logic.
- */
 class StockDecrementTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_stock_is_decremented_when_order_is_paid(): void
     {
-        // Arrange
         $customer = User::factory()->create();
         $product = Product::factory()->create();
 
@@ -47,7 +41,7 @@ class StockDecrementTest extends TestCase
             'total' => 89.97,
         ]);
 
-        // Act — simulates the webhook logic (FIFO)
+        // Simulates the webhook logic (FIFO)
         $availableLot = StockLot::where('product_id', $item->product_id)
             ->whereNull('product_option_id')
             ->where('quantity', '>', 0)
@@ -71,7 +65,6 @@ class StockDecrementTest extends TestCase
         $item->lot_id = $availableLot->id;
         $item->save();
 
-        // Assert
         $this->assertDatabaseHas('stock_lots', [
             'id' => $lot->id,
             'quantity' => 97, // 100 - 3

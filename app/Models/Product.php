@@ -163,4 +163,13 @@ class Product extends Model
     {
         return $query->where('is_active', true);
     }
+
+    /** Scopes the query to products matching the term in their name or SKU. */
+    public function scopeSearch($query, string $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('sku', 'like', "%{$term}%");
+        });
+    }
 }

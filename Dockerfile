@@ -13,6 +13,7 @@ RUN composer install \
     --ignore-platform-reqs
 
 COPY . .
+RUN rm -rf tests
 RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views \ && chmod -R 775 bootstrap/cache storage
 RUN composer dump-autoload --optimize --no-dev
 
@@ -63,9 +64,10 @@ CMD ["php-fpm"]
 # ─────────────────────────────────────────────
 FROM php:8.3-fpm-alpine AS testing
 
-RUN apk add --no-cache bash curl libpng-dev libzip-dev oniguruma-dev zip unzip git
+RUN apk add --no-cache bash curl libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev zip unzip git
 
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # SQLite for in-memory tests
 RUN apk add --no-cache sqlite-dev && docker-php-ext-install pdo_sqlite
@@ -82,4 +84,8 @@ WORKDIR /var/www/html
 COPY . .
 RUN composer install --no-scripts --prefer-dist
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Empty .env so Dotenv's file read succeeds; actual values come from phpunit.xml / -e flags.
+RUN touch .env
+
+RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && chown -R www-data:www-data storage bootstrap/cache

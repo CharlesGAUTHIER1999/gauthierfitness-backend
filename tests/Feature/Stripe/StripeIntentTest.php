@@ -4,6 +4,7 @@ namespace Tests\Feature\Stripe;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\CustomProductSession;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -171,5 +172,44 @@ class StripeIntentTest extends TestCase
         $response = $this->postJson('/api/payment/intent', $this->shippingPayload())->assertOk();
 
         $this->assertEquals(30.0, $response->json('amount')); // 10 * 3
+    }
+
+    public function test_order_item_price_matches_the_amount_charged_for_customized_products(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price_ttc' => 20.00, 'price_ht' => 16.00]);
+
+        $session = CustomProductSession::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'status' => 'ready',
+            'configuration' => [],
+            'unit_price_snapshot' => 35.00, // customization surcharge, differs from the base product price
+        ]);
+
+        $cart = Cart::create(['user_id' => $user->id]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'custom_product_session_id' => $session->id,
+            'quantity' => 1,
+        ]);
+
+        $this->mockStripeReturning('pi_custom_1', 'sec_custom_1');
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/payment/intent', $this->shippingPayload())->assertOk();
+
+        // The amount charged by Stripe must match what is recorded on the order item —
+        // both must use the customization price snapshot, not the base product/option price.
+        $this->assertEquals(35.0, $response->json('amount'));
+
+        $this->assertDatabaseHas('order_items', [
+            'product_id' => $product->id,
+            'custom_product_session_id' => $session->id,
+            'unit_price' => 35.00,
+            'total' => 35.00,
+        ]);
     }
 }
