@@ -9,8 +9,6 @@ Thumbs.db
 /vendor
 /node_modules
 
-/storage/
-/bootstrap/cache/
 public/storage
 /public/build
 /public/hot
