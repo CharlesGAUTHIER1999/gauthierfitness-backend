@@ -14,7 +14,7 @@
         "laravel/tinker": "^v3.0.2",
         "predis/predis": "^3.5",
         "sentry/sentry-laravel": "^4.26",
-        "stripe/stripe-php": "^v19.4.1",
+        "stripe/stripe-php": "^v20.3.0",
         "symfony/css-selector": "^v7.4.9",
         "symfony/dom-crawler": "^v7.4.12"
     },
