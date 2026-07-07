@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminStockController;
+use App\Http\Controllers\Admin\AdminTicketController;
 use App\Http\Controllers\AI\AIDesignController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -29,10 +30,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
-Route::post('/login', LoginController::class)->name('login');
-Route::post('/register', RegisterController::class)->name('register');
+Route::post('/login', LoginController::class)->middleware('throttle:10,1')->name('login');
+Route::post('/register', RegisterController::class)->middleware('throttle:10,1')->name('register');
 Route::post('/forgot-password', ForgotPasswordController::class)->middleware('throttle:5,1')->name('password.email');
-Route::post('/reset-password', ResetPasswordController::class)->name('password.reset');
+Route::post('/reset-password', ResetPasswordController::class)->middleware('throttle:5,1')->name('password.reset');
 
 // Public data
 Route::get('/products', [ProductController::class, 'index']);
@@ -56,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
 
     // Checkout
-    Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent']);
+    Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
@@ -105,4 +106,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/products/{product}/stock', [AdminStockController::class, 'store']);
     Route::patch('/stock/lots/{lot}/adjust', [AdminStockController::class, 'adjust']);
     Route::get('/products/{product}/stock/movements', [AdminStockController::class, 'movements']);
+
+    // Support tickets
+    Route::get('/tickets', [AdminTicketController::class, 'index']);
+    Route::get('/tickets/{ticket}', [AdminTicketController::class, 'show']);
 });

@@ -64,19 +64,16 @@ class OpenAIModerationService
 
         $threshold = (float) config('ai.moderation.threshold', 0.10);
 
-        // Categories flagged by OpenAI (boolean `true`)
-        $flaggedByOpenAi = collect($result['categories'] ?? [])->filter(fn ($flagged) => $flagged === true)
-            ->keys();
-
-        $overThreshold = collect($result['category_scores'] ?? [])
-            ->filter(fn ($score) => (float) $score >= $threshold)
-            ->keys();
-
-        $categories = $flaggedByOpenAi->merge($overThreshold)->unique()->values()->all();
+        $evaluation = ModerationThresholdEvaluator::evaluate(
+            (bool) ($result['flagged'] ?? false),
+            $result['categories'] ?? [],
+            $result['category_scores'] ?? [],
+            $threshold
+        );
 
         return [
-            'flagged' => ($result['flagged'] ?? false) || $overThreshold->isNotEmpty(),
-            'categories' => $categories,
+            'flagged' => $evaluation['flagged'],
+            'categories' => $evaluation['categories'],
             'payload' => $result,
         ];
     }

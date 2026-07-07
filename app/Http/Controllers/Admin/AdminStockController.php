@@ -23,16 +23,14 @@ class AdminStockController extends Controller
      */
     public function list(Request $request): JsonResponse
     {
+        // `images` (not `mainImage`) is what getMainImageAttribute()/getHoverImageAttribute() read from —
+        // eager-loading it here avoids a per-product N+1 when the list is serialized.
         $query = Product::withSum('lots as stock_qty', 'quantity')
-            ->with(['mainImage:id,product_id,url,is_main,position'])
+            ->with(['images:id,product_id,url,is_main,position'])
             ->orderByDesc('id');
 
         if ($request->filled('search')) {
-            $search = $request->query('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
-            });
+            $query->search($request->query('search'));
         }
 
         return response()->json($query->paginate(25));
@@ -48,20 +46,20 @@ class AdminStockController extends Controller
         $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
         ]);
 
-        // Lots without an option (global stock / product without variants)
-        $globalLots = StockLot::where('product_id', $product->id)
-            ->whereNull('product_option_id')
+        // All lots for the product in one query (FIFO : nearest expiration first), then split in memory
+        $allLots = StockLot::where('product_id', $product->id)
             ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
             ->orderBy('id')
             ->get();
 
-        // Lots per option (FIFO : nearest expiration first)
-        $optionStocks = $product->options->map(function ($option) use ($product) {
-            $lots = StockLot::where('product_id', $product->id)
-                ->where('product_option_id', $option->id)
-                ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
-                ->orderBy('id')
-                ->get();
+        // Lots without an option (global stock / product without variants)
+        $globalLots = $allLots->whereNull('product_option_id')->values();
+
+        // Lots per option
+        $lotsByOption = $allLots->whereNotNull('product_option_id')->groupBy('product_option_id');
+
+        $optionStocks = $product->options->map(function ($option) use ($lotsByOption) {
+            $lots = $lotsByOption->get($option->id, collect())->values();
 
             return [
                 'option_id' => $option->id,

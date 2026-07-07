@@ -48,6 +48,7 @@ API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000
 | `APP_ENV`                                 | `local` / `staging` / `production`              |
 | `DB_*`                                    | Connexion MySQL                                 |
 | `SANCTUM_STATEFUL_DOMAINS`                | Domaines autorisés à utiliser le cookie Sanctum |
+| `CORS_ALLOWED_ORIGINS`                    | Origines front autorisées (vide = localhost en dev) |
 | `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe                                          |
 | `OPENAI_API_KEY`                          | OpenAI Images                                   |
 | `MAIL_*`                                  | SMTP (Mailpit en local, OVH en prod)            |
@@ -55,6 +56,23 @@ API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000
 
 Tableau
 complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
+
+### Docker (optionnel)
+
+Deux `Dockerfile` distincts, pour deux usages différents :
+
+| Fichier                  | Usage                                                                          |
+|---------------------------|--------------------------------------------------------------------------------|
+| `Dockerfile` (racine)      | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR |
+| `docker/Dockerfile`        | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
+
+```bash
+cp .env.example .env    # si pas déjà fait
+docker compose up -d
+docker compose exec app php artisan migrate --seed
+```
+
+API accessible sur `http://localhost:8000`, MySQL sur `localhost:3308` (port mappé pour éviter un conflit avec un MySQL local).
 
 ---
 
@@ -74,14 +92,19 @@ app/
 │   │   ├── ProductController.php
 │   │   ├── ContactController.php
 │   │   └── StripeController.php          ← PaymentIntent + webhook
+│   ├── Middleware/       AdminMiddleware (garde les routes /admin)
 │   ├── Requests/         FormRequests (validation + autorisation)
-│   └── Resources/        API Resources (ProductResource, CartResource, …)
+│   └── Resources/        API Resources (ProductResource)
 ├── Models/               Eloquent : User, Cart, Order, Product, StockLot, …
 ├── Notifications/        Emails transactionnels (OrderConfirmed, OrderStatusUpdated)
 ├── Providers/            AppServiceProvider (RateLimiter, Scramble security)
-└── Services/AI/          OpenAIImageService
+└── Services/
+    ├── AI/               OpenAIImageService, OpenAIModerationService, ModerationThresholdEvaluator, PromptBlocklist
+    ├── Pricing/           CartPricingCalculator
+    ├── Stock/             StockAllocator
+    └── CartMergeService.php
 
-routes/api.php            41 routes (3 groupes : public / auth:sanctum / auth:sanctum + admin)
+routes/api.php            43 routes (3 groupes : public / auth:sanctum / auth:sanctum + admin)
 database/migrations/      Schéma versionné
 swagger/openapi.json      Spec OpenAPI 3.1 régénérée par Scramble
 tests/                    Feature + Unit (SQLite in-memory)
