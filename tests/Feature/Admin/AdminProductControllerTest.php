@@ -108,6 +108,22 @@ class AdminProductControllerTest extends TestCase
             ->assertJsonValidationErrors(['name', 'price_ht', 'price_ttc', 'vat']);
     }
 
+    public function test_create_product_rejects_a_sku_already_in_use(): void
+    {
+        Sanctum::actingAs($this->admin);
+        Product::factory()->create(['sku' => 'SKU-DUP-001']);
+
+        $this->postJson('/api/admin/products', [
+            'name' => 'Autre produit',
+            'sku' => 'SKU-DUP-001',
+            'price_ht' => 10.0,
+            'price_ttc' => 12.0,
+            'vat' => 20.0,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['sku']);
+    }
+
     /* ── Update ─────────────────────────────────────────────────── */
 
     public function test_admin_can_update_product(): void

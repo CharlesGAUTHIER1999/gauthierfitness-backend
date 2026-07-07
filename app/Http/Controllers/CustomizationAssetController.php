@@ -19,32 +19,7 @@ class CustomizationAssetController extends Controller
      */
     public function uploadLogo(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'file' => [
-                'required',
-                'file',
-                'mimes:png,jpg,jpeg,webp',
-                'max:3072',
-            ],
-        ]);
-
-        $file = $data['file'];
-        $user = $request->user();
-        $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $directory = 'customization/logos/'.$user->id;
-        $filename = Str::uuid()->toString().'.'.$extension;
-        $storedPath = $file->storeAs($directory, $filename, 'public');
-
-        return response()->json([
-            'message' => 'Logo uploadé avec succès.',
-            'data' => [
-                'path' => $storedPath,
-                'url' => Storage::disk('public')->url($storedPath),
-                'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-            ],
-        ], 201);
+        return $this->storeUpload($request, 'logos', 3072, 'Logo uploadé avec succès.');
     }
 
     /**
@@ -55,24 +30,29 @@ class CustomizationAssetController extends Controller
      */
     public function uploadImage(Request $request): JsonResponse
     {
+        return $this->storeUpload($request, 'images', 5120, 'Image uploadée avec succès.');
+    }
+
+    private function storeUpload(Request $request, string $subdirectory, int $maxKb, string $successMessage): JsonResponse
+    {
         $data = $request->validate([
             'file' => [
                 'required',
                 'file',
                 'mimes:png,jpg,jpeg,webp',
-                'max:5120',
+                "max:{$maxKb}",
             ],
         ]);
 
         $file = $data['file'];
         $user = $request->user();
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $directory = 'customization/images/'.$user->id;
+        $directory = "customization/{$subdirectory}/".$user->id;
         $filename = Str::uuid()->toString().'.'.$extension;
         $storedPath = $file->storeAs($directory, $filename, 'public');
 
         return response()->json([
-            'message' => 'Image uploadée avec succès.',
+            'message' => $successMessage,
             'data' => [
                 'path' => $storedPath,
                 'url' => Storage::disk('public')->url($storedPath),

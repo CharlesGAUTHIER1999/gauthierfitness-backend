@@ -31,11 +31,7 @@ class AdminProductController extends Controller
         ])->orderByDesc('id');
 
         if ($request->filled('search')) {
-            $search = $request->query('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
-            });
+            $query->search($request->query('search'));
         }
 
         if ($request->filled('is_active')) {

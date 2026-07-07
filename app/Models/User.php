@@ -8,7 +8,6 @@ use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -58,24 +57,6 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->hasOne(Cart::class);
     }
 
-    /**
-     * Items in the user's cart.
-     *
-     * IMPORTANT: hasManyThrough needs explicit keys, otherwise you can end up
-     * with an empty cart on the backend.
-     */
-    public function cartItems(): HasManyThrough
-    {
-        return $this->hasManyThrough(
-            CartItem::class,
-            Cart::class,
-            'user_id', // FK on carts
-            'cart_id', // FK on cart_items
-            'id',      // local key on users
-            'id'       // local key on carts
-        );
-    }
-
     /** Checks whether this user has the given role. */
     public function hasRole(string $role): bool
     {
@@ -86,6 +67,18 @@ class User extends Authenticatable implements CanResetPasswordContract
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    /** Public-facing user payload shared by the login/register/profile endpoints. */
+    public function authPayload(): array
+    {
+        return [
+            'id' => $this->id,
+            'firstname' => $this->firstname,
+            'lastname' => $this->lastname,
+            'email' => $this->email,
+            'is_admin' => $this->isAdmin(),
+        ];
     }
 
     /** Sends the password reset notification with a link pointing to the frontend */

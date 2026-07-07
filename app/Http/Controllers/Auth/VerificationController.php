@@ -21,12 +21,8 @@ class VerificationController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'id' => $user->id,
-            'firstname' => $user->firstname,
-            'lastname' => $user->lastname,
-            'email' => $user->email,
+            ...$user->authPayload(),
             'roles' => $user->roles()->pluck('name'),
-            'is_admin' => $user->isAdmin(),
         ]);
     }
 }

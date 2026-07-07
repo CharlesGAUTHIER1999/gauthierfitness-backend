@@ -45,13 +45,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'firstname' => $user->firstname,
-                'lastname' => $user->lastname,
-                'email' => $user->email,
-                'is_admin' => $user->isAdmin(),
-            ],
+            'user' => $user->authPayload(),
         ], 201);
     }
 }
