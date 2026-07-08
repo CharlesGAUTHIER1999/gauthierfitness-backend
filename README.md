@@ -34,6 +34,7 @@ cp .env.example .env
 composer install
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link   # requis pour que les images produits soient servies
 
 # Lance simultanément server, queue, pail, vite
 composer dev
@@ -43,16 +44,16 @@ API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000
 
 ### Variables d'environnement clés
 
-| Var                                       | Usage                                           |
-|-------------------------------------------|-------------------------------------------------|
-| `APP_ENV`                                 | `local` / `staging` / `production`              |
-| `DB_*`                                    | Connexion MySQL                                 |
-| `SANCTUM_STATEFUL_DOMAINS`                | Domaines autorisés à utiliser le cookie Sanctum |
+| Var                                       | Usage                                               |
+|-------------------------------------------|-----------------------------------------------------|
+| `APP_ENV`                                 | `local` / `staging` / `production`                  |
+| `DB_*`                                    | Connexion MySQL                                     |
+| `SANCTUM_STATEFUL_DOMAINS`                | Domaines autorisés à utiliser le cookie Sanctum     |
 | `CORS_ALLOWED_ORIGINS`                    | Origines front autorisées (vide = localhost en dev) |
-| `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe                                          |
-| `OPENAI_API_KEY`                          | OpenAI Images                                   |
-| `MAIL_*`                                  | SMTP (Mailpit en local, OVH en prod)            |
-| `API_VERSION`                             | Version exposée dans la spec OpenAPI            |
+| `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe                                              |
+| `OPENAI_API_KEY`                          | OpenAI Images                                       |
+| `MAIL_*`                                  | SMTP (Mailpit en local, OVH en prod)                |
+| `API_VERSION`                             | Version exposée dans la spec OpenAPI                |
 
 Tableau
 complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
@@ -61,15 +62,16 @@ complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/
 
 Deux `Dockerfile` distincts, pour deux usages différents :
 
-| Fichier                  | Usage                                                                          |
-|---------------------------|--------------------------------------------------------------------------------|
-| `Dockerfile` (racine)      | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR |
-| `docker/Dockerfile`        | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
+| Fichier               | Usage                                                                           |
+|-----------------------|---------------------------------------------------------------------------------|
+| `Dockerfile` (racine) | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR   |
+| `docker/Dockerfile`   | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
 
 ```bash
 cp .env.example .env    # si pas déjà fait
 docker compose up -d
 docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
 ```
 
 API accessible sur `http://localhost:8000`, MySQL sur `localhost:3308` (port mappé pour éviter un conflit avec un MySQL local).
