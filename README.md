@@ -68,7 +68,8 @@ Deux `Dockerfile` distincts, pour deux usages différents :
 | `docker/Dockerfile`   | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
 
 ```bash
-cp .env.example .env    # si pas déjà fait
+cp .env.example .env                  # si pas déjà fait
+cp .env.docker.example .env.docker    # config injectée dans le conteneur app
 docker compose up -d
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
