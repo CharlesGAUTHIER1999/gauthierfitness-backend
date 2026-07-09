@@ -8,6 +8,7 @@ use App\Http\Controllers\AI\AIDesignController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerificationController;
@@ -54,6 +55,7 @@ Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', VerificationController::class)->name('me');
+    Route::patch('/me', ProfileController::class)->name('profile.update');
     Route::post('/logout', LogoutController::class)->name('logout');
 
     // Checkout
