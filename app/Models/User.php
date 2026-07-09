@@ -77,6 +77,10 @@ class User extends Authenticatable implements CanResetPasswordContract
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
             'email' => $this->email,
+            'phone' => $this->phone,
+            'address' => $this->address,
+            'zip' => $this->zip,
+            'city' => $this->city,
             'is_admin' => $this->isAdmin(),
         ];
     }
