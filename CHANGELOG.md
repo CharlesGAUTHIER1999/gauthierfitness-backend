@@ -4,6 +4,14 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.1] - 2026-07-10
+
+### Fixed
+- Ajout de `.env.docker.example` manquant pour l'initialisation Docker locale sur un clone/zip vierge (voir Fiche d'incident 7).
+
+### Removed
+- Favicon.ico vide et inutilisé.
+
 ## [v1.0.0] - 2026-07-08
 
 Première release taguée de l'API. Regroupe l'ensemble des fonctionnalités développées de GF0 à GF31 : catalogue
