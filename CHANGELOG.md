@@ -4,6 +4,12 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.2] - 2026-07-10
+
+### Fixed
+- `vendor/` construit à l'image Docker était masqué par le bind mount local, cassant l'app pour tout utilisateur n'ayant jamais lancé Composer nativement — l'entrypoint du conteneur le reconstruit désormais automatiquement au démarrage si besoin.
+- Ajout de healthchecks (MySQL + app) et passage à `docker compose up -d --wait` pour éliminer les race conditions au premier lancement.
+
 ## [v1.0.1] - 2026-07-10
 
 ### Fixed
