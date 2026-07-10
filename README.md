@@ -29,6 +29,34 @@ Repo : `CharlesGAUTHIER1999/gauthierfitness-backend` &nbsp;·&nbsp; Production :
 
 ## Démarrage local
 
+### Avec Docker (recommandé)
+
+Aucune installation de MySQL en local n'est nécessaire.
+
+```bash
+cp .env.example .env
+cp .env.docker.example .env.docker    # config injectée dans le conteneur app
+docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+```
+
+API accessible sur `http://localhost:8000` (health check : `http://localhost:8000/api/health`), doc Swagger sur
+`http://localhost:8000/docs/api`, MySQL sur `localhost:3308` (port mappé pour éviter un conflit avec un MySQL local).
+
+Deux `Dockerfile` distincts, pour deux usages différents :
+
+| Fichier               | Usage                                                                           |
+|------------------------|----------------------------------------------------------------------------------|
+| `Dockerfile` (racine) | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR   |
+| `docker/Dockerfile`   | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
+
+### Sans Docker
+
+Nécessite un serveur MySQL 8 déjà installé et démarré en local, avec une base et un utilisateur créés au préalable —
+`.env.example` contient des identifiants placeholder (`your_db_user` / `your_db_password`) à recréer tels quels ou à
+adapter aux vôtres (détail : [docs/02-deployment.md § 3](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#3-démarrage-local)).
+
 ```bash
 cp .env.example .env
 composer install
@@ -57,25 +85,6 @@ API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000
 
 Tableau
 complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
-
-### Docker (optionnel)
-
-Deux `Dockerfile` distincts, pour deux usages différents :
-
-| Fichier               | Usage                                                                           |
-|-----------------------|---------------------------------------------------------------------------------|
-| `Dockerfile` (racine) | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR   |
-| `docker/Dockerfile`   | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
-
-```bash
-cp .env.example .env                  # si pas déjà fait
-cp .env.docker.example .env.docker    # config injectée dans le conteneur app
-docker compose up -d
-docker compose exec app php artisan migrate --seed
-docker compose exec app php artisan storage:link
-```
-
-API accessible sur `http://localhost:8000`, MySQL sur `localhost:3308` (port mappé pour éviter un conflit avec un MySQL local).
 
 ---
 
