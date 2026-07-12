@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Orders;
 
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class OrderController extends Controller
      * Order detail.
      * Verifies that the order actually belongs to the authenticated user.
      *
-     * @response 404 scenario="Commande introuvable ou appartenant à un autre utilisateur" {}
+     * @response 404 scenario="Order not found or belongs to another user" {}
      */
     public function show(Request $request, Order $order): JsonResponse
     {

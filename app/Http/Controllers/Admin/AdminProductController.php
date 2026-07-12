@@ -18,9 +18,9 @@ class AdminProductController extends Controller
     /**
      * Paginated list of products (admin).
      *
-     * @queryParam search string Recherche par nom ou SKU. Example: t-shirt
-     * @queryParam is_active boolean Filtrer par statut actif. Example: true
-     * @queryParam is_customizable boolean Filtrer les produits customisables. Example: true
+     * @queryParam search string Search by name or SKU. Example: t-shirt
+     * @queryParam is_active boolean Filter by active status. Example: true
+     * @queryParam is_customizable boolean Filter customizable products. Example: true
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -63,7 +63,7 @@ class AdminProductController extends Controller
     /**
      * Create a product.
      *
-     * @response 422 scenario="SKU déjà utilisé" {"message": "The sku has already been taken."}
+     * @response 422 scenario="SKU already used" {"message": "The sku has already been taken."}
      */
     public function store(Request $request): JsonResponse
     {

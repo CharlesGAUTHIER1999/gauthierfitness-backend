@@ -24,9 +24,9 @@ class AIDesignController extends Controller
      *
      * @throws AiServiceUnavailableException if OpenAI is unreachable or errors out (rendered as 503)
      *
-     * @response 422 scenario="Produit ne supporte pas l'IA" {"message": "AI generation is not allowed for this product."}
-     * @response 422 scenario="Prompt rejeté par la modération" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
-     * @response 422 scenario="Image rejetée par la modération" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
+     * @response 422 scenario="Product does not support AI generation" {"message": "AI generation is not allowed for this product."}
+     * @response 422 scenario="Prompt rejected by moderation" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
+     * @response 422 scenario="Image rejected by moderation" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
      */
     public function __invoke(
         GenerateDesignRequest $request,

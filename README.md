@@ -97,13 +97,12 @@ app/
 │   │   ├── Admin/        Admin produits, commandes, stock
 │   │   ├── AI/           AIDesignController (génération IA)
 │   │   ├── Auth/         Login/Register/Logout/Verification
-│   │   ├── CartController.php
-│   │   ├── CustomizationController.php
-│   │   ├── CustomizationAssetController.php
-│   │   ├── OrderController.php
-│   │   ├── ProductController.php
-│   │   ├── ContactController.php
-│   │   └── StripeController.php          ← PaymentIntent + webhook
+│   │   ├── Cart/         CartController
+│   │   ├── Catalog/      ProductController
+│   │   ├── Customization/CustomizationController, CustomizationAssetController
+│   │   ├── Orders/       OrderController
+│   │   ├── Payments/     StripeController          ← PaymentIntent + webhook
+│   │   └── Support/      ContactController
 │   ├── Middleware/       AdminMiddleware (garde les routes /admin)
 │   ├── Requests/         FormRequests (validation + autorisation)
 │   └── Resources/        API Resources (ProductResource)
@@ -112,9 +111,9 @@ app/
 ├── Providers/            AppServiceProvider (RateLimiter, Scramble security)
 └── Services/
     ├── AI/               OpenAIImageService, OpenAIModerationService, ModerationThresholdEvaluator, PromptBlocklist
+    ├── Cart/             CartMergeService
     ├── Pricing/           CartPricingCalculator
-    ├── Stock/             StockAllocator
-    └── CartMergeService.php
+    └── Stock/             StockAllocator
 
 routes/api.php            43 routes (3 groupes : public / auth:sanctum / auth:sanctum + admin)
 database/migrations/      Schéma versionné

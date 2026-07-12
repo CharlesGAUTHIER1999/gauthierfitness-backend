@@ -19,8 +19,8 @@ class ResetPasswordController extends Controller
      *
      * @unauthenticated
      *
-     * @response 200 scenario="Succès" {"message": "Mot de passe réinitialisé avec succès."}
-     * @response 422 scenario="Token invalide ou expiré" {"message": "This password reset token is invalid."}
+     * @response 200 scenario="Success" {"message": "Mot de passe réinitialisé avec succès."}
+     * @response 422 scenario="Invalid or expired token" {"message": "This password reset token is invalid."}
      */
     public function __invoke(Request $request)
     {

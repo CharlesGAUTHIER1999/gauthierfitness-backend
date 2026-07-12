@@ -58,8 +58,8 @@ class AdminOrderController extends Controller
     /**
      * Paginated list of orders (admin).
      *
-     * @queryParam status string Filtre par statut : new, processing, shipped, delivered, canceled.
-     * @queryParam search string Recherche par email/nom/prénom du client.
+     * @queryParam status string Filter by status: new, processing, shipped, delivered, canceled.
+     * @queryParam search string Search by customer email/first name/last name.
      */
     public function index(Request $request): JsonResponse
     {
@@ -102,7 +102,7 @@ class AdminOrderController extends Controller
      * Update an order's status.
      *
      * @response 200 {"message": "Status updated", "order": {}}
-     * @response 200 scenario="Aucun changement" {"message": "Status unchanged", "order": {}}
+     * @response 200 scenario="No change" {"message": "Status unchanged", "order": {}}
      *
      * @throws Throwable
      */

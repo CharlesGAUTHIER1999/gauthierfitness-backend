@@ -17,9 +17,9 @@ class ForgotPasswordController extends Controller
      *
      * @unauthenticated
      *
-     * @response 200 scenario="Succès" {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
+     * @response 200 scenario="Success" {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
      * @response 422 scenario="Validation" {"message": "The email field is required.", "errors": {"email": ["The email field is required."]}}
-     * @response 429 scenario="Trop de tentatives" {"message": "Too Many Attempts."}
+     * @response 429 scenario="Too many attempts" {"message": "Too Many Attempts."}
      */
     public function __invoke(Request $request)
     {

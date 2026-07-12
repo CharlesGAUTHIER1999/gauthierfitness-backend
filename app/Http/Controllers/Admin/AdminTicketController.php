@@ -14,7 +14,7 @@ class AdminTicketController extends Controller
     /**
      * Paginated list of support tickets (admin).
      *
-     * @queryParam status string Filtre par statut : open, pending, closed.
+     * @queryParam status string Filter by status: open, pending, closed.
      */
     public function index(Request $request): JsonResponse
     {

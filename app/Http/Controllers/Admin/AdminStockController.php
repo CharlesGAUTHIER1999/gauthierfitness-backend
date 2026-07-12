@@ -19,7 +19,7 @@ class AdminStockController extends Controller
      * Global stock view: all products with their total quantity.
      * Returns a paginated list of products (25/page) with the sum of their lot quantities
      *
-     * @queryParam search string Recherche par nom ou SKU. Example: protéine
+     * @queryParam search string Search by name or SKU. Example: protéine
      */
     public function list(Request $request): JsonResponse
     {
@@ -85,7 +85,7 @@ class AdminStockController extends Controller
     /**
      * Create a new lot (restock).
      *
-     * @response 422 scenario="Date d'expiration passée" {"message": "The expiration date field must be a date after today."}
+     * @response 422 scenario="Expiration date in the past" {"message": "The expiration date field must be a date after today."}
      *
      * @throws Throwable
      */

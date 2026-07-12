@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Payments;
 
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -28,10 +29,10 @@ class StripeController extends Controller
     /**
      * Create a Stripe PaymentIntent for the current cart
      *
-     * @response 200 scenario="PaymentIntent créé" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
-     * @response 400 scenario="Panier vide" {"message": "Panier vide"}
-     * @response 401 scenario="Non authentifié" {"message": "Unauthenticated"}
-     * @response 422 scenario="Données de livraison invalides" {"message": "The shipping.zip field is required."}
+     * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
+     * @response 400 scenario="Empty cart" {"message": "Panier vide"}
+     * @response 401 scenario="Unauthenticated" {"message": "Unauthenticated"}
+     * @response 422 scenario="Invalid shipping data" {"message": "The shipping.zip field is required."}
      *
      * @throws Throwable
      */
@@ -184,10 +185,10 @@ class StripeController extends Controller
      *
      * @unauthenticated
      *
-     * @response 200 scenario="Événement traité" {"status": "success"}
-     * @response 200 scenario="Événement déjà traité (idempotence)" {"status": "already_processed"}
-     * @response 400 scenario="Signature invalide" {"error": "Invalid signature"}
-     * @response 500 scenario="Erreur de traitement (retry possible côté Stripe)" {"error": "..."}
+     * @response 200 scenario="Event processed" {"status": "success"}
+     * @response 200 scenario="Event already processed (idempotency)" {"status": "already_processed"}
+     * @response 400 scenario="Invalid signature" {"error": "Invalid signature"}
+     * @response 500 scenario="Processing error (Stripe may retry)" {"error": "..."}
      */
     public function webhook(Request $request): JsonResponse
     {

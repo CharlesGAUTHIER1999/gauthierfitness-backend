@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Customization;
 
+use App\Http\Controllers\Controller;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class CustomizationAssetController extends Controller
      * Upload a logo (PNG/JPG/JPEG/WebP, ≤ 3 MB).
      * Stores the file in `storage/app/public/customization/logos/{user_id}/`
      *
-     * @response 422 scenario="Fichier invalide" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
+     * @response 422 scenario="Invalid file" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadLogo(Request $request): JsonResponse
     {
@@ -26,7 +27,7 @@ class CustomizationAssetController extends Controller
      * Upload a customization image (PNG/JPG/JPEG/WebP, ≤ 5 MB).
      * Stores the file in `storage/app/public/customization/images/{user_id}/`
      *
-     * @response 422 scenario="Fichier invalide" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
+     * @response 422 scenario="Invalid file" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadImage(Request $request): JsonResponse
     {

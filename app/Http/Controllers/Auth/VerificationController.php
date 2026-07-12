@@ -14,7 +14,7 @@ class VerificationController extends Controller
      * Returns the authenticated user with their roles.
      * Used by the frontend to hydrate the store and check whether the token is still valid on application startup.
      *
-     * @response 200 scenario="Succès" { "id": 1, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "roles": ["customer"], "is_admin": false }
+     * @response 200 scenario="Success" { "id": 1, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "roles": ["customer"], "is_admin": false }
      */
     public function __invoke(Request $request)
     {

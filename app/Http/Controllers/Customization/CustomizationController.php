@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Customization;
 
+use App\Http\Controllers\Controller;
 use App\Models\CustomProductSession;
 use App\Models\Design;
 use App\Models\Product;
@@ -26,8 +27,8 @@ class CustomizationController extends Controller
      * Create a customization session.
      * Snapshots the design configuration (text, logo, colors, position) for a customizable product.
      *
-     * @response 422 scenario="Produit non customisable" {"message": "This product is not customizable."}
-     * @response 403 scenario="Design d'un autre utilisateur" {}
+     * @response 422 scenario="Product is not customizable" {"message": "This product is not customizable."}
+     * @response 403 scenario="Design belongs to another user" {}
      */
     public function store(Request $request): JsonResponse
     {
@@ -71,7 +72,7 @@ class CustomizationController extends Controller
     /**
      * Retrieve a customization session.
      *
-     * @response 403 scenario="Session d'un autre utilisateur" {}
+     * @response 403 scenario="Session belongs to another user" {}
      */
     public function show(CustomProductSession $customizationSession): JsonResponse
     {
@@ -87,7 +88,7 @@ class CustomizationController extends Controller
      * Allows changing the configuration, the associated design, the preview image and the status.
      * Allowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`.
      *
-     * @response 403 scenario="Session d'un autre utilisateur" {}
+     * @response 403 scenario="Session belongs to another user" {}
      */
     public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
