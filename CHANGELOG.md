@@ -4,6 +4,11 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.4] - 2026-07-12
+
+### Fixed
+- `DB_ROOT_PASSWORD` manquante dans `.env.docker.example` : `docker compose up` échouait sur un clone/zip vierge, MySQL refusant de s'initialiser sans mot de passe root spécifié. Détecté en testant le démarrage Docker sur une extraction fraîche du zip de rendu (voir Fiche d'incident 7 pour un cas similaire).
+
 ## [v1.0.3] - 2026-07-12
 
 ### Changed
