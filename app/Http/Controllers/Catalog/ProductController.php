@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Catalog;
 
+use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Dedoc\Scramble\Attributes\Group;
@@ -18,10 +19,10 @@ class ProductController extends Controller
      *
      * @unauthenticated
      *
-     * @queryParam per_page integer Nombre de produits par page (1–60, défaut 12). Example: 24
-     * @queryParam gender string Slug d'une catégorie genre (ex: "homme", "femme"). Example: homme
-     * @queryParam category string Slug d'une catégorie (ex: "t-shirts"). Example: t-shirts
-     * @queryParam tag string Tri spécial : "new" (nouveautés), "bestseller" (meilleures ventes). Example: new
+     * @queryParam per_page integer Products per page (1-60, default 12). Example: 24
+     * @queryParam gender string Gender category slug (e.g. "homme", "femme"). Example: homme
+     * @queryParam category string Category slug (e.g. "t-shirts"). Example: t-shirts
+     * @queryParam tag string Special sort: "new" or "bestseller". Example: new
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -91,9 +92,9 @@ class ProductController extends Controller
      *
      * @unauthenticated
      *
-     * @urlParam slug string required Slug du produit (URL-safe). Example: t-shirt-fitness-noir
+     * @urlParam slug string required Product slug (URL-safe). Example: t-shirt-fitness-noir
      *
-     * @response 404 scenario="Produit introuvable" {"message": "No query results for model [App\\Models\\Product]."}
+     * @response 404 scenario="Product not found" {"message": "No query results for model [App\\Models\\Product]."}
      */
     public function show(string $slug): ProductResource
     {

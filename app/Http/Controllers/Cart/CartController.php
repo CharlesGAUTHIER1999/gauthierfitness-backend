@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cart;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\AddToCartRequest;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -35,8 +36,8 @@ class CartController extends Controller
     /**
      * Add a product to the cart.
      *
-     * @response 422 scenario="Stock insuffisant" {"message": "Stock insuffisant"}
-     * @response 403 scenario="Session de personnalisation d'un autre utilisateur" {}
+     * @response 422 scenario="Insufficient stock" {"message": "Stock insuffisant"}
+     * @response 403 scenario="Customization session belongs to another user" {}
      */
     public function add(AddToCartRequest $request)
     {
@@ -89,7 +90,7 @@ class CartController extends Controller
     /**
      * Update the quantity of a cart line.
      *
-     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     * @response 404 scenario="Item not found or belongs to another user" {}
      */
     public function update(Request $request, CartItem $item)
     {
@@ -108,7 +109,7 @@ class CartController extends Controller
     /**
      * Remove a cart line.
      *
-     * @response 404 scenario="Ligne non trouvée ou appartenant à un autre utilisateur" {}
+     * @response 404 scenario="Item not found or belongs to another user" {}
      */
     public function destroy(Request $request, CartItem $item)
     {

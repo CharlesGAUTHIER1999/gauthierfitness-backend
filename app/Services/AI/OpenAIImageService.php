@@ -15,8 +15,8 @@ class OpenAIImageService
      *
      * @return array{b64: string, payload: array}
      *
-     * @throws AiContentRejectedException si le prompt est refusé par gpt-image-1 (400)
-     * @throws AiServiceUnavailableException si le service est injoignable ou en panne
+     * @throws AiContentRejectedException if the prompt is rejected by gpt-image-1 (400)
+     * @throws AiServiceUnavailableException if the service is unreachable or down
      */
     public function generate(string $prompt): array
     {

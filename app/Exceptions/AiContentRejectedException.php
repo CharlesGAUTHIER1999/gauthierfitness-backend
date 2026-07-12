@@ -5,8 +5,8 @@ namespace App\Exceptions;
 use RuntimeException;
 
 /**
- * Levée lorsque le fournisseur d'images (gpt-image-1) refuse un prompt pour
- * violation de sa politique de contenu (HTTP 400). Contrairement à une panne
- * (503), c'est un rejet de contenu : le contrôleur le traduit en 422.
+ * Thrown when the image provider (gpt-image-1) rejects a prompt for violating
+ * its content policy (HTTP 400). Unlike a service outage (503), this is a
+ * content rejection: the controller translates it into a 422.
  */
 class AiContentRejectedException extends RuntimeException {}

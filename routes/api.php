@@ -12,13 +12,13 @@ use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerificationController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\CustomizationAssetController;
-use App\Http\Controllers\CustomizationController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\StripeController;
+use App\Http\Controllers\Cart\CartController;
+use App\Http\Controllers\Catalog\ProductController;
+use App\Http\Controllers\Customization\CustomizationAssetController;
+use App\Http\Controllers\Customization\CustomizationController;
+use App\Http\Controllers\Orders\OrderController;
+use App\Http\Controllers\Payments\StripeController;
+use App\Http\Controllers\Support\ContactController;
 use Illuminate\Support\Facades\Route;
 
 /**

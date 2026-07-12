@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Support;
 
+use App\Http\Controllers\Controller;
 use App\Mail\ContactMessageMail;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -16,8 +17,8 @@ class ContactController extends Controller
      *
      * @unauthenticated
      *
-     * @response 200 scenario="Message envoyé" {"message": "Message envoyé. Nous te répondrons rapidement."}
-     * @response 429 scenario="Trop de requêtes (throttle)" {"message": "Too Many Attempts."}
+     * @response 200 scenario="Message sent" {"message": "Message envoyé. Nous te répondrons rapidement."}
+     * @response 429 scenario="Too many requests (throttle)" {"message": "Too Many Attempts."}
      */
     public function __invoke(Request $request): JsonResponse
     {
