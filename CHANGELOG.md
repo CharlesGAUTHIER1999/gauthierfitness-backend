@@ -4,6 +4,12 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.3] - 2026-07-12
+
+### Changed
+- Contrôleurs réorganisés par domaine (`Cart/`, `Catalog/`, `Customization/`, `Orders/`, `Payments/`, `Support/`), même logique que `Admin/`/`AI/`/`Auth/` déjà en place. `CartMergeService` déplacé dans `Services/Cart/`.
+- Annotations Scramble (`scenario=`, `@queryParam`, `@urlParam`) traduites en anglais pour homogénéiser la doc OpenAPI générée.
+
 ## [v1.0.2] - 2026-07-10
 
 ### Fixed
