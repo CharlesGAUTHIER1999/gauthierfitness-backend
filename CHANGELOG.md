@@ -4,6 +4,11 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.5] - 2026-07-13
+
+### Changed
+- Mise à jour des dépendances Composer mineures/patch groupées par Dependabot (`dedoc/scramble` 0.13.28→0.13.33, `laravel/sail`) et des actions GitHub utilisées en CI/CD (`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `docker/*`, `peter-evans/repository-dispatch`).
+
 ## [v1.0.4] - 2026-07-12
 
 ### Fixed
