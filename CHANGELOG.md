@@ -4,6 +4,11 @@ Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
 
+## [v1.0.6] - 2026-07-13
+
+### Fixed
+- `README.md` : le quickstart Docker (chemin recommandé) ne mentionnait jamais `php artisan key:generate`, contrairement au chemin sans Docker. `APP_KEY` restait donc vide dans `.env.docker` — cassant tout ce qui dépend de l'encryption (cookies, sessions, CSRF) sur une installation fraîche suivant les instructions à la lettre. Repéré en testant le zip de rendu de bout en bout (extraction vierge + build local). Ajout de la génération de la clé + rechargement du conteneur avec `--force-recreate`.
+
 ## [v1.0.5] - 2026-07-13
 
 ### Changed
