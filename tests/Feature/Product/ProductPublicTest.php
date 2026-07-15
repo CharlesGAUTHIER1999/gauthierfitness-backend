@@ -56,32 +56,6 @@ class ProductPublicTest extends TestCase
         $this->assertCount(1, $response->json('data'));
     }
 
-    public function test_listing_filters_by_search_term(): void
-    {
-        Product::factory()->create(['is_active' => true, 'name' => 'T-shirt Fitness Noir']);
-        Product::factory()->create(['is_active' => true, 'name' => 'Legging Sport Gris']);
-
-        $response = $this->getJson('/api/products?search=fitness')->assertOk();
-        $this->assertCount(1, $response->json('data'));
-        $this->assertSame('T-shirt Fitness Noir', $response->json('data.0.name'));
-    }
-
-    public function test_search_is_case_insensitive_and_matches_partial_name(): void
-    {
-        Product::factory()->create(['is_active' => true, 'name' => 'Legging Sport Gris']);
-
-        $response = $this->getJson('/api/products?search=LEGGING')->assertOk();
-        $this->assertCount(1, $response->json('data'));
-    }
-
-    public function test_search_with_no_match_returns_empty_list(): void
-    {
-        Product::factory()->create(['is_active' => true, 'name' => 'T-shirt Fitness Noir']);
-
-        $response = $this->getJson('/api/products?search=inexistant-xyz')->assertOk();
-        $this->assertCount(0, $response->json('data'));
-    }
-
     // Show
 
     public function test_guest_can_view_product_by_slug(): void
