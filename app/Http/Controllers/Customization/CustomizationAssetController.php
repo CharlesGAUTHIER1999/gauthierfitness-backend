@@ -47,8 +47,17 @@ class CustomizationAssetController extends Controller
 
         $file = $data['file'];
         $user = $request->user();
+
+        if ($user) {
+            $ownerKey = (string) $user->id;
+        } else {
+            $guestToken = $request->header('X-Guest-Cart-Token');
+            abort_if(! $guestToken, 400, 'Missing guest cart identifier');
+            $ownerKey = 'guest-'.preg_replace('/[^a-zA-Z0-9_-]/', '', $guestToken);
+        }
+
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $directory = "customization/{$subdirectory}/".$user->id;
+        $directory = "customization/{$subdirectory}/".$ownerKey;
         $filename = Str::uuid()->toString().'.'.$extension;
         $storedPath = $file->storeAs($directory, $filename, 'public');
 

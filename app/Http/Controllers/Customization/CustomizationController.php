@@ -43,9 +43,19 @@ class CustomizationController extends Controller
         $product = Product::findOrFail($data['product_id']);
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
 
+        $user = $request->user();
+        $guestToken = null;
+
+        if (! $user) {
+            $guestToken = $request->header('X-Guest-Cart-Token');
+            abort_if(! $guestToken, 400, 'Missing guest cart identifier');
+            // Designs are AI-generated and AI stays login-only, so a guest never has one.
+            abort_if(! empty($data['design_id']), 422, 'Design does not match the selected product.');
+        }
+
         if (! empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int) $design->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $design->user_id === (int) $user->id, 403);
             abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
         }
 
@@ -53,7 +63,8 @@ class CustomizationController extends Controller
         $unit_price = $option?->price_ttc ?? $product->price_ttc;
 
         $session = CustomProductSession::create([
-            'user_id' => $request->user()->id,
+            'user_id' => $user?->id,
+            'guest_token' => $guestToken,
             'product_id' => $data['product_id'],
             'product_option_id' => $data['product_option_id'] ?? null,
             'status' => 'draft',
@@ -74,9 +85,9 @@ class CustomizationController extends Controller
      *
      * @response 403 scenario="Session belongs to another user" {}
      */
-    public function show(CustomProductSession $customizationSession): JsonResponse
+    public function show(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
-        $this->authorizeOwner($customizationSession->user_id, request()->user()->id);
+        $this->authorizeOwner($customizationSession, $request);
 
         return response()->json([
             'data' => $customizationSession->load(self::SESSION_RELATIONS),
@@ -92,7 +103,7 @@ class CustomizationController extends Controller
      */
     public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
-        $this->authorizeOwner($customizationSession->user_id, $request->user()->id);
+        $this->authorizeOwner($customizationSession, $request);
 
         $data = $request->validate([
             'configuration' => ['nullable', 'array'],
@@ -102,6 +113,8 @@ class CustomizationController extends Controller
         ]);
 
         if (! empty($data['design_id'])) {
+            // Designs are AI-generated and AI stays login-only, so a guest never has one.
+            abort_unless($request->user(), 403);
             $design = Design::findOrFail($data['design_id']);
             abort_unless((int) $design->user_id === (int) $request->user()->id, 403);
             abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
@@ -122,9 +135,16 @@ class CustomizationController extends Controller
         ]);
     }
 
-    // Abort with 403 unless the given user owns the resource.
-    protected function authorizeOwner(int $ownerId, int $currentUserId): void
+    // Abort with 403 unless the requester (authenticated user or guest token) owns the session.
+    protected function authorizeOwner(CustomProductSession $session, Request $request): void
     {
-        abort_if($ownerId !== $currentUserId, 403);
+        if ($user = $request->user()) {
+            abort_unless((int) $session->user_id === (int) $user->id, 403);
+
+            return;
+        }
+
+        $guestToken = $request->header('X-Guest-Cart-Token');
+        abort_unless($guestToken && $session->guest_token === $guestToken, 403);
     }
 }

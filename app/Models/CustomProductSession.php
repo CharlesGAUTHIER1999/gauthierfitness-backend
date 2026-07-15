@@ -10,6 +10,7 @@ class CustomProductSession extends Model
 {
     protected $fillable = [
         'user_id',
+        'guest_token',
         'product_id',
         'product_option_id',
         'status',

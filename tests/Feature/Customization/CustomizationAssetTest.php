@@ -62,12 +62,26 @@ class CustomizationAssetTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_logo_upload_requires_authentication(): void
+    public function test_logo_upload_requires_authentication_or_guest_token(): void
     {
         $file = UploadedFile::fake()->image('logo.png');
 
         $this->postJson('/api/customization/assets/logo', ['file' => $file])
-            ->assertUnauthorized();
+            ->assertStatus(400);
+    }
+
+    public function test_guest_can_upload_logo_with_guest_token(): void
+    {
+        $file = UploadedFile::fake()->image('logo.png', 200, 200);
+
+        $response = $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
+            ->postJson('/api/customization/assets/logo', ['file' => $file]);
+
+        $response->assertCreated();
+
+        $path = $response->json('data.path');
+        Storage::disk('public')->assertExists($path);
+        $this->assertStringContainsString('customization/logos/guest-guest-abc/', $path);
     }
 
     /* ── Upload Image ──────────────────────────────────────────── */
@@ -100,5 +114,19 @@ class CustomizationAssetTest extends TestCase
 
         $path = $response->json('data.path');
         $this->assertStringContainsString("customization/images/{$user->id}/", $path);
+    }
+
+    public function test_guest_can_upload_image_with_guest_token(): void
+    {
+        $file = UploadedFile::fake()->image('photo.jpg', 800, 600);
+
+        $response = $this->withHeader('X-Guest-Cart-Token', 'guest-xyz')
+            ->postJson('/api/customization/assets/image', ['file' => $file]);
+
+        $response->assertCreated();
+
+        $path = $response->json('data.path');
+        Storage::disk('public')->assertExists($path);
+        $this->assertStringContainsString('customization/images/guest-guest-xyz/', $path);
     }
 }
