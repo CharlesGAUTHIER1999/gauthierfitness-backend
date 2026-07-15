@@ -46,7 +46,7 @@ class CustomizationAssetController extends Controller
         ]);
 
         $file = $data['file'];
-        $user = $request->user();
+        $user = $request->user('sanctum');
 
         if ($user) {
             $ownerKey = (string) $user->id;

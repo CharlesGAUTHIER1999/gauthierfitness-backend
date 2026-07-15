@@ -43,7 +43,7 @@ class CustomizationController extends Controller
         $product = Product::findOrFail($data['product_id']);
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
 
-        $user = $request->user();
+        $user = $request->user('sanctum');
         $guestToken = null;
 
         if (! $user) {
@@ -114,9 +114,9 @@ class CustomizationController extends Controller
 
         if (! empty($data['design_id'])) {
             // Designs are AI-generated and AI stays login-only, so a guest never has one.
-            abort_unless($request->user(), 403);
+            abort_unless($request->user('sanctum'), 403);
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int) $design->user_id === (int) $request->user()->id, 403);
+            abort_unless((int) $design->user_id === (int) $request->user('sanctum')->id, 403);
             abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
         }
 
@@ -138,7 +138,7 @@ class CustomizationController extends Controller
     // Abort with 403 unless the requester (authenticated user or guest token) owns the session.
     protected function authorizeOwner(CustomProductSession $session, Request $request): void
     {
-        if ($user = $request->user()) {
+        if ($user = $request->user('sanctum')) {
             abort_unless((int) $session->user_id === (int) $user->id, 403);
 
             return;
