@@ -23,6 +23,7 @@ class ProductController extends Controller
      * @queryParam gender string Gender category slug (e.g. "homme", "femme"). Example: homme
      * @queryParam category string Category slug (e.g. "t-shirts"). Example: t-shirts
      * @queryParam tag string Special sort: "new" or "bestseller". Example: new
+     * @queryParam search string Free-text search on the product name. Example: t-shirt
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -56,6 +57,13 @@ class ProductController extends Controller
                 $q->where('slug', $gender)
                     ->orWhere('slug', 'like', $gender.'-%');
             });
+        }
+
+        if ($request->filled('search')) {
+            $search = (string) $request->query('search');
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+
+            $query->where('name', 'like', '%'.$escaped.'%');
         }
 
         if ($request->filled('category')) {
