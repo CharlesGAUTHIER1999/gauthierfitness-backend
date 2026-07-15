@@ -36,6 +36,31 @@ class CustomizationTest extends TestCase
         ]);
     }
 
+    // Sanctum::actingAs() bypasses real guard resolution and would pass even if the
+    // controller read the wrong guard (regression: it did, see GF34 hotfix — the route
+    // moved out of the auth:sanctum middleware group, which used to set the default
+    // guard for the request; $request->user() without 'sanctum' then silently returned
+    // null for a genuinely logged-in user). A real bearer token exercises the same path
+    // production traffic does.
+    public function test_authenticated_user_with_real_bearer_token_can_create_session(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+        $token = $user->createToken('test')->plainTextToken;
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/customization/sessions', [
+                'product_id' => $product->id,
+                'configuration' => ['color' => 'red'],
+            ])->assertCreated();
+
+        $this->assertDatabaseHas('custom_product_sessions', [
+            'user_id' => $user->id,
+            'guest_token' => null,
+            'product_id' => $product->id,
+        ]);
+    }
+
     public function test_create_session_fails_for_non_customizable_product(): void
     {
         $user = User::factory()->create();
