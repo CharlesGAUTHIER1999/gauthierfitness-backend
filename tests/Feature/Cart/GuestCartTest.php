@@ -71,14 +71,52 @@ class GuestCartTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_guest_cannot_attach_a_customization_session(): void
+    public function test_guest_cannot_attach_another_guests_or_a_users_customization_session(): void
     {
         $product = Product::factory()->create(['is_customizable' => true]);
         StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 10]);
 
         $owner = User::factory()->create();
-        $session = CustomProductSession::create([
+        $userSession = CustomProductSession::create([
             'user_id' => $owner->id,
+            'product_id' => $product->id,
+            'status' => 'ready',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-a')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+                'custom_product_session_id' => $userSession->id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['custom_product_session_id']);
+
+        $otherGuestSession = CustomProductSession::create([
+            'guest_token' => 'guest-b',
+            'product_id' => $product->id,
+            'status' => 'ready',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-a')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+                'custom_product_session_id' => $otherGuestSession->id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['custom_product_session_id']);
+    }
+
+    public function test_guest_can_attach_own_customization_session(): void
+    {
+        $product = Product::factory()->create(['is_customizable' => true]);
+        StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 10]);
+
+        $session = CustomProductSession::create([
+            'guest_token' => 'guest-a',
             'product_id' => $product->id,
             'status' => 'ready',
             'configuration' => [],
@@ -90,8 +128,14 @@ class GuestCartTest extends TestCase
                 'quantity' => 1,
                 'custom_product_session_id' => $session->id,
             ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['custom_product_session_id']);
+            ->assertOk()
+            ->assertJsonPath('count', 1);
+
+        $this->assertDatabaseHas('cart_items', [
+            'custom_product_session_id' => $session->id,
+        ]);
+        $session->refresh();
+        $this->assertEquals('added_to_cart', $session->status);
     }
 
     public function test_login_merges_guest_cart_into_user_cart(): void

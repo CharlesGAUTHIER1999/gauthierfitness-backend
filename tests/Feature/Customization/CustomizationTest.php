@@ -49,13 +49,31 @@ class CustomizationTest extends TestCase
             ->assertJsonPath('message', 'This product is not customizable.');
     }
 
-    public function test_create_session_requires_authentication(): void
+    public function test_create_session_requires_authentication_or_guest_token(): void
     {
         $product = Product::factory()->create(['is_customizable' => true]);
 
         $this->postJson('/api/customization/sessions', [
             'product_id' => $product->id,
-        ])->assertUnauthorized();
+        ])->assertStatus(400);
+    }
+
+    public function test_guest_can_create_customization_session_with_guest_token(): void
+    {
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
+            ->postJson('/api/customization/sessions', [
+                'product_id' => $product->id,
+                'configuration' => ['color' => 'red'],
+            ])->assertCreated()
+            ->assertJsonPath('data.product_id', $product->id);
+
+        $this->assertDatabaseHas('custom_product_sessions', [
+            'guest_token' => 'guest-abc',
+            'product_id' => $product->id,
+            'user_id' => null,
+        ]);
     }
 
     public function test_create_session_validates_product_id(): void
@@ -129,6 +147,51 @@ class CustomizationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_guest_can_show_own_customization_session(): void
+    {
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $session = CustomProductSession::create([
+            'guest_token' => 'guest-abc',
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
+            ->getJson("/api/customization/sessions/{$session->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $session->id);
+    }
+
+    public function test_guest_cannot_show_another_guests_or_a_users_session(): void
+    {
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $guestSession = CustomProductSession::create([
+            'guest_token' => 'guest-a',
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-b')
+            ->getJson("/api/customization/sessions/{$guestSession->id}")
+            ->assertForbidden();
+
+        $user = User::factory()->create();
+        $userSession = CustomProductSession::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-b')
+            ->getJson("/api/customization/sessions/{$userSession->id}")
+            ->assertForbidden();
+    }
+
     /* ── Update ────────────────────────────────────────────────── */
 
     public function test_user_can_update_own_session_configuration(): void
@@ -172,5 +235,52 @@ class CustomizationTest extends TestCase
         $this->patchJson("/api/customization/sessions/{$session->id}", [
             'status' => 'invalid_status',
         ])->assertStatus(422);
+    }
+
+    public function test_guest_can_update_own_session_configuration(): void
+    {
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $session = CustomProductSession::create([
+            'guest_token' => 'guest-abc',
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => ['color' => 'red'],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
+            ->patchJson("/api/customization/sessions/{$session->id}", [
+                'configuration' => ['color' => 'blue'],
+                'status' => 'ready',
+            ])->assertOk();
+
+        $session->refresh();
+        $this->assertEquals('blue', $session->configuration['color']);
+        $this->assertEquals('ready', $session->status);
+    }
+
+    public function test_guest_cannot_attach_a_design_to_a_session(): void
+    {
+        $owner = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $design = Design::create([
+            'user_id' => $owner->id,
+            'product_id' => $product->id,
+            'name' => 'Some design',
+            'status' => 'generated',
+        ]);
+
+        $session = CustomProductSession::create([
+            'guest_token' => 'guest-abc',
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => [],
+        ]);
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
+            ->patchJson("/api/customization/sessions/{$session->id}", [
+                'design_id' => $design->id,
+            ])->assertForbidden();
     }
 }
