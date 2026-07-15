@@ -58,7 +58,7 @@ class CartController extends Controller
 
         if ($customSessionId) {
             $session = CustomProductSession::findOrFail($customSessionId);
-            abort_unless((int) $session->user_id === (int) $request->user('sanctum')->id, 403);
+            abort_unless($this->ownsSession($request, $session), 403);
             abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
 
             $item = CartItem::create([
@@ -153,6 +153,18 @@ class CartController extends Controller
         $guestToken = $request->header('X-Guest-Cart-Token');
 
         return $guestToken && $cart->guest_token === $guestToken;
+    }
+
+    // Whether the current request (user or guest) owns the given customization session
+    private function ownsSession(Request $request, CustomProductSession $session): bool
+    {
+        if ($user = $request->user('sanctum')) {
+            return (int) $session->user_id === (int) $user->id;
+        }
+
+        $guestToken = $request->header('X-Guest-Cart-Token');
+
+        return $guestToken && $session->guest_token === $guestToken;
     }
 
     // Build the JSON-friendly cart representation
