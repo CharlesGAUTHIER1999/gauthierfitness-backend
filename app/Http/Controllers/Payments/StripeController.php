@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Payments;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -19,6 +20,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Stripe\StripeClient;
 use Stripe\Webhook;
 use Throwable;
@@ -31,20 +33,23 @@ class StripeController extends Controller
      *
      * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
      * @response 400 scenario="Empty cart" {"message": "Panier vide"}
-     * @response 401 scenario="Unauthenticated" {"message": "Unauthenticated"}
+     * @response 400 scenario="Missing guest cart identifier" {"message": "Missing guest cart identifier"}
      * @response 422 scenario="Invalid shipping data" {"message": "The shipping.zip field is required."}
      *
      * @throws Throwable
      */
     public function createPaymentIntent(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $request->user('sanctum');
+        $guestToken = null;
 
         if (! $user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
+            $guestToken = $request->header('X-Guest-Cart-Token');
+            abort_if(! $guestToken, 400, 'Missing guest cart identifier');
         }
 
         $data = $request->validate([
+            'email' => ['required', 'email'],
             'shipping' => ['required', 'array'],
             'shipping.firstname' => ['required', 'string'],
             'shipping.lastname' => ['required', 'string'],
@@ -55,7 +60,9 @@ class StripeController extends Controller
             'shipping.phone' => ['nullable', 'string'],
         ]);
 
-        $cart = $user->cart()->firstOrCreate(['user_id' => $user->id]);
+        $cart = $user
+            ? $user->cart()->firstOrCreate(['user_id' => $user->id])
+            : Cart::firstOrCreate(['guest_token' => $guestToken]);
 
         $cartItems = $cart->items()
             ->with(['product', 'option', 'customProductSession'])
@@ -67,7 +74,7 @@ class StripeController extends Controller
 
         $stripe = app(StripeClient::class);
 
-        return DB::transaction(function () use ($user, $cartItems, $data, $stripe) {
+        return DB::transaction(function () use ($user, $guestToken, $cartItems, $data, $stripe) {
             $totalTtc = 0.0;
             $totalHt = 0.0;
             $pricedItems = [];
@@ -98,7 +105,9 @@ class StripeController extends Controller
 
             // 2) Order
             $order = Order::create([
-                'user_id' => $user->id,
+                'user_id' => $user?->id,
+                'guest_token' => $guestToken,
+                'email' => $data['email'],
                 'total_ht' => $totalHt,
                 'total_ttc' => $totalTtc,
                 'payment_status' => 'pending',
@@ -159,7 +168,7 @@ class StripeController extends Controller
                 'description' => "Commande #$order->id",
                 'metadata' => [
                     'order_id' => (string) $order->id,
-                    'user_id' => (string) $user->id,
+                    'user_id' => $user ? (string) $user->id : '',
                     'payment_id' => (string) $payment->id,
                 ],
             ]);
@@ -247,11 +256,18 @@ class StripeController extends Controller
                         // clear DB cart (source: cart->items)
                         if ($order->user) {
                             $order->user->cart?->items()->delete();
+                        } elseif ($order->guest_token) {
+                            Cart::where('guest_token', $order->guest_token)->first()?->items()->delete();
                         }
 
                         // confirmation email (idempotent)
-                        if ($order->user && ! $order->paid_email_sent_at) {
-                            $order->user->notify(new OrderConfirmed($order));
+                        if (! $order->paid_email_sent_at && ($order->user || $order->email)) {
+                            if ($order->user) {
+                                $order->user->notify(new OrderConfirmed($order));
+                            } else {
+                                Notification::route('mail', $order->email)->notify(new OrderConfirmed($order));
+                            }
+
                             $order->paid_email_sent_at = now();
                             $order->save();
                         }
