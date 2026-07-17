@@ -23,12 +23,13 @@ class OrderConfirmed extends Notification
     /** Build the order confirmation email, listing items and total. */
     public function toMail($notifiable): MailMessage
     {
-        $order = $this->order->loadMissing(['items.product']);
+        $order = $this->order->loadMissing(['items.product', 'shipment']);
+        $name = $order->shipment?->firstname ?? 'client';
 
         $mail = (new MailMessage)
             ->subject("Commande #{$order->id} confirmée ✅")
             ->replyTo(config('mail.support_address') ?? config('mail.from.address'))
-            ->greeting("Bonjour {$notifiable->firstname},")
+            ->greeting("Bonjour {$name},")
             ->line('Merci pour votre commande chez Gauthier Fitness.')
             ->line('Votre paiement a bien été confirmé.')
             ->line(' ')
@@ -47,10 +48,13 @@ class OrderConfirmed extends Notification
             $mail->line("• {$name} ×{$qty} — {$lineTotal}");
         }
 
-        return $mail
-            ->line(' ')
-            ->line('Vous pouvez suivre l’évolution de votre commande depuis votre espace client.')
-            ->action('Voir mes commandes', config('app.front_url').'/account/orders')
-            ->salutation('— Gauthier Fitness');
+        // Guest orders aren't tied to an account
+        if ($order->user) {
+            $mail->line(' ')
+                ->line('Vous pouvez suivre l’évolution de votre commande depuis votre espace client.')
+                ->action('Voir mes commandes', config('app.front_url').'/account/orders');
+        }
+
+        return $mail->salutation('— Gauthier Fitness');
     }
 }

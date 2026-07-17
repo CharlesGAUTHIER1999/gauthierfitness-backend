@@ -22,6 +22,7 @@ class StripeIntentTest extends TestCase
     private function shippingPayload(): array
     {
         return [
+            'email' => 'alice@example.com',
             'shipping' => [
                 'firstname' => 'Alice',
                 'lastname' => 'Dupont',
@@ -61,12 +62,39 @@ class StripeIntentTest extends TestCase
         parent::tearDown();
     }
 
-    /* ── Auth ──────────────────────────────────────────────────── */
+    /* ── Guest checkout ────────────────────────────────────────── */
 
-    public function test_unauthenticated_user_cannot_create_payment_intent(): void
+    public function test_request_without_auth_or_guest_token_is_rejected(): void
     {
         $this->postJson('/api/payment/intent', $this->shippingPayload())
-            ->assertUnauthorized();
+            ->assertStatus(400)
+            ->assertJsonPath('message', 'Missing guest cart identifier');
+    }
+
+    public function test_guest_can_create_payment_intent_with_guest_token(): void
+    {
+        $product = Product::factory()->create(['price_ttc' => 25.00, 'price_ht' => 20.00]);
+
+        $cart = Cart::create(['guest_token' => 'guest-checkout-1']);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $this->mockStripeReturning('pi_guest_1', 'sec_guest_1');
+
+        $this->withHeader('X-Guest-Cart-Token', 'guest-checkout-1')
+            ->postJson('/api/payment/intent', $this->shippingPayload())
+            ->assertOk()
+            ->assertJsonPath('payment_intent_id', 'pi_guest_1');
+
+        $this->assertDatabaseHas('orders', [
+            'user_id' => null,
+            'guest_token' => 'guest-checkout-1',
+            'email' => 'alice@example.com',
+            'total_ttc' => 25.00,
+        ]);
     }
 
     /* ── Empty cart ────────────────────────────────────────────── */
@@ -89,6 +117,7 @@ class StripeIntentTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->postJson('/api/payment/intent', [
+            'email' => 'alice@example.com',
             'shipping' => ['firstname' => 'Alice'],
         ])->assertStatus(422)
             ->assertJsonValidationErrors([
@@ -98,6 +127,19 @@ class StripeIntentTest extends TestCase
                 'shipping.city',
                 'shipping.country',
             ]);
+    }
+
+    public function test_email_is_required(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $payload = $this->shippingPayload();
+        unset($payload['email']);
+
+        $this->postJson('/api/payment/intent', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
     /* ── Happy path ────────────────────────────────────────────── */
