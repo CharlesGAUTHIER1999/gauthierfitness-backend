@@ -59,14 +59,14 @@ Route::patch('/customization/sessions/{customizationSession}', [CustomizationCon
 Route::post('/customization/assets/logo', [CustomizationAssetController::class, 'uploadLogo']);
 Route::post('/customization/assets/image', [CustomizationAssetController::class, 'uploadImage']);
 
+// Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
+Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', VerificationController::class)->name('me');
     Route::patch('/me', ProfileController::class)->name('profile.update');
     Route::post('/logout', LogoutController::class)->name('logout');
-
-    // Checkout
-    Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);

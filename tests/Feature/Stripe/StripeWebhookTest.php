@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Stripe;
 
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -179,6 +181,55 @@ class StripeWebhookTest extends TestCase
         Notification::assertSentTo($user, OrderConfirmed::class);
 
         $this->assertNotNull($order->fresh()->paid_email_sent_at);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function test_payment_intent_succeeded_sends_confirmation_email_and_clears_cart_for_guest(): void
+    {
+        $cart = Cart::create(['guest_token' => 'guest-webhook-1']);
+        $product = Product::factory()->create();
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => null,
+            'guest_token' => 'guest-webhook-1',
+            'email' => 'guest@example.com',
+            'payment_status' => 'pending',
+            'order_status' => 'new',
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'provider' => 'stripe',
+            'amount' => 50.00,
+            'status' => 'pending',
+        ]);
+
+        $payload = $this->buildSucceededPayload('evt_guest_email_1', $order->id, $payment->id);
+
+        $this->call(
+            'POST', '/api/stripe/webhook', [], [], [],
+            array_merge(
+                ['CONTENT_TYPE' => 'application/json'],
+                $this->convertHeadersForCall($this->signedHeaders($payload))
+            ),
+            $payload
+        )->assertOk();
+
+        // No User to notify — must go through Laravel's on-demand ("anonymous"
+        // notifiable) mail route to the email stored on the order.
+        Notification::assertSentOnDemand(
+            OrderConfirmed::class,
+            fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'guest@example.com'
+        );
+
+        $this->assertNotNull($order->fresh()->paid_email_sent_at);
+        $this->assertDatabaseCount('cart_items', 0);
     }
 
     public function test_payment_intent_succeeded_decrements_stock_fifo(): void
