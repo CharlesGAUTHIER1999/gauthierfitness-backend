@@ -13,6 +13,7 @@ use App\Models\StockMovement;
 use App\Models\WebhookEvent;
 use App\Notifications\OrderConfirmed;
 use App\Services\Pricing\CartPricingCalculator;
+use App\Services\Pricing\ShippingCalculator;
 use App\Services\Stock\StockAllocator;
 use Dedoc\Scramble\Attributes\Group;
 use Exception;
@@ -31,7 +32,7 @@ class StripeController extends Controller
     /**
      * Create a Stripe PaymentIntent for the current cart
      *
-     * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "currency": "EUR" }
+     * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "shipping_cost": 4.90, "currency": "EUR" }
      * @response 400 scenario="Empty cart" {"message": "Panier vide"}
      * @response 400 scenario="Missing guest cart identifier" {"message": "Missing guest cart identifier"}
      * @response 422 scenario="Invalid shipping data" {"message": "The shipping.zip field is required."}
@@ -50,6 +51,7 @@ class StripeController extends Controller
 
         $data = $request->validate([
             'email' => ['required', 'email'],
+            'shipping_method' => ['required', 'in:'.implode(',', ShippingCalculator::METHODS)],
             'shipping' => ['required', 'array'],
             'shipping.firstname' => ['required', 'string'],
             'shipping.lastname' => ['required', 'string'],
@@ -103,6 +105,12 @@ class StripeController extends Controller
             $totalTtc = CartPricingCalculator::round($totalTtc);
             $totalHt = CartPricingCalculator::round($totalHt);
 
+            // Shipping cost is priced here, server-side, from the product subtotal — the
+            // method is client-chosen but never its price, so the Stripe amount can't be tampered with.
+            $shippingMethod = $data['shipping_method'];
+            $shippingCost = CartPricingCalculator::round(ShippingCalculator::cost($shippingMethod, $totalTtc));
+            $totalTtc = CartPricingCalculator::round($totalTtc + $shippingCost);
+
             // 2) Order
             $order = Order::create([
                 'user_id' => $user?->id,
@@ -124,6 +132,8 @@ class StripeController extends Controller
                 'city' => $data['shipping']['city'],
                 'country' => $data['shipping']['country'],
                 'phone' => $data['shipping']['phone'] ?? null,
+                'method' => $shippingMethod,
+                'cost' => $shippingCost,
                 'status' => 'pending',
             ]);
 
@@ -182,6 +192,7 @@ class StripeController extends Controller
                 'payment_intent_id' => $intent->id,
                 'client_secret' => $intent->client_secret,
                 'amount' => $totalTtc,
+                'shipping_cost' => $shippingCost,
                 'currency' => 'EUR',
             ]);
         });
