@@ -56,8 +56,11 @@ Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
 Route::post('/customization/sessions', [CustomizationController::class, 'store']);
 Route::get('/customization/sessions/{customizationSession}', [CustomizationController::class, 'show']);
 Route::patch('/customization/sessions/{customizationSession}', [CustomizationController::class, 'update']);
-Route::post('/customization/assets/logo', [CustomizationAssetController::class, 'uploadLogo']);
-Route::post('/customization/assets/image', [CustomizationAssetController::class, 'uploadImage']);
+Route::post('/customization/assets/logo', [CustomizationAssetController::class, 'uploadLogo'])->middleware('throttle:20,10');
+Route::post('/customization/assets/image', [CustomizationAssetController::class, 'uploadImage'])->middleware('throttle:20,10');
+
+// Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
+Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
 
 // Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
 Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
@@ -73,8 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/orders', [OrderController::class, 'store']);
 
-    // AI
-    Route::post('/ai/designs/generate', AIDesignController::class);
+    // AI (each call hits the paid OpenAI image API — capped per user to bound cost/abuse)
+    Route::post('/ai/designs/generate', AIDesignController::class)->middleware('throttle:8,60');
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Order;
+use App\Services\Pricing\ShippingCalculator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -23,13 +24,12 @@ class OrderConfirmed extends Notification
     /** Build the order confirmation email, listing items and total. */
     public function toMail($notifiable): MailMessage
     {
-        $order = $this->order->loadMissing(['items.product', 'shipment']);
-        $name = $order->shipment?->firstname ?? 'client';
+        $order = $this->order->loadMissing(['items.product']);
 
         $mail = (new MailMessage)
             ->subject("Commande #{$order->id} confirmée ✅")
             ->replyTo(config('mail.support_address') ?? config('mail.from.address'))
-            ->greeting("Bonjour {$name},")
+            ->greeting("Bonjour {$notifiable->firstname},")
             ->line('Merci pour votre commande chez Gauthier Fitness.')
             ->line('Votre paiement a bien été confirmé.')
             ->line(' ')
@@ -46,6 +46,16 @@ class OrderConfirmed extends Notification
             $qty = (int) $item->quantity;
             $lineTotal = number_format((float) $item->total, 2, ',', ' ').' €';
             $mail->line("• {$name} ×{$qty} — {$lineTotal}");
+        }
+
+        if ($order->shipment) {
+            $methodLabel = ShippingCalculator::METHOD_LABELS[$order->shipment->method] ?? 'Standard';
+            $shippingCost = (float) $order->shipment->cost;
+            $shippingLine = $shippingCost > 0
+                ? number_format($shippingCost, 2, ',', ' ').' €'
+                : 'Gratuite';
+            $mail->line(' ')
+                ->line("Livraison ({$methodLabel}) : {$shippingLine}");
         }
 
         // Guest orders aren't tied to an account
