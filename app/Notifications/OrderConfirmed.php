@@ -24,13 +24,12 @@ class OrderConfirmed extends Notification
     /** Build the order confirmation email, listing items and total. */
     public function toMail($notifiable): MailMessage
     {
-        $order = $this->order->loadMissing(['items.product', 'shipment']);
-        $name = $order->shipment?->firstname ?? 'client';
+        $order = $this->order->loadMissing(['items.product']);
 
         $mail = (new MailMessage)
             ->subject("Commande #{$order->id} confirmée ✅")
             ->replyTo(config('mail.support_address') ?? config('mail.from.address'))
-            ->greeting("Bonjour {$name},")
+            ->greeting("Bonjour {$notifiable->firstname},")
             ->line('Merci pour votre commande chez Gauthier Fitness.')
             ->line('Votre paiement a bien été confirmé.')
             ->line(' ')
