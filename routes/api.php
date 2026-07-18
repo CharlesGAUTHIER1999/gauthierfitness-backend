@@ -62,9 +62,6 @@ Route::post('/customization/assets/image', [CustomizationAssetController::class,
 // Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
 Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
 
-// Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
-Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
-
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', VerificationController::class)->name('me');
