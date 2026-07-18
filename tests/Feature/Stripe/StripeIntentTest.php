@@ -19,10 +19,11 @@ class StripeIntentTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function shippingPayload(): array
+    private function shippingPayload(string $method = 'standard'): array
     {
         return [
             'email' => 'alice@example.com',
+            'shipping_method' => $method,
             'shipping' => [
                 'firstname' => 'Alice',
                 'lastname' => 'Dupont',
@@ -93,7 +94,7 @@ class StripeIntentTest extends TestCase
             'user_id' => null,
             'guest_token' => 'guest-checkout-1',
             'email' => 'alice@example.com',
-            'total_ttc' => 25.00,
+            'total_ttc' => 29.90, // 25.00 + 4.90 standard shipping (subtotal below the 70€ free-shipping threshold)
         ]);
     }
 
@@ -166,11 +167,12 @@ class StripeIntentTest extends TestCase
             ->assertJsonPath('client_secret', 'pi_test_123_secret_abc')
             ->assertJsonPath('currency', 'EUR');
 
-        $this->assertEquals(50.0, $response->json('amount'));
+        $this->assertEquals(54.90, $response->json('amount'));
+        $this->assertEquals(4.90, $response->json('shipping_cost'));
 
         $this->assertDatabaseHas('orders', [
             'user_id' => $user->id,
-            'total_ttc' => 50.00,
+            'total_ttc' => 54.90,
             'payment_status' => 'pending',
         ]);
 
@@ -178,13 +180,15 @@ class StripeIntentTest extends TestCase
             'firstname' => 'Alice',
             'city' => 'Paris',
             'zip' => '75002',
+            'method' => 'standard',
+            'cost' => 4.90,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'provider' => 'stripe',
             'provider_payment_id' => 'pi_test_123',
             'status' => 'pending',
-            'amount' => 50.00,
+            'amount' => 54.90,
         ]);
 
         $this->assertDatabaseHas('order_items', [
@@ -213,7 +217,7 @@ class StripeIntentTest extends TestCase
 
         $response = $this->postJson('/api/payment/intent', $this->shippingPayload())->assertOk();
 
-        $this->assertEquals(30.0, $response->json('amount')); // 10 * 3
+        $this->assertEquals(34.90, $response->json('amount')); // 10 * 3 + 4.90 standard shipping
     }
 
     public function test_order_item_price_matches_the_amount_charged_for_customized_products(): void
@@ -245,7 +249,7 @@ class StripeIntentTest extends TestCase
 
         // The amount charged by Stripe must match what is recorded on the order item —
         // both must use the customization price snapshot, not the base product/option price.
-        $this->assertEquals(35.0, $response->json('amount'));
+        $this->assertEquals(39.90, $response->json('amount')); // 35.00 + 4.90 standard shipping
 
         $this->assertDatabaseHas('order_items', [
             'product_id' => $product->id,
@@ -253,5 +257,67 @@ class StripeIntentTest extends TestCase
             'unit_price' => 35.00,
             'total' => 35.00,
         ]);
+    }
+
+    /* ── Shipping cost ─────────────────────────────────────────── */
+
+    public function test_shipping_method_is_required(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $payload = $this->shippingPayload();
+        unset($payload['shipping_method']);
+
+        $this->postJson('/api/payment/intent', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['shipping_method']);
+    }
+
+    public function test_shipping_method_rejects_unknown_value(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/payment/intent', $this->shippingPayload('overnight'))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['shipping_method']);
+    }
+
+    public function test_standard_shipping_is_free_above_the_threshold(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price_ttc' => 75.00, 'price_ht' => 60.00]);
+
+        $cart = Cart::create(['user_id' => $user->id]);
+        CartItem::create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1]);
+
+        $this->mockStripeReturning('pi_free_ship', 'sec_free_ship');
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/payment/intent', $this->shippingPayload('standard'))->assertOk();
+
+        $this->assertEquals(75.0, $response->json('amount'));
+        $this->assertEquals(0.0, $response->json('shipping_cost'));
+        $this->assertDatabaseHas('shipments', ['method' => 'standard', 'cost' => 0]);
+    }
+
+    public function test_express_shipping_is_never_free(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price_ttc' => 75.00, 'price_ht' => 60.00]);
+
+        $cart = Cart::create(['user_id' => $user->id]);
+        CartItem::create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1]);
+
+        $this->mockStripeReturning('pi_express', 'sec_express');
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/payment/intent', $this->shippingPayload('express'))->assertOk();
+
+        // Above the 70€ threshold, but express always carries its own flat cost.
+        $this->assertEquals(84.90, $response->json('amount'));
+        $this->assertEquals(9.90, $response->json('shipping_cost'));
+        $this->assertDatabaseHas('shipments', ['method' => 'express', 'cost' => 9.90]);
     }
 }

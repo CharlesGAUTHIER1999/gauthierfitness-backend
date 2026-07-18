@@ -18,6 +18,8 @@ class Shipment extends Model
         'city',
         'country',
         'phone',
+        'method',
+        'cost',
         'carrier',
         'tracking_url',
         'status',

@@ -27,6 +27,7 @@ class ContactTest extends TestCase
         $this->postJson('/api/contact', [
             'name' => 'Charles Gauthier',
             'email' => 'charles@example.com',
+            'reason' => 'order',
             'subject' => 'Question',
             'message' => 'Bonjour, j\'ai une question sur vos produits.',
         ])->assertOk()
@@ -39,7 +40,7 @@ class ContactTest extends TestCase
     {
         $this->postJson('/api/contact', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'email', 'message']);
+            ->assertJsonValidationErrors(['name', 'email', 'reason', 'message']);
 
         Mail::assertNothingSent();
     }
@@ -49,9 +50,35 @@ class ContactTest extends TestCase
         $this->postJson('/api/contact', [
             'name' => 'Test',
             'email' => 'not-an-email',
+            'reason' => 'other',
             'message' => 'Hello',
         ])->assertStatus(422)
             ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_contact_validates_reason_value(): void
+    {
+        $this->postJson('/api/contact', [
+            'name' => 'Test',
+            'email' => 'test@example.com',
+            'reason' => 'not-a-real-reason',
+            'message' => 'Hello',
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['reason']);
+    }
+
+    public function test_contact_email_subject_is_prefixed_with_reason_label(): void
+    {
+        $this->postJson('/api/contact', [
+            'name' => 'Charles Gauthier',
+            'email' => 'charles@example.com',
+            'reason' => 'delivery',
+            'message' => 'Ma commande n\'est jamais arrivée.',
+        ])->assertOk();
+
+        Mail::assertSent(ContactMessageMail::class, function (ContactMessageMail $mail) {
+            return $mail->envelope()->subject === 'Contact GauthierFitness — [Livraison] Nouveau message';
+        });
     }
 
     public function test_contact_is_throttled_after_5_requests(): void
@@ -59,6 +86,7 @@ class ContactTest extends TestCase
         $payload = [
             'name' => 'Spammer',
             'email' => 'spam@example.com',
+            'reason' => 'other',
             'message' => 'Spam content.',
         ];
 

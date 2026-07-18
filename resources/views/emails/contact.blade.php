@@ -18,6 +18,10 @@
         <td>{{ $data['email'] }}</td>
     </tr>
     <tr>
+        <td style="font-weight: bold;">Motif</td>
+        <td>{{ \App\Mail\ContactMessageMail::REASON_LABELS[$data['reason']] ?? 'Autre' }}</td>
+    </tr>
+    <tr>
         <td style="font-weight: bold;">Sujet</td>
         <td>{{ $data['subject'] ?? '—' }}</td>
     </tr>
