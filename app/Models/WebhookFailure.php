@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WebhookFailure extends Model
 {
@@ -15,8 +16,8 @@ class WebhookFailure extends Model
         'retry_count',
     ];
 
-    /** Webhook event this failure is associated with. */
-    public function event()
+    // Webhook event this failure is associated with
+    public function event(): BelongsTo
     {
         return $this->belongsTo(WebhookEvent::class, 'webhook_event_id');
     }

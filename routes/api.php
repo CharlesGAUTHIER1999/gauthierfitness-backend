@@ -22,7 +22,7 @@ use App\Http\Controllers\Support\ContactController;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Public health check, used by the `infra/deploy-prod.sh` script and monitoring probes.
+ * Public health check, used by the `infra/deploy-prod.sh`
  *
  * @unauthenticated
  *
@@ -46,20 +46,20 @@ Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
 // Contact Form (public)
 Route::post('/contact', ContactController::class)->middleware('throttle:5,1');
 
-// Cart (public: works for both guests, via X-Guest-Cart-Token, and authenticated users)
+// Cart (public)
 Route::get('/cart', [CartController::class, 'show']);
 Route::post('/cart/items', [CartController::class, 'add']);
 Route::patch('/cart/items/{item}', [CartController::class, 'update']);
 Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
 
-// Customization (public: works for both guests, via X-Guest-Cart-Token, and authenticated users — AI generation stays login-only, see below)
+// Customization (public)
 Route::post('/customization/sessions', [CustomizationController::class, 'store']);
 Route::get('/customization/sessions/{customizationSession}', [CustomizationController::class, 'show']);
 Route::patch('/customization/sessions/{customizationSession}', [CustomizationController::class, 'update']);
 Route::post('/customization/assets/logo', [CustomizationAssetController::class, 'uploadLogo'])->middleware('throttle:20,10');
 Route::post('/customization/assets/image', [CustomizationAssetController::class, 'uploadImage'])->middleware('throttle:20,10');
 
-// Checkout (public: guest checkout works via X-Guest-Cart-Token, same pattern as /cart)
+// Checkout (public)
 Route::post('/payment/intent', [StripeController::class, 'createPaymentIntent'])->middleware('throttle:3,1');
 
 // Protected routes
@@ -73,17 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/orders', [OrderController::class, 'store']);
 
-    // AI (each call hits the paid OpenAI image API — capped per user to bound cost/abuse)
+    // AI
     Route::post('/ai/designs/generate', AIDesignController::class)->middleware('throttle:8,60');
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    /**
-     * Admin ping
-     *
-     * @response 200 {"ok": true}
-     * @response 403 {"message": "Forbidden"}
-     */
+    // Admin ping
     Route::get('/ping', fn () => response()->json(['ok' => true]));
     Route::get('/stats', [AdminOrderController::class, 'stats']);
 

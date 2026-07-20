@@ -4,10 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * @mixin IdeHelperProduct
- */
 class Product extends Model
 {
     use HasFactory;
@@ -56,41 +55,37 @@ class Product extends Model
         'hover_image',
     ];
 
-    /* ================= RELATIONS ================= */
-
-    /** Supplier providing this product. */
-    public function supplier()
+    // Supplier providing this product
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    /** Product group (e.g. color variants) this product belongs to. */
-    public function group()
+    // Product group this product belongs to
+    public function group(): BelongsTo
     {
         return $this->belongsTo(ProductGroup::class, 'group_id');
     }
 
-    /** Other product variants sharing the same group, ordered by color. */
+    // Other product variants
     public function variants()
     {
-        return $this->hasMany(Product::class, 'group_id', 'group_id')
-            ->whereKeyNot($this->getKey())
-            ->orderBy('color_code');
+        return $this->hasMany(Product::class, 'group_id', 'group_id')->whereKeyNot($this->getKey())->orderBy('color_code');
     }
 
-    /** Categories this product is assigned to. */
-    public function categories()
+    // Categories this product is assigned to
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'product_category');
     }
 
-    /** All images for this product, ordered by position. */
+    // All images for this product, ordered by position
     public function images()
     {
         return $this->hasMany(ProductImage::class)->orderBy('position')->orderBy('id');
     }
 
-    /** Primary (main) image of this product. */
+    // Primary (main) image of this product
     public function mainImage()
     {
         return $this->hasOne(ProductImage::class)
@@ -99,7 +94,7 @@ class Product extends Model
             ->orderBy('id');
     }
 
-    /** Secondary (hover) image of this product. */
+    // Secondary (hover) image of this product
     public function hoverImage()
     {
         return $this->hasOne(ProductImage::class)
@@ -108,68 +103,60 @@ class Product extends Model
             ->orderBy('id');
     }
 
-    /** Selectable options for this product, ordered by position. */
+    // Selectable options for this product
     public function options()
     {
         return $this->hasMany(ProductOption::class)->orderBy('position');
     }
 
-    /** Stock lots for this product. */
+    // Stock lots for this product
     public function lots()
     {
         return $this->hasMany(StockLot::class);
     }
 
-    /** Cart items referencing this product. */
+    // Cart items referencing this product
     public function cartItems()
     {
         return $this->hasMany(CartItem::class);
     }
 
-    /** Designs created for this product. */
+    // Designs created for this product
     public function designs()
     {
         return $this->hasMany(Design::class);
     }
 
-    /** Customization sessions created for this product. */
+    // Customization sessions created for this product
     public function customizationSessions()
     {
         return $this->hasMany(CustomProductSession::class);
     }
 
-    /* ================= ACCESSORS ================= */
-
-    /** Returns the URL of the product's main image. */
+    // Returns the URL of the product's main image
     public function getMainImageAttribute(): ?string
     {
-        return $this->images
-            ->firstWhere('is_main', true)
-            ?->url;
+        return $this->images->firstWhere('is_main', true)?->url;
     }
 
-    /** Returns the URL of the product's hover image. */
+    // Returns the URL of the product's hover image
     public function getHoverImageAttribute(): ?string
     {
-        return $this->images
-            ->firstWhere('is_main', false)
-            ?->url;
+        return $this->images->firstWhere('is_main', false)?->url;
     }
 
-    /* ================= SCOPES ================= */
-
-    /** Scopes the query to only active products. */
+    // Scopes the query to only active products
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /** Scopes the query to products matching the term in their name or SKU. */
+    // Scopes the query to products
     public function scopeSearch($query, string $term)
     {
         return $query->where(function ($q) use ($term) {
-            $q->where('name', 'like', "%{$term}%")
-                ->orWhere('sku', 'like', "%{$term}%");
+            $q->where('name', 'like', "%$term%")
+                ->orWhere('sku', 'like', "%$term%");
         });
     }
 }

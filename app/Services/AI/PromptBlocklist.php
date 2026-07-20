@@ -4,7 +4,7 @@ namespace App\Services\AI;
 
 use Illuminate\Support\Str;
 
-/** “Brand Policy” filter: detects topics in a prompt that are explicitly prohibited (weapons, war, drugs, hate). */
+// Brand Policy filter : detects topics in a prompt that are explicitly prohibited
 class PromptBlocklist
 {
     /**
@@ -16,16 +16,13 @@ class PromptBlocklist
     public function matches(string $text, ?array $blocklist = null): array
     {
         $normalized = Str::lower(Str::ascii($text));
-
         $matched = [];
 
         foreach ($blocklist ?? config('ai.moderation.blocklist', []) as $term) {
             $needle = Str::lower(Str::ascii($term));
-
             if ($needle === '') {
                 continue;
             }
-
             if (preg_match('/\b'.preg_quote($needle, '/').'\b/u', $normalized)) {
                 $matched[] = $term;
             }

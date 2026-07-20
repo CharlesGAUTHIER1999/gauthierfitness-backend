@@ -21,13 +21,13 @@ class PromptHistory extends Model
         'response_payload' => 'array',
     ];
 
-    /** User who submitted this prompt. */
+    // User who submitted this prompt
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Design generated from this prompt, if any. */
+    // Design generated from this prompt
     public function design(): BelongsTo
     {
         return $this->belongsTo(Design::class);

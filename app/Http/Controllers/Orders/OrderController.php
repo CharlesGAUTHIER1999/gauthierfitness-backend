@@ -11,10 +11,7 @@ use Illuminate\Http\Request;
 #[Group(name: 'Commandes', weight: 6)]
 class OrderController extends Controller
 {
-    /**
-     * Order history for the user.
-     * Returns all orders of the authenticated user (most recent first), with their associated payment and shipment.
-     */
+    // Order history for the user
     public function index(Request $request): JsonResponse
     {
         $orders = $request->user()
@@ -32,8 +29,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Order detail.
-     * Verifies that the order actually belongs to the authenticated user.
+     * Order detail
      *
      * @response 404 scenario="Order not found or belongs to another user" {}
      */
@@ -54,14 +50,12 @@ class OrderController extends Controller
     /**
      * Create an order (deprecated).
      *
-     * @deprecated This endpoint always returns 405. Creating an order goes through `POST /api/payment/intent`, which orchestrates the creation of the order, the Stripe payment and the shipment in a single transaction.
+     * @deprecated This endpoint always returns 405
      *
      * @response 405 {"message": "Use POST /payment/intent to create an order."}
      */
     public function store(): JsonResponse
     {
-        return response()->json([
-            'message' => 'Use POST /payment/intent to create an order.',
-        ], 405);
+        return response()->json(['message' => 'Use POST /payment/intent to create an order.'], 405);
     }
 }

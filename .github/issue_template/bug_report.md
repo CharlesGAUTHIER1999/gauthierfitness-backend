@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Signaler une anomalie détectée sur GauthierFitness
+about: Signalement d'une anomalie détectée sur GauthierFitness
 title: "[BUG] "
 labels: bug
 ---
@@ -8,7 +8,7 @@ labels: bug
 ## Contexte
 - Environnement : <!-- production / staging / local -->
 - Version / commit : <!-- tag ou SHA -->
-- Navigateur / OS (si pertinent) : <!-- ex. Chrome 126 / Windows 11 -->
+- Navigateur / OS (si pertinent) : <!-- ex : Chrome 126 / Windows 11 -->
 - Date/heure de l'incident :
 
 ## Étapes de reproduction
@@ -24,10 +24,10 @@ labels: bug
 <!-- Qui est affecté, combien d'utilisateurs, données ou paiement en jeu ? -->
 
 ## Gravité
-- [ ] S1 — Critique (prod indisponible, sécurité ou paiement compromis)
-- [ ] S2 — Majeure (fonctionnalité clé cassée, pas de contournement simple)
-- [ ] S3 — Mineure (fonctionnalité secondaire, contournement possible)
-- [ ] S4 — Cosmétique
+- [ ] S1 - Critique (prod indisponible, sécurité ou paiement compromis)
+- [ ] S2 - Majeure (fonctionnalité clé cassée, pas de contournement simple)
+- [ ] S3 - Mineure (fonctionnalité secondaire, contournement possible)
+- [ ] S4 - Cosmétique
 
 ## Analyse / cause racine
 <!-- Rempli après investigation -->

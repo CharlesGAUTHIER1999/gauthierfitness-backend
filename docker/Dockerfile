@@ -44,13 +44,8 @@ RUN composer install --no-interaction --no-progress --prefer-dist || true
 
 # Permissions (storage / cache)
 RUN chown -R www-data:www-data storage bootstrap/cache
-
-# The docker-compose.yml bind mount shadows this image's vendor/ whenever the
-# host directory has none of its own (fresh clone) — the entrypoint rebuilds
-# it on container start so `docker compose up` works with zero local PHP/Composer.
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
-
 EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

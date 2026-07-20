@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\Storage;
 class OpenAIImageService
 {
     /**
-     * Generates an image using OpenAI and returns its base64-encoded content WITHOUT writing it to disk.
+     * Generates an image using OpenAI
      *
      * @return array{b64: string, payload: array}
      *
-     * @throws AiContentRejectedException if the prompt is rejected by gpt-image-1 (400)
-     * @throws AiServiceUnavailableException if the service is unreachable or down
+     * @throws AiContentRejectedException if prompt rejected by gpt-image-1
+     * @throws AiServiceUnavailableException if service is unreachable/down
      */
     public function generate(string $prompt): array
     {
@@ -41,19 +41,15 @@ class OpenAIImageService
 
         $payload = $response->json();
         $base64 = $payload['data'][0]['b64_json'] ?? null;
-
         if (! $base64) {
             throw new AiServiceUnavailableException('No image returned by OpenAI.');
         }
 
-        return [
-            'b64' => $base64,
-            'payload' => $payload,
-        ];
+        return ['b64' => $base64, 'payload' => $payload];
     }
 
     /**
-     * Writes a base64-encoded image to the public disk and returns its path and URL.
+     * Writes a base64-encoded image to public disk
      *
      * @return array{path: string, url: string}
      */
