@@ -27,31 +27,31 @@ class OrderItem extends Model
         'customization_snapshot' => 'array',
     ];
 
-    /** Order this item belongs to. */
-    public function order()
+    // Order this item belongs to
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /** Product purchased in this order item. */
-    public function product()
+    // Product purchased in this order item
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /** Product option purchased in this order item. */
-    public function option()
+    // Product option purchased in this order item
+    public function option(): BelongsTo
     {
         return $this->belongsTo(ProductOption::class, 'product_option_id');
     }
 
-    /** Stock lot this order item was fulfilled from. */
-    public function lot()
+    // Stock lot this order item was fulfilled from
+    public function lot(): BelongsTo
     {
         return $this->belongsTo(StockLot::class);
     }
 
-    /** Custom product session tied to this order item, if any. */
+    // Custom product session tied to this order item, if any
     public function customProductSession(): BelongsTo
     {
         return $this->belongsTo(CustomProductSession::class);

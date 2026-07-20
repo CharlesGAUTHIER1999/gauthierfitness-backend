@@ -2,12 +2,12 @@
 
 namespace App\Services\Stock;
 
-/** Pure FIFO deduction math for stock lots — no DB, no Eloquent. */
+// FIFO deduction math for stock lots
 class StockAllocator
 {
-    /** Quantity actually deductible from a lot, capped at what's available. */
-    public static function deduction(int $availableQuantity, int $requestedQuantity): int
+    // Quantity actually deductible from a lot
+    public static function deduction(int $available_quantity, int $requested_quantity): int
     {
-        return min($availableQuantity, $requestedQuantity);
+        return min($available_quantity, $requested_quantity);
     }
 }

@@ -16,41 +16,28 @@ use Throwable;
 class AdminStockController extends Controller
 {
     /**
-     * Global stock view: all products with their total quantity.
-     * Returns a paginated list of products (25/page) with the sum of their lot quantities
-     *
-     * @queryParam search string Search by name or SKU. Example: protéine
+     * Global stock view : all products with their total quantity.
+     * Returns a paginated list of products (25/page)
+     * @queryParam search string Search by name or SKU.
      */
     public function list(Request $request): JsonResponse
     {
-        // `images` (not `mainImage`) is what getMainImageAttribute()/getHoverImageAttribute() read from —
-        // eager-loading it here avoids a per-product N+1 when the list is serialized.
-        $query = Product::withSum('lots as stock_qty', 'quantity')
-            ->with(['images:id,product_id,url,is_main,position'])
-            ->orderByDesc('id');
-
-        if ($request->filled('search')) {
-            $query->search($request->query('search'));
-        }
-
+        $query = Product::withSum('lots as stock_qty', 'quantity')->with(['images:id,product_id,url,is_main,position'])->orderByDesc('id');
+        if ($request->filled('search')) $query->search($request->query('search'));
         return response()->json($query->paginate(25));
     }
 
     /**
-     * Stock detail for a product.
-     * Returns lots grouped into two blocks: `global_stock` (lots without an option) and
-     * `option_stocks` (lots per variant). Lots are sorted FIFO (nearest expiration first).
+     * Stock detail for a product
+     * Returns lots grouped into two blocks: `global_stock` (lots without an option) and `option_stocks` (lots per variant).
+     * Lots are sorted FIFO (nearest expiration first).
      */
     public function index(Product $product): JsonResponse
     {
-        $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),
-        ]);
+        $product->load(['options' => fn($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position'),]);
 
-        // All lots for the product in one query (FIFO : nearest expiration first), then split in memory
-        $allLots = StockLot::where('product_id', $product->id)
-            ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
-            ->orderBy('id')
-            ->get();
+        // All lots for the product in one query (FIFO : nearest expiration first)
+        $allLots = StockLot::where('product_id', $product->id)->orderByRaw('expiration_date IS NULL, expiration_date ASC')->orderBy('id')->get();
 
         // Lots without an option (global stock / product without variants)
         $globalLots = $allLots->whereNull('product_option_id')->values();
@@ -66,7 +53,7 @@ class AdminStockController extends Controller
                 'option_code' => $option->code,
                 'option_label' => $option->label,
                 'option_type' => $option->type,
-                'total_qty' => (int) $lots->sum('quantity'),
+                'total_qty' => (int)$lots->sum('quantity'),
                 'lots' => $lots,
             ];
         });
@@ -75,7 +62,7 @@ class AdminStockController extends Controller
             'product_id' => $product->id,
             'product_name' => $product->name,
             'global_stock' => [
-                'total_qty' => (int) $globalLots->sum('quantity'),
+                'total_qty' => (int)$globalLots->sum('quantity'),
                 'lots' => $globalLots,
             ],
             'option_stocks' => $optionStocks,
@@ -83,10 +70,8 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Create a new lot (restock).
-     *
+     * Create a new lot (restock)
      * @response 422 scenario="Expiration date in the past" {"message": "The expiration date field must be a date after today."}
-     *
      * @throws Throwable
      */
     public function store(Request $request, Product $product): JsonResponse
@@ -115,7 +100,7 @@ class AdminStockController extends Controller
                 'user_id' => auth()->id(),
                 'type' => 'in',
                 'quantity' => $data['quantity'],
-                'reason' => 'Réapprovisionnement admin — lot '.$lot->lot_number,
+                'reason' => 'Réapprovisionnement admin — lot ' . $lot->lot_number,
             ]);
 
             return response()->json($lot->load('option'), 201);
@@ -123,9 +108,7 @@ class AdminStockController extends Controller
     }
 
     /**
-     * Manually adjust a lot's quantity.
-     * Computes the delta (`new_quantity - old_quantity`) and logs the difference
-     *
+     * Manually adjust a lot's quantity
      * @throws Throwable
      */
     public function adjust(Request $request, StockLot $lot): JsonResponse
@@ -137,7 +120,6 @@ class AdminStockController extends Controller
 
         return DB::transaction(function () use ($data, $lot) {
             $delta = $data['quantity'] - $lot->quantity;
-
             $lot->quantity = $data['quantity'];
             $lot->save();
 
@@ -155,17 +137,10 @@ class AdminStockController extends Controller
         });
     }
 
-    /**
-     * Paginated history of a product's stock movements.
-     * Returns all `stock_movements` (in, out, corrections) linked to the product, 30 per page, most recent first.
-     */
+    // Paginated history of a product's stock movements.
     public function movements(Product $product): JsonResponse
     {
-        $movements = StockMovement::where('product_id', $product->id)
-            ->with(['lot:id,lot_number,expiration_date,product_option_id'])
-            ->orderByDesc('created_at')
-            ->paginate(30);
-
+        $movements = StockMovement::where('product_id', $product->id)->with(['lot:id,lot_number,expiration_date,product_option_id'])->orderByDesc('created_at')->paginate(30);
         return response()->json($movements);
     }
 }

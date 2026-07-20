@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 #[Group(name: 'Customisation', weight: 4)]
 class CustomizationController extends Controller
 {
-    private const SESSION_RELATIONS = [
+    private const array SESSION_RELATIONS = [
         'product.group',
         'product.categories',
         'product.images',
@@ -24,9 +24,7 @@ class CustomizationController extends Controller
     ];
 
     /**
-     * Create a customization session.
-     * Snapshots the design configuration (text, logo, colors, position) for a customizable product.
-     *
+     * Create a customization session
      * @response 422 scenario="Product is not customizable" {"message": "This product is not customizable."}
      * @response 403 scenario="Design belongs to another user" {}
      */
@@ -42,29 +40,27 @@ class CustomizationController extends Controller
 
         $product = Product::findOrFail($data['product_id']);
         abort_unless($product->is_customizable, 422, 'This product is not customizable.');
-
         $user = $request->user('sanctum');
-        $guestToken = null;
+        $guest_token = null;
 
-        if (! $user) {
-            $guestToken = $request->header('X-Guest-Cart-Token');
-            abort_if(! $guestToken, 400, 'Missing guest cart identifier');
-            // Designs are AI-generated and AI stays login-only, so a guest never has one.
-            abort_if(! empty($data['design_id']), 422, 'Design does not match the selected product.');
+        if (!$user) {
+            $guest_token = $request->header('X-Guest-Cart-Token');
+            abort_if(!$guest_token, 400, 'Missing guest cart identifier');
+            abort_if(!empty($data['design_id']), 422, 'Design does not match the selected product.');
         }
 
-        if (! empty($data['design_id'])) {
+        if (!empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int) $design->user_id === (int) $user->id, 403);
-            abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
+            abort_unless((int)$design->user_id === (int)$user->id, 403);
+            abort_unless((int)$design->product_id === (int)$product->id, 422, 'Design does not match the selected product.');
         }
 
-        $option = ! empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
+        $option = !empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
         $unit_price = $option?->price_ttc ?? $product->price_ttc;
 
         $session = CustomProductSession::create([
             'user_id' => $user?->id,
-            'guest_token' => $guestToken,
+            'guest_token' => $guest_token,
             'product_id' => $data['product_id'],
             'product_option_id' => $data['product_option_id'] ?? null,
             'status' => 'draft',
@@ -82,23 +78,16 @@ class CustomizationController extends Controller
 
     /**
      * Retrieve a customization session.
-     *
      * @response 403 scenario="Session belongs to another user" {}
      */
     public function show(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
         $this->authorizeOwner($customizationSession, $request);
-
-        return response()->json([
-            'data' => $customizationSession->load(self::SESSION_RELATIONS),
-        ]);
+        return response()->json(['data' => $customizationSession->load(self::SESSION_RELATIONS),]);
     }
 
     /**
-     * Update a customization session.
-     * Allows changing the configuration, the associated design, the preview image and the status.
-     * Allowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`.
-     *
+     * Update a customization session
      * @response 403 scenario="Session belongs to another user" {}
      */
     public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
@@ -112,20 +101,17 @@ class CustomizationController extends Controller
             'status' => ['nullable', 'in:draft,ready,added_to_cart,ordered'],
         ]);
 
-        if (! empty($data['design_id'])) {
-            // Designs are AI-generated and AI stays login-only, so a guest never has one.
+        if (!empty($data['design_id'])) {
             abort_unless($request->user('sanctum'), 403);
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int) $design->user_id === (int) $request->user('sanctum')->id, 403);
-            abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
+            abort_unless((int)$design->user_id === (int)$request->user('sanctum')->id, 403);
+            abort_unless((int)$design->product_id === (int)$customizationSession->product_id, 422, 'Design does not match the customization session product.');
         }
 
         $customizationSession->update([
             'configuration' => $data['configuration'] ?? $customizationSession->configuration,
             'design_id' => $data['design_id'] ?? $customizationSession->design_id,
-            'preview_image_path' => array_key_exists('preview_image_path', $data)
-                ? $data['preview_image_path']
-                : $customizationSession->preview_image_path,
+            'preview_image_path' => array_key_exists('preview_image_path', $data) ? $data['preview_image_path'] : $customizationSession->preview_image_path,
             'status' => $data['status'] ?? $customizationSession->status,
         ]);
 
@@ -135,16 +121,15 @@ class CustomizationController extends Controller
         ]);
     }
 
-    // Abort with 403 unless the requester (authenticated user or guest token) owns the session.
+    // Abort with 403 unless the requester owns the session
     protected function authorizeOwner(CustomProductSession $session, Request $request): void
     {
         if ($user = $request->user('sanctum')) {
-            abort_unless((int) $session->user_id === (int) $user->id, 403);
-
+            abort_unless((int)$session->user_id === (int)$user->id, 403);
             return;
         }
 
-        $guestToken = $request->header('X-Guest-Cart-Token');
-        abort_unless($guestToken && $session->guest_token === $guestToken, 403);
+        $guest_token = $request->header('X-Guest-Cart-Token');
+        abort_unless($guest_token && $session->guest_token === $guest_token, 403);
     }
 }

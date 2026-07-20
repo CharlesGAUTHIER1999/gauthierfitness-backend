@@ -12,17 +12,11 @@ class VerificationController extends Controller
     /**
      * Current user profile.
      * Returns the authenticated user with their roles.
-     * Used by the frontend to hydrate the store and check whether the token is still valid on application startup.
-     *
      * @response 200 scenario="Success" { "id": 1, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "roles": ["customer"], "is_admin": false }
      */
     public function __invoke(Request $request)
     {
         $user = $request->user();
-
-        return response()->json([
-            ...$user->authPayload(),
-            'roles' => $user->roles()->pluck('name'),
-        ]);
+        return response()->json([...$user->authPayload(), 'roles' => $user->roles()->pluck('name'),]);
     }
 }

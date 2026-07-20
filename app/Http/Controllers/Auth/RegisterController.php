@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Hash;
 #[Group(name: 'Authentification', weight: 1)]
 class RegisterController extends Controller
 {
-    public function __construct(private CartMergeService $cartMergeService) {}
+    public function __construct(private readonly CartMergeService $cartMergeService)
+    {
+    }
 
     /**
-     * Register a new user.
-     * Creates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately.
-     *
+     * Register a new user
+     * Creates a user account (non-admin by default)
      * @unauthenticated
-     *
      * @response 201 scenario="Account created" { "token": "2|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "user": { "id": 12, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "is_admin": false } }
      * @response 422 scenario="Email already used" {"message": "The email has already been taken."}
      */
@@ -40,7 +40,6 @@ class RegisterController extends Controller
         ]);
 
         $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
-
         $token = $user->createToken('react')->plainTextToken;
 
         return response()->json([

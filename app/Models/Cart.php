@@ -10,16 +10,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cart extends Model
 {
     use HasFactory;
-
     protected $fillable = ['user_id', 'guest_token'];
 
-    /** Owner of this cart. */
+    // Owner of this cart
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Items contained in this cart. */
+    // Items contained in this cart
     public function items(): HasMany
     {
         return $this->hasMany(CartItem::class);

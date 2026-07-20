@@ -16,11 +16,10 @@ use Illuminate\Support\Str;
 class AdminProductController extends Controller
 {
     /**
-     * Paginated list of products (admin).
-     *
-     * @queryParam search string Search by name or SKU. Example: t-shirt
-     * @queryParam is_active boolean Filter by active status. Example: true
-     * @queryParam is_customizable boolean Filter customizable products. Example: true
+     * Paginated list of products (admin)
+     * @queryParam search string Search by name or SKU.
+     * @queryParam is_active boolean Filter by active status.
+     * @queryParam is_customizable boolean Filter customizable products.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -30,22 +29,13 @@ class AdminProductController extends Controller
             'options:id,product_id,type,code,label,position',
         ])->orderByDesc('id');
 
-        if ($request->filled('search')) {
-            $query->search($request->query('search'));
-        }
-
-        if ($request->filled('is_active')) {
-            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if ($request->filled('is_customizable')) {
-            $query->where('is_customizable', filter_var($request->query('is_customizable'), FILTER_VALIDATE_BOOLEAN));
-        }
-
+        if ($request->filled('search')) $query->search($request->query('search'));
+        if ($request->filled('is_active')) $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        if ($request->filled('is_customizable')) $query->where('is_customizable', filter_var($request->query('is_customizable'), FILTER_VALIDATE_BOOLEAN));
         return ProductResource::collection($query->paginate(20));
     }
 
-    /** Product detail (admin). */
+    // Product detail (admin)
     public function show(Product $product): ProductResource
     {
         $product->load([
@@ -61,8 +51,7 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Create a product.
-     *
+     * Create a product
      * @response 422 scenario="SKU already used" {"message": "The sku has already been taken."}
      */
     public function store(Request $request): JsonResponse
@@ -91,7 +80,7 @@ class AdminProductController extends Controller
         $base = $slug;
         $i = 1;
         while (Product::where('slug', $slug)->exists()) {
-            $slug = "{$base}-{$i}";
+            $slug = "$base-$i";
             $i++;
         }
 
@@ -123,13 +112,12 @@ class AdminProductController extends Controller
         }
 
         $product->load('options');
-
         return response()->json(new ProductResource($product), 201);
     }
 
     /**
-     * Update a product.
-     * All fields are optional (`sometimes`). The slug cannot be changed here.
+     * Update a product
+     * Slug cannot be changed here
      */
     public function update(Request $request, Product $product): JsonResponse
     {
@@ -148,31 +136,26 @@ class AdminProductController extends Controller
         ]);
 
         $product->update($data);
-
         return response()->json(new ProductResource($product->fresh()));
     }
 
     /**
-     * Delete a product.
-     *
+     * Delete a product
      * @response 200 {"message": "Produit supprimé."}
      */
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
-
         return response()->json(['message' => 'Produit supprimé.']);
     }
 
     /**
-     * Activate / deactivate a product.
-     *
+     * Activate / deactivate a product
      * @response 200 {"is_active": true}
      */
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => ! $product->is_active]);
-
+        $product->update(['is_active' => !$product->is_active]);
         return response()->json(['is_active' => $product->is_active]);
     }
 }

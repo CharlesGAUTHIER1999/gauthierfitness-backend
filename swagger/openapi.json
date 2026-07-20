@@ -57,7 +57,7 @@
         "/login": {
             "post": {
                 "operationId": "login",
-                "summary": "User login.\nAuthenticates a user via email/password and returns a Sanctum token.\nThe previous token named \"react\" is revoked to limit the session to a single active device",
+                "summary": "User login.\nAuthenticates a user via email/password and returns a Sanctum token",
                 "tags": [
                     "Authentification"
                 ],
@@ -109,7 +109,7 @@
         "/register": {
             "post": {
                 "operationId": "register",
-                "summary": "Register a new user.\nCreates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately",
+                "summary": "Register a new user\nCreates a user account (non-admin by default)",
                 "tags": [
                     "Authentification"
                 ],
@@ -175,7 +175,7 @@
         "/forgot-password": {
             "post": {
                 "operationId": "password.email",
-                "summary": "Password reset request.\nSends an email with a reset link if an account exists for that email.\nAlways returns the same generic message, whether the email exists or not",
+                "summary": "Password reset request\nSends an email with a reset link if an account exists for that email",
                 "tags": [
                     "Authentification"
                 ],
@@ -220,7 +220,7 @@
         "/reset-password": {
             "post": {
                 "operationId": "password.reset",
-                "summary": "Password reset.\nVerifies the token received by email and changes the password.\nAll existing Sanctum tokens are revoked: the user must log in again everywhere after a reset",
+                "summary": "Password reset\nVerifies the token received by email and changes the password",
                 "tags": [
                     "Authentification"
                 ],
@@ -279,7 +279,7 @@
         "/me": {
             "get": {
                 "operationId": "me",
-                "summary": "Current user profile.\nReturns the authenticated user with their roles.\nUsed by the frontend to hydrate the store and check whether the token is still valid on application startup",
+                "summary": "Current user profile.\nReturns the authenticated user with their roles",
                 "tags": [
                     "Authentification"
                 ],
@@ -302,7 +302,7 @@
             },
             "patch": {
                 "operationId": "profile.update",
-                "summary": "Update profile.\nUpdates the authenticated user's contact and postal address details",
+                "summary": "Update profile\nUpdates the authenticated user's contact and postal address details",
                 "tags": [
                     "Authentification"
                 ],
@@ -377,7 +377,7 @@
         "/logout": {
             "post": {
                 "operationId": "logout",
-                "summary": "Logout.\nRevokes the current Sanctum token. The next call will require a new login",
+                "summary": "Logout\nRevokes the current Sanctum token. The next call will require a new login",
                 "tags": [
                     "Authentification"
                 ],
@@ -402,7 +402,7 @@
         "/products": {
             "get": {
                 "operationId": "product.index",
-                "summary": "Paginated list of public products.\nReturns active products visible in the shop. Products with variants (color, size) are grouped",
+                "summary": "Paginated list of public products",
                 "tags": [
                     "Catalogue"
                 ],
@@ -553,7 +553,7 @@
         "/products/{slug}": {
             "get": {
                 "operationId": "product.show",
-                "summary": "Product detail by slug.\nReturns a product with all its relations (images, categories, options, stock lots, group variants)",
+                "summary": "Product detail by slug",
                 "tags": [
                     "Catalogue"
                 ],
@@ -586,7 +586,6 @@
         "/cart": {
             "get": {
                 "operationId": "cart.show",
-                "summary": "Retrieve the current cart \u2014 the authenticated user's cart, or a guest cart\nidentified by the X-Guest-Cart-Token header",
                 "tags": [
                     "Panier"
                 ],
@@ -610,7 +609,7 @@
                                                         "type": "integer"
                                                     },
                                                     "custom_product_session_id": {
-                                                        "type": "string"
+                                                        "type": "integer"
                                                     },
                                                     "is_customized": {
                                                         "type": "boolean"
@@ -799,7 +798,9 @@
                                         "message": {
                                             "type": "string",
                                             "description": "Error overview.",
-                                            "example": ""
+                                            "examples": [
+                                                ""
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -913,7 +914,7 @@
         "/customization/sessions": {
             "post": {
                 "operationId": "customization.store",
-                "summary": "Create a customization session.\nSnapshots the design configuration (text, logo, colors, position) for a customizable product",
+                "summary": "Create a customization session",
                 "tags": [
                     "Customisation"
                 ],
@@ -977,6 +978,28 @@
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     },
+                    "400": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                "Missing guest cart identifier"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -987,7 +1010,9 @@
                                         "message": {
                                             "type": "string",
                                             "description": "Error overview.",
-                                            "example": ""
+                                            "examples": [
+                                                ""
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -996,11 +1021,9 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/customization/sessions/{customizationSession}": {
@@ -1035,15 +1058,13 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             },
             "patch": {
                 "operationId": "customization.update",
-                "summary": "Update a customization session.\nAllows changing the configuration, the associated design, the preview image and the status.\nAllowed status transitions are: `draft`, `ready`, `added_to_cart`, `ordered`",
+                "summary": "Update a customization session",
                 "tags": [
                     "Customisation"
                 ],
@@ -1094,7 +1115,8 @@
                                             "draft",
                                             "ready",
                                             "added_to_cart",
-                                            "ordered"
+                                            "ordered",
+                                            null
                                         ]
                                     }
                                 }
@@ -1124,7 +1146,9 @@
                                         "message": {
                                             "type": "string",
                                             "description": "Error overview.",
-                                            "example": ""
+                                            "examples": [
+                                                ""
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -1139,17 +1163,15 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/customization/assets/logo": {
             "post": {
                 "operationId": "customizationAsset.uploadLogo",
-                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB).\nStores the file in `storage/app/public/customization/logos/{user_id}/`",
+                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB)\nStores the file in `storage/app/public/customization/logos/{user_id}/`",
                 "tags": [
                     "Customisation"
                 ],
@@ -1164,11 +1186,9 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/customization/assets/image": {
@@ -1189,11 +1209,9 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/ai/designs/generate": {
@@ -1223,7 +1241,9 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Votre demande ne respecte pas nos r\u00e8gles de contenu et ne peut pas \u00eatre g\u00e9n\u00e9r\u00e9e."
+                                            "examples": [
+                                                "Votre demande ne respecte pas nos r\u00e8gles de contenu et ne peut pas \u00eatre g\u00e9n\u00e9r\u00e9e."
+                                            ]
                                         },
                                         "reason": {
                                             "type": "string",
@@ -1238,8 +1258,10 @@
                                         "categories": {
                                             "type": "array",
                                             "description": "Cat\u00e9gories de mod\u00e9ration d\u00e9clench\u00e9es (ex. violence, sexual, hate).",
-                                            "example": [
-                                                "violence"
+                                            "examples": [
+                                                [
+                                                    "violence"
+                                                ]
                                             ],
                                             "items": {
                                                 "type": "string"
@@ -1268,7 +1290,9 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Design generated successfully."
+                                            "examples": [
+                                                "Design generated successfully."
+                                            ]
                                         },
                                         "data": {
                                             "type": "object",
@@ -1278,26 +1302,36 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
-                                                    "example": "Generated design"
+                                                    "examples": [
+                                                        "Generated design"
+                                                    ]
                                                 },
                                                 "status": {
                                                     "type": "string",
-                                                    "example": "generated"
+                                                    "examples": [
+                                                        "generated"
+                                                    ]
                                                 },
                                                 "prompt": {
                                                     "type": "string"
                                                 },
                                                 "provider": {
                                                     "type": "string",
-                                                    "example": "openai"
+                                                    "examples": [
+                                                        "openai"
+                                                    ]
                                                 },
                                                 "image_path": {
                                                     "type": "string",
-                                                    "example": "designs/fitness_design_652f0a1b9c8d4.png"
+                                                    "examples": [
+                                                        "designs/fitness_design_652f0a1b9c8d4.png"
+                                                    ]
                                                 },
                                                 "preview_url": {
                                                     "type": "string",
-                                                    "example": "http://localhost:8000/storage/designs/fitness_design_652f0a1b9c8d4.png"
+                                                    "examples": [
+                                                        "http://localhost:8000/storage/designs/fitness_design_652f0a1b9c8d4.png"
+                                                    ]
                                                 },
                                                 "assets": {
                                                     "type": "array",
@@ -1309,15 +1343,21 @@
                                                             },
                                                             "type": {
                                                                 "type": "string",
-                                                                "example": "generated"
+                                                                "examples": [
+                                                                    "generated"
+                                                                ]
                                                             },
                                                             "path": {
                                                                 "type": "string",
-                                                                "example": "designs/fitness_design_652f0a1b9c8d4.png"
+                                                                "examples": [
+                                                                    "designs/fitness_design_652f0a1b9c8d4.png"
+                                                                ]
                                                             },
                                                             "mime_type": {
                                                                 "type": "string",
-                                                                "example": "image/png"
+                                                                "examples": [
+                                                                    "image/png"
+                                                                ]
                                                             },
                                                             "is_primary": {
                                                                 "type": "boolean"
@@ -1345,7 +1385,9 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Le service de g\u00e9n\u00e9ration IA est temporairement indisponible. Veuillez r\u00e9essayer dans un instant."
+                                            "examples": [
+                                                "Le service de g\u00e9n\u00e9ration IA est temporairement indisponible. Veuillez r\u00e9essayer dans un instant."
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -1361,7 +1403,6 @@
         "/orders": {
             "get": {
                 "operationId": "order.index",
-                "summary": "Order history for the user.\nReturns all orders of the authenticated user (most recent first), with their associated payment and shipment",
                 "tags": [
                     "Commandes"
                 ],
@@ -1386,7 +1427,7 @@
             },
             "post": {
                 "operationId": "order.store",
-                "description": "This endpoint always returns 405. Creating an order goes through `POST /api/payment/intent`, which orchestrates the creation of the order, the Stripe payment and the shipment in a single transaction.",
+                "description": "This endpoint always returns 405",
                 "summary": "Create an order (deprecated)",
                 "deprecated": true,
                 "tags": [
@@ -1413,7 +1454,7 @@
         "/orders/{order}": {
             "get": {
                 "operationId": "order.show",
-                "summary": "Order detail.\nVerifies that the order actually belongs to the authenticated user",
+                "summary": "Order detail",
                 "tags": [
                     "Commandes"
                 ],
@@ -1452,7 +1493,7 @@
         "/stripe/webhook": {
             "post": {
                 "operationId": "stripe.webhook",
-                "summary": "Stripe webhook - payment events\nEndpoint called by Stripe (not by the frontend).\nVerifies the `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`",
+                "summary": "Stripe webhook - Payment events\nEndpoint called by Stripe",
                 "tags": [
                     "Paiement"
                 ],
@@ -1486,6 +1527,17 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "shipping_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "standard",
+                                            "express"
+                                        ]
+                                    },
                                     "shipping": {
                                         "type": "object",
                                         "properties": {
@@ -1525,6 +1577,8 @@
                                     }
                                 },
                                 "required": [
+                                    "email",
+                                    "shipping_method",
                                     "shipping"
                                 ]
                             }
@@ -1543,13 +1597,33 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                "Missing guest cart identifier"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "security": []
             }
         },
         "/contact": {
@@ -1575,6 +1649,16 @@
                                         "format": "email",
                                         "maxLength": 190
                                     },
+                                    "reason": {
+                                        "type": "string",
+                                        "enum": [
+                                            "order",
+                                            "delivery",
+                                            "payment",
+                                            "customization",
+                                            "other"
+                                        ]
+                                    },
                                     "subject": {
                                         "type": [
                                             "string",
@@ -1590,6 +1674,7 @@
                                 "required": [
                                     "name",
                                     "email",
+                                    "reason",
                                     "message"
                                 ]
                             }
@@ -1842,7 +1927,8 @@
                                         ],
                                         "enum": [
                                             "2d",
-                                            "3d"
+                                            "3d",
+                                            null
                                         ]
                                     },
                                     "allow_text_customization": {
@@ -1930,7 +2016,6 @@
         "/admin/products/{product}": {
             "get": {
                 "operationId": "adminProduct.show",
-                "summary": "Product detail (admin)",
                 "tags": [
                     "Admin - Produits"
                 ],
@@ -1974,7 +2059,7 @@
             },
             "patch": {
                 "operationId": "adminProduct.update",
-                "summary": "Update a product.\nAll fields are optional (`sometimes`). The slug cannot be changed here",
+                "summary": "Update a product\nSlug cannot be changed here",
                 "tags": [
                     "Admin - Produits"
                 ],
@@ -2030,7 +2115,8 @@
                                         ],
                                         "enum": [
                                             "2d",
-                                            "3d"
+                                            "3d",
+                                            null
                                         ]
                                     },
                                     "allow_text_customization": {
@@ -2402,7 +2488,6 @@
         "/admin/orders/{order}": {
             "get": {
                 "operationId": "adminOrder.show",
-                "summary": "Order detail (admin)",
                 "tags": [
                     "Admin - Commandes"
                 ],
@@ -2653,7 +2738,6 @@
         "/admin/tickets/{ticket}": {
             "get": {
                 "operationId": "adminTicket.show",
-                "summary": "Ticket detail with its messages (admin)",
                 "tags": [
                     "Admin - Support"
                 ],
@@ -2691,7 +2775,7 @@
         "/admin/stock": {
             "get": {
                 "operationId": "adminStock.list",
-                "summary": "Global stock view: all products with their total quantity.\nReturns a paginated list of products (25/page) with the sum of their lot quantities",
+                "summary": "Global stock view : all products with their total quantity.\nReturns a paginated list of products (25/page)",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -2837,7 +2921,7 @@
         "/admin/products/{product}/stock": {
             "get": {
                 "operationId": "adminStock.index",
-                "summary": "Stock detail for a product.\nReturns lots grouped into two blocks: `global_stock` (lots without an option) and\n`option_stocks` (lots per variant). Lots are sorted FIFO (nearest expiration first)",
+                "summary": "Stock detail for a product\nReturns lots grouped into two blocks: `global_stock` (lots without an option) and `option_stocks` (lots per variant).\nLots are sorted FIFO (nearest expiration first)",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -3021,7 +3105,7 @@
         "/admin/stock/lots/{lot}/adjust": {
             "patch": {
                 "operationId": "adminStock.adjust",
-                "summary": "Manually adjust a lot's quantity.\nComputes the delta (`new_quantity - old_quantity`) and logs the difference",
+                "summary": "Manually adjust a lot's quantity",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -3086,7 +3170,6 @@
         "/admin/products/{product}/stock/movements": {
             "get": {
                 "operationId": "adminStock.movements",
-                "summary": "Paginated history of a product's stock movements.\nReturns all `stock_movements` (in, out, corrections) linked to the product, 30 per page, most recent first",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -3236,7 +3319,7 @@
         },
         "/health": {
             "get": {
-                "summary": "Public health check, used by the `infra/deploy-prod.sh` script and monitoring probes",
+                "summary": "Public health check, used by the `infra/deploy-prod.sh`",
                 "responses": {
                     "200": {
                         "description": "",
@@ -3255,15 +3338,21 @@
         },
         "/admin/ping": {
             "get": {
-                "summary": "Admin ping",
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "integer",
-                                    "const": 200
+                                    "type": "object",
+                                    "properties": {
+                                        "ok": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "ok"
+                                    ]
                                 }
                             }
                         }
@@ -3624,20 +3713,9 @@
                         ]
                     },
                     "variant_type": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    "flavor",
-                                    "color"
-                                ]
-                            }
+                        "type": [
+                            "string",
+                            "null"
                         ]
                     },
                     "variant_name": {
@@ -3675,7 +3753,7 @@
                         "type": "object",
                         "properties": {
                             "id": {
-                                "type": "string"
+                                "type": "integer"
                             },
                             "name": {
                                 "type": "string"
@@ -3684,7 +3762,10 @@
                                 "type": "string"
                             },
                             "type": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             }
                         },
                         "required": [
@@ -3745,7 +3826,7 @@
                         "type": "object",
                         "properties": {
                             "id": {
-                                "type": "string"
+                                "type": "integer"
                             },
                             "name": {
                                 "type": "string"
@@ -3869,20 +3950,9 @@
                                     ]
                                 },
                                 "variant_type": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "null"
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [
-                                                "flavor",
-                                                "color"
-                                            ]
-                                        }
+                                    "type": [
+                                        "string",
+                                        "null"
                                     ]
                                 },
                                 "variant_name": {
@@ -3942,9 +4012,6 @@
                             ]
                         }
                     },
-                    "is_customizable": {
-                        "type": "boolean"
-                    },
                     "customization": {
                         "type": "object",
                         "properties": {
@@ -3971,11 +4038,17 @@
                             "ai"
                         ]
                     },
+                    "is_customizable": {
+                        "type": "boolean"
+                    },
                     "is_active": {
                         "type": "boolean"
                     },
                     "created_at": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -3996,8 +4069,8 @@
                     "flavor_label",
                     "main_image",
                     "hover_image",
-                    "is_customizable",
                     "customization",
+                    "is_customizable",
                     "is_active",
                     "created_at"
                 ],

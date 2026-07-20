@@ -13,12 +13,9 @@ use Illuminate\Support\Facades\Password;
 class ResetPasswordController extends Controller
 {
     /**
-     * Password reset.
-     * Verifies the token received by email and changes the password.
-     * All existing Sanctum tokens are revoked: the user must log in again everywhere after a reset.
-     *
+     * Password reset
+     * Verifies the token received by email and changes the password
      * @unauthenticated
-     *
      * @response 200 scenario="Success" {"message": "Mot de passe réinitialisé avec succès."}
      * @response 422 scenario="Invalid or expired token" {"message": "This password reset token is invalid."}
      */
@@ -40,15 +37,11 @@ class ResetPasswordController extends Controller
             function (User $user, string $password) {
                 $user->password = Hash::make($password);
                 $user->save();
-
                 $user->tokens()->delete();
             }
         );
 
-        if ($status !== Password::PASSWORD_RESET) {
-            return response()->json(['message' => __($status)], 422);
-        }
-
+        if ($status !== Password::PASSWORD_RESET) return response()->json(['message' => __($status)], 422);
         return response()->json(['message' => 'Mot de passe réinitialisé avec succès.']);
     }
 }

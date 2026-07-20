@@ -24,7 +24,7 @@ use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /** Register bindings in the container, before providers are booted. */
+    // Register bindings in the container
     public function register(): void
     {
         $this->app->singleton(StripeClient::class, function () {
@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /** Bootstrap the app: register the API rate limiter and Scramble config. */
+    // Bootstrap the app : register API rate limiter and Scramble config
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
@@ -42,10 +42,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureScramble();
     }
 
-    /** Configure Scramble programmatically */
+    // Configure Scramble programmatically
     private function configureScramble(): void
     {
-        $authMiddlewarePatterns = ['auth', 'auth:*'];
+        $auth_middleware_patterns = ['auth', 'auth:*'];
 
         Scramble::configure()
             ->withDocumentTransformers(function (OpenApi $openApi) {
@@ -55,88 +55,79 @@ class AppServiceProvider extends ServiceProvider
                         ->setDescription('Token Sanctum obtenu via `POST /api/login` ou `POST /api/register`. Préfixé par `Bearer ` dans le header `Authorization`.')
                 );
             })
-            ->withOperationTransformers(function (OperationTransformers $transformers) use ($authMiddlewarePatterns) {
-                $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($authMiddlewarePatterns): void {
-                    $hasAuthMiddleware = collect($routeInfo->route->gatherMiddleware())->some(fn (string $mw) => Str::is($authMiddlewarePatterns, $mw));
-
-                    if (! $hasAuthMiddleware) {
-                        $operation->security = [];
-                    }
+            ->withOperationTransformers(function (OperationTransformers $transformers) use ($auth_middleware_patterns) {
+                $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($auth_middleware_patterns): void {
+                    $has_auth_middleware = collect($routeInfo->route->gatherMiddleware())->some(fn(string $mw) => Str::is($auth_middleware_patterns, $mw));
+                    if (!$has_auth_middleware) $operation->security = [];
                 });
 
-                // Scramble doesn't finely infer the AI generation responses
                 $transformers->append(function (Operation $operation, RouteInfo $routeInfo): void {
-                    if ($routeInfo->route->uri() === 'api/ai/designs/generate') {
-                        $this->documentAiDesignResponses($operation);
-                    }
+                    if ($routeInfo->route->uri() === 'api/ai/designs/generate') $this->documentAiDesignResponses($operation);
                 });
             });
     }
 
-    /** Manually document the responses of `POST /api/ai/designs/generate` */
+    // Manually document the responses of `POST /api/ai/designs/generate`
     private function documentAiDesignResponses(Operation $operation): void
     {
-        // Real success status is 201
-        $operation->responses = array_values(array_filter(
-            $operation->responses ?? [],
-            fn ($response) => ! ($response instanceof Response && (int) $response->code === 200)
-        ));
+        // Success status 201
+        $operation->responses = array_values(array_filter($operation->responses ?? [], fn($response) => !($response instanceof Response && (int)$response->code === 200)));
 
         // 201 : design generated, moderated and persisted
         $asset = (new ObjectType)
             ->addProperty('id', new IntegerType)
-            ->addProperty('type', (new StringType)->example('generated'))
-            ->addProperty('path', (new StringType)->example('designs/fitness_design_652f0a1b9c8d4.png'))
-            ->addProperty('mime_type', (new StringType)->example('image/png'))
+            ->addProperty('type', (new StringType)->examples(['generated']))
+            ->addProperty('path', (new StringType)->examples(['designs/fitness_design_652f0a1b9c8d4.png']))
+            ->addProperty('mime_type', (new StringType)->examples(['image/png']))
             ->addProperty('is_primary', new BooleanType);
 
         $design = (new ObjectType)
             ->addProperty('id', new IntegerType)
-            ->addProperty('name', (new StringType)->example('Generated design'))
-            ->addProperty('status', (new StringType)->example('generated'))
+            ->addProperty('name', (new StringType)->examples(['Generated design']))
+            ->addProperty('status', (new StringType)->examples(['generated']))
             ->addProperty('prompt', new StringType)
-            ->addProperty('provider', (new StringType)->example('openai'))
-            ->addProperty('image_path', (new StringType)->example('designs/fitness_design_652f0a1b9c8d4.png'))
-            ->addProperty('preview_url', (new StringType)->example('http://localhost:8000/storage/designs/fitness_design_652f0a1b9c8d4.png'))
+            ->addProperty('provider', (new StringType)->examples(['openai']))
+            ->addProperty('image_path', (new StringType)->examples(['designs/fitness_design_652f0a1b9c8d4.png']))
+            ->addProperty('preview_url', (new StringType)->examples(['http://localhost:8000/storage/designs/fitness_design_652f0a1b9c8d4.png']))
             ->addProperty('assets', (new ArrayType)->setItems($asset));
 
-        $successBody = (new ObjectType)
-            ->addProperty('message', (new StringType)->example('Design generated successfully.'))
+        $success_body = (new ObjectType)
+            ->addProperty('message', (new StringType)->examples(['Design generated successfully.']))
             ->addProperty('data', $design)
             ->setRequired(['message', 'data']);
 
         $operation->addResponse(
             Response::make(201)
                 ->setDescription('Design généré, validé par la modération et persisté.')
-                ->setContent('application/json', Schema::fromType($successBody))
+                ->setContent('application/json', Schema::fromType($success_body))
         );
 
-        // 422 : content rejected by moderation (overrides the generic ref)
+        // 422 : content rejected by moderation
         $moderationBody = (new ObjectType)
-            ->addProperty('message', (new StringType)->example('Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.'))
+            ->addProperty('message', (new StringType)->examples(['Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.']))
             ->addProperty('reason', (new StringType)
                 ->enum(['prompt_blocked', 'prompt_flagged', 'image_provider_rejected', 'image_flagged'])
                 ->setDescription('Origine du rejet : blocklist de marque, modération du prompt, refus du générateur d’images, ou modération de l’image générée.'))
             ->addProperty('categories', (new ArrayType)
                 ->setItems(new StringType)
                 ->setDescription('Catégories de modération déclenchées (ex. violence, sexual, hate).')
-                ->example(['violence']))
+                ->examples([['violence']]))
             ->setRequired(['message']);
 
         $operation->addResponse(
             Response::make(422)
                 ->setDescription(
-                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant ".
-                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; ".
-                    'image générée rejetée par la modération (`reason: image_flagged`). '.
+                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant " .
+                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; " .
+                    'image générée rejetée par la modération (`reason: image_flagged`). ' .
                     'Les erreurs de validation du formulaire renvoient également un 422.'
                 )
                 ->setContent('application/json', Schema::fromType($moderationBody))
         );
 
-        // 503 : AI provider unreachable or erroring (timeout, 429, 5xx)
+        // 503 : AI provider unreachable or erroring
         $unavailableBody = (new ObjectType)
-            ->addProperty('message', (new StringType)->example('Le service de génération IA est temporairement indisponible. Veuillez réessayer dans un instant.'))
+            ->addProperty('message', (new StringType)->examples(['Le service de génération IA est temporairement indisponible. Veuillez réessayer dans un instant.']))
             ->setRequired(['message']);
 
         $operation->addResponse(

@@ -11,16 +11,11 @@ use Illuminate\Console\Command;
 #[Description('Deletes carts (guest or user) with no activity for 7 days.')]
 class PurgeAbandonedCarts extends Command
 {
-    /**
-     * Deletes any cart — guest or user — whose last activity is older than 7 days.
-     * Cart items cascade-delete along with their parent cart.
-     */
+    // Deletes cart — guest or user — whose last activity is older than 7 days
     public function handle(): void
     {
         $count = Cart::where('updated_at', '<', now()->subDays(7))->count();
-
         Cart::where('updated_at', '<', now()->subDays(7))->delete();
-
-        $this->info("Purged {$count} abandoned cart(s).");
+        $this->info("Purged $count abandoned cart(s).");
     }
 }

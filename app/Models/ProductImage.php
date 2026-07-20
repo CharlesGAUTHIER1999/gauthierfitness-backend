@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductImage extends Model
 {
@@ -21,25 +22,17 @@ class ProductImage extends Model
 
     protected $appends = ['full_url'];
 
-    /** Product this image belongs to. */
-    public function product()
+    // Product this image belongs to
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /** Returns the absolute public URL of the image. */
+    // Returns the absolute public URL of the image
     public function getFullUrlAttribute(): ?string
     {
-        if (! $this->url) {
-            return null;
-        }
-
-        // If it's already an absolute URL
-        if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://')) {
-            return $this->url;
-        }
-
-        // Generate the correct public URL: /storage/products/...
+        if (! $this->url) return null;
+        if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://')) return $this->url;
         return asset('storage/'.ltrim($this->url, '/'));
     }
 }
