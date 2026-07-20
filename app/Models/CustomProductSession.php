@@ -25,37 +25,37 @@ class CustomProductSession extends Model
         'unit_price_snapshot' => 'decimal:2',
     ];
 
-    /** Owner of this customization session. */
+    // Owner of this customization session
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** Product being customized in this session. */
+    // Product being customized in this session
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /** Product option selected in this session. */
+    // Product option selected in this session
     public function productOption(): BelongsTo
     {
         return $this->belongsTo(ProductOption::class);
     }
 
-    /** Design attached to this customization session. */
+    // Design attached to this customization session
     public function design(): BelongsTo
     {
         return $this->belongsTo(Design::class);
     }
 
-    /** Cart items created from this session. */
+    // Cart items created from this session
     public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
 
-    /** Order items created from this session. */
+    // Order items created from this session
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);

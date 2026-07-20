@@ -8,13 +8,13 @@ use Illuminate\Validation\Validator;
 
 class AddToCartRequest extends FormRequest
 {
-    /** Guests and authenticated users alike may add items to the cart. */
+    // Guests and authenticated users
     public function authorize(): bool
     {
         return true;
     }
 
-    /** Base validation rules for the add-to-cart payload. */
+    // Base validation rules for add-to-cart payload
     public function rules(): array
     {
         return [
@@ -25,7 +25,7 @@ class AddToCartRequest extends FormRequest
         ];
     }
 
-    /** Cross-field checks : the customization session (if any) must belong to the current user and match the selected product/option. */
+    // Cross-field checks
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
@@ -33,19 +33,17 @@ class AddToCartRequest extends FormRequest
             if (! $session_id) {
                 return;
             }
-
             $session = CustomProductSession::find($session_id);
             if (! $session) {
                 return;
             }
-
             $user = $this->user('sanctum');
 
             if ($user) {
                 $owns = (int) $session->user_id === (int) $user->id;
             } else {
-                $guestToken = $this->header('X-Guest-Cart-Token');
-                $owns = $guestToken && $session->guest_token === $guestToken;
+                $guest_token = $this->header('X-Guest-Cart-Token');
+                $owns = $guest_token && $session->guest_token === $guest_token;
             }
 
             if (! $owns) {
@@ -58,10 +56,7 @@ class AddToCartRequest extends FormRequest
                 $validator->errors()->add('custom_product_session_id', 'Customization session does not match the selected product.');
             }
 
-            if (
-                $this->filled('product_option_id') &&
-                (int) $session->product_option_id !== (int) $this->input('product_option_id')
-            ) {
+            if ($this->filled('product_option_id') && (int) $session->product_option_id !== (int) $this->input('product_option_id')) {
                 $validator->errors()->add('product_option_id', 'Selected option does not match the customization session.');
             }
         });

@@ -12,16 +12,13 @@ use Illuminate\Http\Request;
 class AdminTicketController extends Controller
 {
     /**
-     * Paginated list of support tickets (admin).
+     * Paginated list of support tickets (admin)
      *
-     * @queryParam status string Filter by status: open, pending, closed.
+     * @queryParam status string Filter by status
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Ticket::with(['user:id,firstname,lastname,email'])
-            ->withCount('messages')
-            ->orderByDesc('id');
-
+        $query = Ticket::with(['user:id,firstname,lastname,email'])->withCount('messages')->orderByDesc('id');
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
@@ -29,7 +26,7 @@ class AdminTicketController extends Controller
         return response()->json($query->paginate(20));
     }
 
-    /** Ticket detail with its messages (admin). */
+    // Ticket detail with its messages (admin)
     public function show(Ticket $ticket): JsonResponse
     {
         $ticket->load([

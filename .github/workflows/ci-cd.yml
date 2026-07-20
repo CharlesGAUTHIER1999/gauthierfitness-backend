@@ -1,7 +1,6 @@
 # ════════════════════════════════════════════════════════════════════
-#  GauthierFitness Backend — CI
+#  GauthierFitness Backend - CI
 #  repo : CharlesGAUTHIER1999/gauthierfitness-backend
-#
 #  Séquence : PHPUnit → Pint → Build image GHCR → Trigger deploy infra
 # ════════════════════════════════════════════════════════════════════
 
@@ -17,9 +16,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/charlesgauthier1999/gauthierfitness-backend
 
-# ──────────────────────────────────────────────────────────────────
+# -----------------------
 # JOB 1 - Tests PHPUnit
-# ──────────────────────────────────────────────────────────────────
+# -----------------------
 jobs:
   phpunit:
     name: "PHPUnit"
@@ -71,9 +70,9 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
-  # ──────────────────────────────────────────────────────────────────
+  # --------------------------
   # JOB 2 - Linter PHP (Pint)
-  # ──────────────────────────────────────────────────────────────────
+  # --------------------------
   lint:
     name: "Laravel Pint"
     runs-on: ubuntu-latest
@@ -100,9 +99,9 @@ jobs:
       - name: Pint (vérification style)
         run: ./vendor/bin/pint --test
 
-  # ──────────────────────────────────────────────────────────────────
-  # JOB 3 - Build & Push image GHCR (push uniquement, pas PR)
-  # ──────────────────────────────────────────────────────────────────
+  # ---------------------------------------------
+  # JOB 3 - Build & Push image GHCR (push only)
+  # ---------------------------------------------
   build:
     name: "Build image backend"
     runs-on: ubuntu-latest
@@ -149,12 +148,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ──────────────────────────────────────────────────────────────────
-  # JOB 4 - Déclencher le deploy dans gauthierfitness-infra
-  #          (seulement sur develop, après build réussi)
-  # ──────────────────────────────────────────────────────────────────
+  # ------------------------------------------------------------------------------
+  # JOB 4 - Déclenchement du deploy dans gauthierfitness-infra (only on develop)
+  # ------------------------------------------------------------------------------
   trigger-deploy:
-    name: "📡 Trigger deploy infra"
+    name: "Trigger deploy infra"
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'

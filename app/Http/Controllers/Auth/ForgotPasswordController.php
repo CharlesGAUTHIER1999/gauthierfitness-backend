@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\Password;
 class ForgotPasswordController extends Controller
 {
     /**
-     * Password reset request.
-     * Sends an email with a reset link if an account exists for that email.
-     * Always returns the same generic message, whether the email exists or not
+     * Password reset request
+     * Sends an email with a reset link if an account exists for that email
      *
      * @unauthenticated
      *
@@ -23,14 +22,9 @@ class ForgotPasswordController extends Controller
      */
     public function __invoke(Request $request)
     {
-        $validated = $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
+        $validated = $request->validate(['email' => ['required', 'email']]);
         Password::sendResetLink(['email' => strtolower(trim($validated['email']))]);
 
-        return response()->json([
-            'message' => 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.',
-        ]);
+        return response()->json(['message' => 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.']);
     }
 }

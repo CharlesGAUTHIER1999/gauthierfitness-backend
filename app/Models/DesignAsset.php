@@ -20,7 +20,7 @@ class DesignAsset extends Model
         'is_primary' => 'boolean',
     ];
 
-    /** Design this asset belongs to. */
+    // Design this asset belongs to
     public function design(): BelongsTo
     {
         return $this->belongsTo(Design::class);

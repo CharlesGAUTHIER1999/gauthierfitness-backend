@@ -18,35 +18,29 @@ class CartItem extends Model
         'quantity',
     ];
 
-    protected $casts = [
-        'quantity' => 'integer',
-    ];
+    protected $casts = ['quantity' => 'integer'];
 
-    /**
-     * Bumps the parent cart's updated_at whenever a line changes, so it reflects
-     * this cart's real last activity (used by the abandonment purge).
-     */
     protected $touches = ['cart'];
 
-    /** Cart this item belongs to. */
+    // Cart this item belongs to
     public function cart(): BelongsTo
     {
         return $this->belongsTo(Cart::class);
     }
 
-    /** Product referenced by this cart item. */
+    // Product referenced by this cart item
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /** Selected product option for this cart item. */
+    // Selected product option for this cart item
     public function option(): BelongsTo
     {
         return $this->belongsTo(ProductOption::class, 'product_option_id');
     }
 
-    /** Custom product session associated with this cart item, if any. */
+    // Custom product session associated with this cart item
     public function customProductSession(): BelongsTo
     {
         return $this->belongsTo(CustomProductSession::class, 'custom_product_session_id');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Order extends Model
 {
@@ -30,26 +31,26 @@ class Order extends Model
         'canceled_email_sent_at' => 'datetime',
     ];
 
-    /** Items included in this order. */
+    // Items included in this order
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    /** Payment associated with this order. */
+    // Payment associated with this order
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
-    /** Shipment associated with this order. */
+    // Shipment associated with this order
     public function shipment()
     {
         return $this->hasOne(Shipment::class);
     }
 
-    /** Customer who placed this order. */
-    public function user()
+    // Customer who placed this order
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

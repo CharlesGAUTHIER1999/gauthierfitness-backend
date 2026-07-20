@@ -13,8 +13,8 @@ class ContactMessageMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /** French labels for each contact reason, used in the subject line and the email body. */
-    public const REASON_LABELS = [
+    // French labels for each contact reason
+    public const array REASON_LABELS = [
         'order' => 'Commande',
         'delivery' => 'Livraison',
         'payment' => 'Paiement',
@@ -29,19 +29,19 @@ class ContactMessageMail extends Mailable
      */
     public function __construct(public array $data) {}
 
-    /** Build the envelope: subject line (prefixed with the reason) and reply-to set to the sender. */
+    // Build the envelope
     public function envelope(): Envelope
     {
         $subject = $this->data['subject'] ?? null;
-        $reasonLabel = self::REASON_LABELS[$this->data['reason']] ?? 'Autre';
+        $reason_label = self::REASON_LABELS[$this->data['reason']] ?? 'Autre';
 
         return new Envelope(
-            subject: "Contact GauthierFitness — [{$reasonLabel}] ".($subject ?: 'Nouveau message'),
             replyTo: [new Address($this->data['email'], $this->data['name'])],
+            subject: "Contact GauthierFitness — [$reason_label] ".($subject ?: 'Nouveau message'),
         );
     }
 
-    /** Render the contact message using the "emails.contact" view. */
+    // Render contact message
     public function content(): Content
     {
         return new Content(

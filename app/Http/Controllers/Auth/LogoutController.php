@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class LogoutController extends Controller
 {
     /**
-     * Logout.
+     * Logout
      * Revokes the current Sanctum token. The next call will require a new login.
      *
      * @response 200 scenario="Success" {"message": "ok"}
@@ -19,15 +19,10 @@ class LogoutController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
-
         if (! $user) {
-            return response()->json([
-                'message' => 'Unauthenticated',
-            ], 401);
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
-
         $token = $user->currentAccessToken();
-
         if ($token) {
             $token->delete();
         }

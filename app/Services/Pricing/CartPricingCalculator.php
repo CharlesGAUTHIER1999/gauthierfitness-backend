@@ -2,13 +2,13 @@
 
 namespace App\Services\Pricing;
 
-/** Pure pricing math shared by cart checkout and order snapshotting — no DB, no HTTP. */
+// Pure pricing math shared by cart checkout and order snapshotting
 class CartPricingCalculator
 {
-    /** Resolution order: session snapshot (customization) > option price > base product price. */
-    public static function unitPrice(?float $sessionSnapshot, ?float $optionPrice, float $productPrice): float
+    // Resolution order : session snapshot (customization) > option price > base product price
+    public static function unitPrice(?float $session_snapshot, ?float $option_price, float $product_price): float
     {
-        return (float) ($sessionSnapshot ?? $optionPrice ?? $productPrice);
+        return $session_snapshot ?? $option_price ?? $product_price;
     }
 
     public static function lineTotal(float $unitPrice, int $quantity): float

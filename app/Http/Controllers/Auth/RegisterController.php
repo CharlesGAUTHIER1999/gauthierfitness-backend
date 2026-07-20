@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Hash;
 #[Group(name: 'Authentification', weight: 1)]
 class RegisterController extends Controller
 {
-    public function __construct(private CartMergeService $cartMergeService) {}
+    public function __construct(private readonly CartMergeService $cartMergeService) {}
 
     /**
-     * Register a new user.
-     * Creates a user account (non-admin by default) and returns a Sanctum token to authenticate immediately.
+     * Register a new user
+     * Creates a user account (non-admin by default)
      *
      * @unauthenticated
      *
@@ -40,7 +40,6 @@ class RegisterController extends Controller
         ]);
 
         $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
-
         $token = $user->createToken('react')->plainTextToken;
 
         return response()->json([

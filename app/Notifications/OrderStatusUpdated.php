@@ -11,25 +11,22 @@ class OrderStatusUpdated extends Notification
 {
     use Queueable;
 
-    /** Bind the order and its new status to this notification. */
-    public function __construct(
-        public Order $order,
-        public string $status,
-    ) {}
+    // Bind the order and its new status to this notification
+    public function __construct(public Order $order, public string $status) {}
 
-    /** Deliver this notification by mail only. */
+    // Deliver this notification by mail only
     public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    /** Build the order status update email with a human-readable status label. */
+    // Build the order status update email with a human-readable status label
     public function toMail($notifiable): MailMessage
     {
         $labels = [
-            'shipped' => 'expédiée 📦',
-            'delivered' => 'livrée ✅',
-            'canceled' => 'annulée ❌',
+            'shipped' => 'expédiée',
+            'delivered' => 'livrée',
+            'canceled' => 'annulée',
         ];
 
         $label = $labels[$this->status] ?? $this->status;

@@ -6,7 +6,7 @@ use App\Exceptions\AiServiceUnavailableException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-/** Checks whether content (text or images) complies with content guidelines using OpenAI's Moderation API */
+// Checks whether content (text or images) complies with content guidelines using OpenAI's Moderation API
 class OpenAIModerationService
 {
     /**
@@ -18,9 +18,7 @@ class OpenAIModerationService
      */
     public function moderateText(string $text): array
     {
-        return $this->moderate([
-            ['type' => 'text', 'text' => $text],
-        ]);
+        return $this->moderate([['type' => 'text', 'text' => $text]]);
     }
 
     /**
@@ -32,9 +30,7 @@ class OpenAIModerationService
      */
     public function moderateImage(string $base64, string $mimeType = 'image/png'): array
     {
-        return $this->moderate([
-            ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$base64}"]],
-        ]);
+        return $this->moderate([['type' => 'image_url', 'image_url' => ['url' => "data:$mimeType;base64,$base64"]]]);
     }
 
     /**
@@ -59,9 +55,7 @@ class OpenAIModerationService
         if ($response->failed()) {
             throw new AiServiceUnavailableException('OpenAI moderation failed: '.$response->body());
         }
-
         $result = $response->json('results.0', []);
-
         $threshold = (float) config('ai.moderation.threshold', 0.10);
 
         $evaluation = ModerationThresholdEvaluator::evaluate(

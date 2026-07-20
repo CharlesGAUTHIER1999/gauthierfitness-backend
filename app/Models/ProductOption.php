@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductOption extends Model
 {
@@ -32,13 +33,13 @@ class ProductOption extends Model
         'is_active' => 'boolean',
     ];
 
-    /** Product this option belongs to. */
-    public function product()
+    // Product this option belongs to
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /** Stock lots associated with this option. */
+    // Stock lots associated with this option
     public function lots()
     {
         return $this->hasMany(StockLot::class, 'product_option_id');

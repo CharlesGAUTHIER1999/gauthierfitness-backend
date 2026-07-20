@@ -15,7 +15,7 @@ class ProductGroup extends Model
         'type',
     ];
 
-    /** Products belonging to this group, ordered by color. */
+    // Products belonging to this group, ordered by color
     public function products()
     {
         return $this->hasMany(Product::class, 'group_id')->orderBy('color_code');

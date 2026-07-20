@@ -42,11 +42,11 @@ class StripeController extends Controller
     public function createPaymentIntent(Request $request): JsonResponse
     {
         $user = $request->user('sanctum');
-        $guestToken = null;
+        $guest_token = null;
 
         if (! $user) {
-            $guestToken = $request->header('X-Guest-Cart-Token');
-            abort_if(! $guestToken, 400, 'Missing guest cart identifier');
+            $guest_token = $request->header('X-Guest-Cart-Token');
+            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
         }
 
         $data = $request->validate([
@@ -62,67 +62,51 @@ class StripeController extends Controller
             'shipping.phone' => ['nullable', 'string'],
         ]);
 
-        $cart = $user
-            ? $user->cart()->firstOrCreate(['user_id' => $user->id])
-            : Cart::firstOrCreate(['guest_token' => $guestToken]);
-
-        $cartItems = $cart->items()
-            ->with(['product', 'option', 'customProductSession'])
-            ->get();
-
-        if ($cartItems->isEmpty()) {
+        $cart = $user ? $user->cart()->firstOrCreate(['user_id' => $user->id]) : Cart::firstOrCreate(['guest_token' => $guest_token]);
+        $cart_items = $cart->items()->with(['product', 'option', 'customProductSession'])->get();
+        if ($cart_items->isEmpty()) {
             return response()->json(['message' => 'Panier vide'], 400);
         }
-
         $stripe = app(StripeClient::class);
 
-        return DB::transaction(function () use ($user, $guestToken, $cartItems, $data, $stripe) {
-            $totalTtc = 0.0;
-            $totalHt = 0.0;
-            $pricedItems = [];
+        return DB::transaction(function () use ($user, $guest_token, $cart_items, $data, $stripe) {
+            $total_ttc = 0.0;
+            $total_ht = 0.0;
+            $priced_items = [];
 
-            foreach ($cartItems as $ci) {
+            foreach ($cart_items as $ci) {
                 $product = $ci->product;
-
                 if (! $product) {
                     abort(422, 'Produit introuvable dans le panier.');
                 }
-
-                $unitTtc = CartPricingCalculator::unitPrice(
-                    $ci->customProductSession?->unit_price_snapshot,
-                    $ci->option?->price_ttc,
-                    (float) $product->price_ttc
-                );
-                $unitHt = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float) $product->price_ht);
-                $qty = (int) $ci->quantity;
-
-                $totalTtc += CartPricingCalculator::lineTotal($unitTtc, $qty);
-                $totalHt += CartPricingCalculator::lineTotal($unitHt, $qty);
-
-                $pricedItems[] = ['cartItem' => $ci, 'product' => $product, 'unitTtc' => $unitTtc, 'qty' => $qty];
+                $unit_ttc = CartPricingCalculator::unitPrice($ci->customProductSession?->unit_price_snapshot, $ci->option?->price_ttc, (float) $product->price_ttc);
+                $unit_ht = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float) $product->price_ht);
+                $quantity = (int) $ci->quantity;
+                $total_ttc += CartPricingCalculator::lineTotal($unit_ttc, $quantity);
+                $total_ht += CartPricingCalculator::lineTotal($unit_ht, $quantity);
+                $priced_items[] = ['cartItem' => $ci, 'product' => $product, 'unitTtc' => $unit_ttc, 'qty' => $quantity];
             }
 
-            $totalTtc = CartPricingCalculator::round($totalTtc);
-            $totalHt = CartPricingCalculator::round($totalHt);
+            $total_ttc = CartPricingCalculator::round($total_ttc);
+            $total_ht = CartPricingCalculator::round($total_ht);
 
-            // Shipping cost is priced here, server-side, from the product subtotal — the
-            // method is client-chosen but never its price, so the Stripe amount can't be tampered with.
-            $shippingMethod = $data['shipping_method'];
-            $shippingCost = CartPricingCalculator::round(ShippingCalculator::cost($shippingMethod, $totalTtc));
-            $totalTtc = CartPricingCalculator::round($totalTtc + $shippingCost);
+            // Shipping cost is priced here
+            $shipping_method = $data['shipping_method'];
+            $shipping_cost = CartPricingCalculator::round(ShippingCalculator::cost($shipping_method, $total_ttc));
+            $total_ttc = CartPricingCalculator::round($total_ttc + $shipping_cost);
 
-            // 2) Order
+            // Order create
             $order = Order::create([
                 'user_id' => $user?->id,
-                'guest_token' => $guestToken,
+                'guest_token' => $guest_token,
                 'email' => $data['email'],
-                'total_ht' => $totalHt,
-                'total_ttc' => $totalTtc,
+                'total_ht' => $total_ht,
+                'total_ttc' => $total_ttc,
                 'payment_status' => 'pending',
                 'order_status' => 'new',
             ]);
 
-            // 3) Shipment (structured)
+            // Shipment create
             Shipment::create([
                 'order_id' => $order->id,
                 'firstname' => $data['shipping']['firstname'],
@@ -132,55 +116,51 @@ class StripeController extends Controller
                 'city' => $data['shipping']['city'],
                 'country' => $data['shipping']['country'],
                 'phone' => $data['shipping']['phone'] ?? null,
-                'method' => $shippingMethod,
-                'cost' => $shippingCost,
+                'method' => $shipping_method,
+                'cost' => $shipping_cost,
                 'status' => 'pending',
             ]);
 
-            // 4) Items
-            foreach ($pricedItems as $priced) {
+            // Items
+            foreach ($priced_items as $priced) {
                 $ci = $priced['cartItem'];
                 $product = $priced['product'];
-                $unitTtc = $priced['unitTtc'];
-                $qty = $priced['qty'];
+                $unit_ttc = $priced['unitTtc'];
+                $quantity = $priced['qty'];
+                $custom_session = $ci->customProductSession;
 
-                $customSession = $ci->customProductSession;
-
+                // OrderItem create
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'product_option_id' => $ci->product_option_id,
-                    'custom_product_session_id' => $customSession?->id,
+                    'custom_product_session_id' => $custom_session?->id,
                     'lot_id' => null,
-                    'unit_price' => round((float) $unitTtc, 2),
-                    'quantity' => $qty,
-                    'total' => round(((float) $unitTtc) * $qty, 2),
-                    'customization_snapshot' => $customSession?->configuration,
-                    'customization_preview_path' => $customSession?->preview_image_path,
+                    'unit_price' => round((float) $unit_ttc, 2),
+                    'quantity' => $quantity,
+                    'total' => round(((float) $unit_ttc) * $quantity, 2),
+                    'customization_snapshot' => $custom_session?->configuration,
+                    'customization_preview_path' => $custom_session?->preview_image_path,
                 ]);
             }
 
-            // 5) Payment row
+            // Payment create
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'provider' => 'stripe',
                 'provider_payment_id' => null,
-                'amount' => $totalTtc,
+                'amount' => $total_ttc,
                 'status' => 'pending',
                 'raw_payload' => null,
             ]);
 
-            // 6) Stripe PaymentIntent
+            // Stripe PaymentIntent create
             $intent = $stripe->paymentIntents->create([
-                'amount' => (int) round($totalTtc * 100),
+                'amount' => (int) round($total_ttc * 100),
                 'currency' => 'eur',
                 'payment_method_types' => ['card'],
                 'description' => "Commande #$order->id",
-                'metadata' => [
-                    'order_id' => (string) $order->id,
-                    'user_id' => $user ? (string) $user->id : '',
-                    'payment_id' => (string) $payment->id,
-                ],
+                'metadata' => ['order_id' => (string) $order->id, 'user_id' => $user ? (string) $user->id : '', 'payment_id' => (string) $payment->id],
             ]);
 
             $payment->provider_payment_id = $intent->id;
@@ -191,17 +171,16 @@ class StripeController extends Controller
                 'order_id' => $order->id,
                 'payment_intent_id' => $intent->id,
                 'client_secret' => $intent->client_secret,
-                'amount' => $totalTtc,
-                'shipping_cost' => $shippingCost,
+                'amount' => $total_ttc,
+                'shipping_cost' => $shipping_cost,
                 'currency' => 'EUR',
             ]);
         });
     }
 
     /**
-     * Stripe webhook - payment events
-     * Endpoint called by Stripe (not by the frontend).
-     * Verifies the `Stripe-Signature` header against `STRIPE_WEBHOOK_SECRET`
+     * Stripe webhook - Payment events
+     * Endpoint called by Stripe
      *
      * @unauthenticated
      *
@@ -212,59 +191,57 @@ class StripeController extends Controller
      */
     public function webhook(Request $request): JsonResponse
     {
-        $endpointSecret = config('services.stripe.webhook_secret', env('STRIPE_WEBHOOK_SECRET'));
+        $endpoint_secret = config('services.stripe.webhook_secret', env('STRIPE_WEBHOOK_SECRET'));
         $payload = $request->getContent();
-        $sig = $request->header('Stripe-Signature');
+        $signature = $request->header('Stripe-Signature');
 
         try {
-            $event = Webhook::constructEvent($payload, $sig, $endpointSecret);
+            $event = Webhook::constructEvent($payload, $signature, $endpoint_secret);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
 
         $provider = 'stripe';
-        $providerEventId = (string) $event->id;
+        $provider_event_id = $event->id;
 
         // idempotency
         try {
-            $we = WebhookEvent::firstOrCreate(
-                ['provider' => $provider, 'provider_event_id' => $providerEventId],
+            $webhook_event = WebhookEvent::firstOrCreate(
+                ['provider' => $provider, 'provider_event_id' => $provider_event_id],
                 ['event_type' => $event->type, 'payload' => $event->toArray(), 'processed_at' => null]
             );
         } catch (QueryException $e) {
-            $we = WebhookEvent::where('provider', $provider)
-                ->where('provider_event_id', $providerEventId)
-                ->first();
+            $webhook_event = WebhookEvent::where('provider', $provider)->where('provider_event_id', $provider_event_id)->first();
         }
 
-        if ($we && $we->processed_at) {
+        if ($webhook_event && $webhook_event->processed_at) {
             return response()->json(['status' => 'already_processed']);
         }
 
-        if ($we && empty($we->payload)) {
-            $we->payload = $event->toArray();
-            $we->save();
+        if ($webhook_event && empty($webhook_event->payload)) {
+            $webhook_event->payload = $event->toArray();
+            $webhook_event->save();
         }
 
         try {
             if ($event->type === 'payment_intent.succeeded') {
-                $pi = $event->data->object;
-                $orderId = $pi->metadata->order_id ?? null;
-                $paymentId = $pi->metadata->payment_id ?? null;
+                $payment_intent = $event->data->object;
+                $order_id = $payment_intent->metadata->order_id ?? null;
+                $payment_id = $payment_intent->metadata->payment_id ?? null;
 
-                DB::transaction(function () use ($pi, $orderId, $paymentId) {
-                    if ($paymentId && ($payment = Payment::find($paymentId))) {
+                DB::transaction(function () use ($payment_intent, $order_id, $payment_id) {
+                    if ($payment_id && ($payment = Payment::find($payment_id))) {
                         $payment->status = 'success';
-                        $payment->raw_payload = $pi->toArray();
+                        $payment->raw_payload = $payment_intent->toArray();
                         $payment->save();
                     }
 
-                    if ($orderId && ($order = Order::with(['user', 'items.product'])->find($orderId))) {
+                    if ($order_id && ($order = Order::with(['user', 'items.product'])->find($order_id))) {
                         $order->payment_status = 'paid';
                         $order->order_status = 'processing';
                         $order->save();
 
-                        // clear DB cart (source: cart->items)
+                        // clear DB cart
                         if ($order->user) {
                             $order->user->cart?->items()->delete();
                         } elseif ($order->guest_token) {
@@ -278,19 +255,14 @@ class StripeController extends Controller
                             } else {
                                 Notification::route('mail', $order->email)->notify(new OrderConfirmed($order));
                             }
-
                             $order->paid_email_sent_at = now();
                             $order->save();
                         }
 
-                        // Decrement stock — FIFO (earliest-expiring lot first)
+                        // Decrement stock — FIFO
                         foreach ($order->items as $item) {
                             $lot = StockLot::where('product_id', $item->product_id)
-                                ->when(
-                                    $item->product_option_id,
-                                    fn ($q) => $q->where('product_option_id', $item->product_option_id),
-                                    fn ($q) => $q->whereNull('product_option_id')
-                                )
+                                ->when($item->product_option_id, fn ($q) => $q->where('product_option_id', $item->product_option_id), fn ($q) => $q->whereNull('product_option_id'))
                                 ->where('quantity', '>', 0)
                                 ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
                                 ->orderBy('id')
@@ -305,7 +277,7 @@ class StripeController extends Controller
                                     'product_id' => $item->product_id,
                                     'quantity' => $deducted,
                                     'type' => 'out',
-                                    'reason' => "Vente — Commande #{$order->id}",
+                                    'reason' => "Vente — Commande #$order->id",
                                 ]);
 
                                 $item->lot_id = $lot->id;
@@ -317,18 +289,18 @@ class StripeController extends Controller
             }
 
             if ($event->type === 'payment_intent.payment_failed') {
-                $pi = $event->data->object;
-                $orderId = $pi->metadata->order_id ?? null;
-                $paymentId = $pi->metadata->payment_id ?? null;
+                $payment_intent = $event->data->object;
+                $order_id = $payment_intent->metadata->order_id ?? null;
+                $payment_id = $payment_intent->metadata->payment_id ?? null;
 
-                DB::transaction(function () use ($pi, $orderId, $paymentId) {
-                    if ($paymentId && ($payment = Payment::find($paymentId))) {
+                DB::transaction(function () use ($payment_intent, $order_id, $payment_id) {
+                    if ($payment_id && ($payment = Payment::find($payment_id))) {
                         $payment->status = 'failed';
-                        $payment->raw_payload = $pi->toArray();
+                        $payment->raw_payload = $payment_intent->toArray();
                         $payment->save();
                     }
 
-                    if ($orderId && ($order = Order::find($orderId))) {
+                    if ($order_id && ($order = Order::find($order_id))) {
                         $order->payment_status = 'failed';
                         $order->order_status = 'new';
                         $order->save();
@@ -336,13 +308,13 @@ class StripeController extends Controller
                 });
             }
 
-            $we->processed_at = now();
-            $we->save();
+            $webhook_event->processed_at = now();
+            $webhook_event->save();
 
             return response()->json(['status' => 'success']);
         } catch (Throwable $e) {
-            if ($we) {
-                $we->failures()->create([
+            if ($webhook_event) {
+                $webhook_event->failures()->create([
                     'error_message' => $e->getMessage(),
                     'retry_count' => 0,
                 ]);

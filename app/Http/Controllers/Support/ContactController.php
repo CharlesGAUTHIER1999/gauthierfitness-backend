@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 class ContactController extends Controller
 {
     /**
-     * Send a contact message.
+     * Send a contact message
      *
      * @unauthenticated
      *
@@ -33,8 +33,6 @@ class ContactController extends Controller
         $to = config('mail.support_address') ?: config('mail.from.address');
         Mail::to($to)->send(new ContactMessageMail($data));
 
-        return response()->json([
-            'message' => 'Message envoyé. Nous te répondrons rapidement.',
-        ]);
+        return response()->json(['message' => 'Message envoyé. Nous te répondrons rapidement.']);
     }
 }

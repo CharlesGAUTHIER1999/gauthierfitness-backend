@@ -16,29 +16,33 @@ use Throwable;
 #[Group(name: 'Admin - Commandes', weight: 11)]
 class AdminOrderController extends Controller
 {
+    /** Maps a status to the order column tracking whether its notification email was already sent. */
+    private const EMAIL_SENT_AT_FIELDS = [
+        'shipped' => 'shipped_email_sent_at',
+        'delivered' => 'delivered_email_sent_at',
+        'canceled' => 'canceled_email_sent_at',
+    ];
+
     /** Dashboard - global statistics */
     public function stats(): JsonResponse
     {
-        $lowThreshold = 5;
+        $low_threshold = 5;
 
         // Stock per active product
-        $stockByProduct = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')->groupBy('product_id')->pluck('total_qty', 'product_id');
-        $activeProductIds = Product::where('is_active', true)->pluck('id');
+        $stocky_by_product = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')->groupBy('product_id')->pluck('total_qty', 'product_id');
+        $active_product_ids = Product::where('is_active', true)->pluck('id');
+        $out_of_stock = $active_product_ids->filter(fn ($id) => ($stocky_by_product[$id] ?? 0) == 0)->count();
 
-        $outOfStock = $activeProductIds->filter(
-            fn ($id) => ($stockByProduct[$id] ?? 0) == 0
-        )->count();
+        $low_stock = $active_product_ids->filter(function ($id) use ($stocky_by_product, $low_threshold) {
+            $quantity = $stocky_by_product[$id] ?? 0;
 
-        $lowStock = $activeProductIds->filter(function ($id) use ($stockByProduct, $lowThreshold) {
-            $qty = $stockByProduct[$id] ?? 0;
-
-            return $qty > 0 && $qty < $lowThreshold;
+            return $quantity > 0 && $quantity < $low_threshold;
         })->count();
 
         return response()->json([
             'products' => [
                 'total' => Product::count(),
-                'active' => $activeProductIds->count(),
+                'active' => $active_product_ids->count(),
                 'customizable' => Product::where('is_customizable', true)->count(),
             ],
             'orders' => [
@@ -49,17 +53,17 @@ class AdminOrderController extends Controller
                 'revenue_month' => (float) Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
             ],
             'stock' => [
-                'out_of_stock' => $outOfStock,
-                'low_stock' => $lowStock,
+                'out_of_stock' => $out_of_stock,
+                'low_stock' => $low_stock,
             ],
         ]);
     }
 
     /**
-     * Paginated list of orders (admin).
+     * Paginated list of orders (admin)
      *
-     * @queryParam status string Filter by status: new, processing, shipped, delivered, canceled.
-     * @queryParam search string Search by customer email/first name/last name.
+     * @queryParam status string Filter by status
+     * @queryParam search string Search by customer
      */
     public function index(Request $request): JsonResponse
     {
@@ -75,15 +79,15 @@ class AdminOrderController extends Controller
         if ($request->filled('search')) {
             $search = $request->query('search');
             $query->whereHas('user', function ($q) use ($search) {
-                $q->where('email', 'like', "%{$search}%")->orWhere('firstname', 'like', "%{$search}%")
-                    ->orWhere('lastname', 'like', "%{$search}%");
+                $q->where('email', 'like', "%$search%")->orWhere('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%");
             });
         }
 
         return response()->json($query->paginate(20));
     }
 
-    /** Order detail (admin). */
+    // Order detail (admin)
     public function show(Order $order): JsonResponse
     {
         $order->load([
@@ -99,7 +103,7 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Update an order's status.
+     * Update an order's status
      *
      * @response 200 {"message": "Status updated", "order": {}}
      * @response 200 scenario="No change" {"message": "Status unchanged", "order": {}}
@@ -108,40 +112,22 @@ class AdminOrderController extends Controller
      */
     public function updateStatus(Request $request, Order $order): JsonResponse
     {
-        $data = $request->validate([
-            'order_status' => ['required', 'in:new,processing,shipped,delivered,canceled'],
-        ]);
+        $data = $request->validate(['order_status' => ['required', 'in:new,processing,shipped,delivered,canceled']]);
+        $new_status = $data['order_status'];
 
-        $newStatus = $data['order_status'];
-
-        return DB::transaction(function () use ($order, $newStatus) {
-            if ($order->order_status === $newStatus) {
+        return DB::transaction(function () use ($order, $new_status) {
+            if ($order->order_status === $new_status) {
                 return response()->json(['message' => 'Status unchanged', 'order' => $order]);
             }
-
-            $order->order_status = $newStatus;
+            $order->order_status = $new_status;
             $order->save();
-
             $user = $order->user;
+            $email_field = self::EMAIL_SENT_AT_FIELDS[$new_status] ?? null;
 
-            if ($user) {
-                if ($newStatus === 'shipped' && ! $order->shipped_email_sent_at) {
-                    $user->notify(new OrderStatusUpdated($order, 'shipped'));
-                    $order->shipped_email_sent_at = now();
-                    $order->save();
-                }
-
-                if ($newStatus === 'delivered' && ! $order->delivered_email_sent_at) {
-                    $user->notify(new OrderStatusUpdated($order, 'delivered'));
-                    $order->delivered_email_sent_at = now();
-                    $order->save();
-                }
-
-                if ($newStatus === 'canceled' && ! $order->canceled_email_sent_at) {
-                    $user->notify(new OrderStatusUpdated($order, 'canceled'));
-                    $order->canceled_email_sent_at = now();
-                    $order->save();
-                }
+            if ($user && $email_field && ! $order->$email_field) {
+                $user->notify(new OrderStatusUpdated($order, $new_status));
+                $order->$email_field = now();
+                $order->save();
             }
 
             return response()->json(['message' => 'Status updated', 'order' => $order->fresh()]);

@@ -13,9 +13,8 @@ use Illuminate\Support\Facades\Password;
 class ResetPasswordController extends Controller
 {
     /**
-     * Password reset.
-     * Verifies the token received by email and changes the password.
-     * All existing Sanctum tokens are revoked: the user must log in again everywhere after a reset.
+     * Password reset
+     * Verifies the token received by email and changes the password
      *
      * @unauthenticated
      *
@@ -40,7 +39,6 @@ class ResetPasswordController extends Controller
             function (User $user, string $password) {
                 $user->password = Hash::make($password);
                 $user->save();
-
                 $user->tokens()->delete();
             }
         );

@@ -16,7 +16,7 @@ class Supplier extends Model
         'phone',
     ];
 
-    /** Products provided by this supplier. */
+    // Products provided by this supplier
     public function products()
     {
         return $this->hasMany(Product::class);

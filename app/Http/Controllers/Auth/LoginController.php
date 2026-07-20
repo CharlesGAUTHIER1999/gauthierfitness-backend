@@ -12,12 +12,11 @@ use Illuminate\Support\Facades\Hash;
 #[Group(name: 'Authentification', weight: 1)]
 class LoginController extends Controller
 {
-    public function __construct(private CartMergeService $cartMergeService) {}
+    public function __construct(private readonly CartMergeService $cartMergeService) {}
 
     /**
      * User login.
      * Authenticates a user via email/password and returns a Sanctum token.
-     * The previous token named "react" is revoked to limit the session to a single active device.
      *
      * @unauthenticated
      *
@@ -33,18 +32,12 @@ class LoginController extends Controller
         ]);
 
         $email = strtolower(trim($validated['email']));
-
         $user = User::where('email', $email)->first();
-
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
-
-        // 1 "react" token per user
         $user->tokens()->where('name', 'react')->delete();
-
         $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
-
         $token = $user->createToken('react')->plainTextToken;
 
         return response()->json([
