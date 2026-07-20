@@ -24,6 +24,7 @@ class ContactMessageMail extends Mailable
 
     /**
      * Store the submitted contact form data.
+     *
      * @param  array{name: string, email: string, reason: string, subject: ?string, message: string}  $data
      */
     public function __construct(public array $data) {}

@@ -21,7 +21,9 @@ class AIDesignController extends Controller
 {
     /**
      * Generate a design via OpenAI from a text prompt
+     *
      * @throws AiServiceUnavailableException if OpenAI is unreachable or errors out (rendered as 503)
+     *
      * @response 422 scenario="Product does not support AI generation" {"message": "AI generation is not allowed for this product."}
      * @response 422 scenario="Prompt rejected by moderation" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
      * @response 422 scenario="Image rejected by moderation" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
@@ -38,7 +40,7 @@ class AIDesignController extends Controller
         // 1 - Brand policy blocklist
         $banned_terms = $blocklist->matches($prompt);
 
-        if (!empty($banned_terms)) {
+        if (! empty($banned_terms)) {
             PromptHistory::create([
                 'user_id' => $user_id,
                 'prompt' => $prompt,

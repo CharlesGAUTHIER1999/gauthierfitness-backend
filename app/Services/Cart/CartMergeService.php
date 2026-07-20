@@ -11,14 +11,19 @@ class CartMergeService
     // Merges guest cart (identified by its token) into the given user's cart
     public function mergeGuestCartIntoUser(?string $guestToken, User $user): void
     {
-        if (! $guestToken) return;
+        if (! $guestToken) {
+            return;
+        }
         $guest_cart = Cart::where('guest_token', $guestToken)->first();
-        if (! $guest_cart) return;
+        if (! $guest_cart) {
+            return;
+        }
         $user_cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
         foreach ($guest_cart->items as $guest_item) {
             if ($guest_item->custom_product_session_id) {
                 $guest_item->update(['cart_id' => $user_cart->id]);
+
                 continue;
             }
 

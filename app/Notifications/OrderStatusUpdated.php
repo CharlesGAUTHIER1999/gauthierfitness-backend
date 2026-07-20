@@ -12,7 +12,7 @@ class OrderStatusUpdated extends Notification
     use Queueable;
 
     // Bind the order and its new status to this notification
-    public function __construct(public Order $order, public string $status,) {}
+    public function __construct(public Order $order, public string $status) {}
 
     // Deliver this notification by mail only
     public function via($notifiable): array

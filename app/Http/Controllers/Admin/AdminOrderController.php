@@ -31,10 +31,11 @@ class AdminOrderController extends Controller
         // Stock per active product
         $stocky_by_product = StockLot::selectRaw('product_id, SUM(quantity) as total_qty')->groupBy('product_id')->pluck('total_qty', 'product_id');
         $active_product_ids = Product::where('is_active', true)->pluck('id');
-        $out_of_stock = $active_product_ids->filter(fn($id) => ($stocky_by_product[$id] ?? 0) == 0)->count();
+        $out_of_stock = $active_product_ids->filter(fn ($id) => ($stocky_by_product[$id] ?? 0) == 0)->count();
 
         $low_stock = $active_product_ids->filter(function ($id) use ($stocky_by_product, $low_threshold) {
             $quantity = $stocky_by_product[$id] ?? 0;
+
             return $quantity > 0 && $quantity < $low_threshold;
         })->count();
 
@@ -48,8 +49,8 @@ class AdminOrderController extends Controller
                 'total' => Order::count(),
                 'this_week' => Order::where('created_at', '>=', now()->startOfWeek())->count(),
                 'by_status' => Order::selectRaw('order_status, count(*) as count')->groupBy('order_status')->pluck('count', 'order_status'),
-                'revenue' => (float)Order::where('payment_status', 'paid')->sum('total_ttc'),
-                'revenue_month' => (float)Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
+                'revenue' => (float) Order::where('payment_status', 'paid')->sum('total_ttc'),
+                'revenue_month' => (float) Order::where('payment_status', 'paid')->where('created_at', '>=', now()->startOfMonth())->sum('total_ttc'),
             ],
             'stock' => [
                 'out_of_stock' => $out_of_stock,
@@ -60,6 +61,7 @@ class AdminOrderController extends Controller
 
     /**
      * Paginated list of orders (admin)
+     *
      * @queryParam status string Filter by status
      * @queryParam search string Search by customer
      */
@@ -70,7 +72,9 @@ class AdminOrderController extends Controller
             'payment:id,order_id,amount,status',
         ])->orderByDesc('id');
 
-        if ($request->filled('status')) $query->where('order_status', $request->query('status'));
+        if ($request->filled('status')) {
+            $query->where('order_status', $request->query('status'));
+        }
 
         if ($request->filled('search')) {
             $search = $request->query('search');
@@ -100,23 +104,27 @@ class AdminOrderController extends Controller
 
     /**
      * Update an order's status
+     *
      * @response 200 {"message": "Status updated", "order": {}}
      * @response 200 scenario="No change" {"message": "Status unchanged", "order": {}}
+     *
      * @throws Throwable
      */
     public function updateStatus(Request $request, Order $order): JsonResponse
     {
-        $data = $request->validate(['order_status' => ['required', 'in:new,processing,shipped,delivered,canceled'],]);
+        $data = $request->validate(['order_status' => ['required', 'in:new,processing,shipped,delivered,canceled']]);
         $new_status = $data['order_status'];
 
         return DB::transaction(function () use ($order, $new_status) {
-            if ($order->order_status === $new_status) return response()->json(['message' => 'Status unchanged', 'order' => $order]);
+            if ($order->order_status === $new_status) {
+                return response()->json(['message' => 'Status unchanged', 'order' => $order]);
+            }
             $order->order_status = $new_status;
             $order->save();
             $user = $order->user;
             $email_field = self::EMAIL_SENT_AT_FIELDS[$new_status] ?? null;
 
-            if ($user && $email_field && !$order->$email_field) {
+            if ($user && $email_field && ! $order->$email_field) {
                 $user->notify(new OrderStatusUpdated($order, $new_status));
                 $order->$email_field = now();
                 $order->save();

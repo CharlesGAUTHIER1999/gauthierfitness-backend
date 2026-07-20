@@ -23,8 +23,10 @@ class User extends Authenticatable implements CanResetPasswordContract
         'user_id',
     ];
 
-    protected $casts = ['email_verified_at' => 'datetime',];
+    protected $casts = ['email_verified_at' => 'datetime'];
+
     protected $hidden = ['password', 'remember_token'];
+
     protected $appends = ['name'];
 
     // Returns the user's full name

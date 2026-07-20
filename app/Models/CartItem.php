@@ -18,7 +18,8 @@ class CartItem extends Model
         'quantity',
     ];
 
-    protected $casts = ['quantity' => 'integer',];
+    protected $casts = ['quantity' => 'integer'];
+
     protected $touches = ['cart'];
 
     // Cart this item belongs to

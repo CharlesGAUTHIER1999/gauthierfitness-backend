@@ -25,6 +25,7 @@ class CustomizationController extends Controller
 
     /**
      * Create a customization session
+     *
      * @response 422 scenario="Product is not customizable" {"message": "This product is not customizable."}
      * @response 403 scenario="Design belongs to another user" {}
      */
@@ -43,19 +44,19 @@ class CustomizationController extends Controller
         $user = $request->user('sanctum');
         $guest_token = null;
 
-        if (!$user) {
+        if (! $user) {
             $guest_token = $request->header('X-Guest-Cart-Token');
-            abort_if(!$guest_token, 400, 'Missing guest cart identifier');
-            abort_if(!empty($data['design_id']), 422, 'Design does not match the selected product.');
+            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
+            abort_if(! empty($data['design_id']), 422, 'Design does not match the selected product.');
         }
 
-        if (!empty($data['design_id'])) {
+        if (! empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int)$design->user_id === (int)$user->id, 403);
-            abort_unless((int)$design->product_id === (int)$product->id, 422, 'Design does not match the selected product.');
+            abort_unless((int) $design->user_id === (int) $user->id, 403);
+            abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
         }
 
-        $option = !empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
+        $option = ! empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
         $unit_price = $option?->price_ttc ?? $product->price_ttc;
 
         $session = CustomProductSession::create([
@@ -78,16 +79,19 @@ class CustomizationController extends Controller
 
     /**
      * Retrieve a customization session.
+     *
      * @response 403 scenario="Session belongs to another user" {}
      */
     public function show(Request $request, CustomProductSession $customizationSession): JsonResponse
     {
         $this->authorizeOwner($customizationSession, $request);
-        return response()->json(['data' => $customizationSession->load(self::SESSION_RELATIONS),]);
+
+        return response()->json(['data' => $customizationSession->load(self::SESSION_RELATIONS)]);
     }
 
     /**
      * Update a customization session
+     *
      * @response 403 scenario="Session belongs to another user" {}
      */
     public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
@@ -101,11 +105,11 @@ class CustomizationController extends Controller
             'status' => ['nullable', 'in:draft,ready,added_to_cart,ordered'],
         ]);
 
-        if (!empty($data['design_id'])) {
+        if (! empty($data['design_id'])) {
             abort_unless($request->user('sanctum'), 403);
             $design = Design::findOrFail($data['design_id']);
-            abort_unless((int)$design->user_id === (int)$request->user('sanctum')->id, 403);
-            abort_unless((int)$design->product_id === (int)$customizationSession->product_id, 422, 'Design does not match the customization session product.');
+            abort_unless((int) $design->user_id === (int) $request->user('sanctum')->id, 403);
+            abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
         }
 
         $customizationSession->update([
@@ -125,7 +129,8 @@ class CustomizationController extends Controller
     protected function authorizeOwner(CustomProductSession $session, Request $request): void
     {
         if ($user = $request->user('sanctum')) {
-            abort_unless((int)$session->user_id === (int)$user->id, 403);
+            abort_unless((int) $session->user_id === (int) $user->id, 403);
+
             return;
         }
 

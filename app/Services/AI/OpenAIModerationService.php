@@ -11,27 +11,32 @@ class OpenAIModerationService
 {
     /**
      * Moderates a text prompt
+     *
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     public function moderateText(string $text): array
     {
-        return $this->moderate([['type' => 'text', 'text' => $text],]);
+        return $this->moderate([['type' => 'text', 'text' => $text]]);
     }
 
     /**
      * Moderates an image provided in base64 format (sent as a data URL to the API)
+     *
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     public function moderateImage(string $base64, string $mimeType = 'image/png'): array
     {
-        return $this->moderate([['type' => 'image_url', 'image_url' => ['url' => "data:$mimeType;base64,$base64"]],]);
+        return $this->moderate([['type' => 'image_url', 'image_url' => ['url' => "data:$mimeType;base64,$base64"]]]);
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $input
      * @return array{flagged: bool, categories: list<string>, payload: array}
+     *
      * @throws AiServiceUnavailableException
      */
     private function moderate(array $input): array
@@ -47,7 +52,9 @@ class OpenAIModerationService
             throw new AiServiceUnavailableException('OpenAI moderation unreachable.', $e);
         }
 
-        if ($response->failed()) throw new AiServiceUnavailableException('OpenAI moderation failed: '.$response->body());
+        if ($response->failed()) {
+            throw new AiServiceUnavailableException('OpenAI moderation failed: '.$response->body());
+        }
         $result = $response->json('results.0', []);
         $threshold = (float) config('ai.moderation.threshold', 0.10);
 

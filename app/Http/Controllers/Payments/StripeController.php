@@ -31,10 +31,12 @@ class StripeController extends Controller
 {
     /**
      * Create a Stripe PaymentIntent for the current cart
+     *
      * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "shipping_cost": 4.90, "currency": "EUR" }
      * @response 400 scenario="Empty cart" {"message": "Panier vide"}
      * @response 400 scenario="Missing guest cart identifier" {"message": "Missing guest cart identifier"}
      * @response 422 scenario="Invalid shipping data" {"message": "The shipping.zip field is required."}
+     *
      * @throws Throwable
      */
     public function createPaymentIntent(Request $request): JsonResponse
@@ -42,14 +44,14 @@ class StripeController extends Controller
         $user = $request->user('sanctum');
         $guest_token = null;
 
-        if (!$user) {
+        if (! $user) {
             $guest_token = $request->header('X-Guest-Cart-Token');
-            abort_if(!$guest_token, 400, 'Missing guest cart identifier');
+            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
         }
 
         $data = $request->validate([
             'email' => ['required', 'email'],
-            'shipping_method' => ['required', 'in:' . implode(',', ShippingCalculator::METHODS)],
+            'shipping_method' => ['required', 'in:'.implode(',', ShippingCalculator::METHODS)],
             'shipping' => ['required', 'array'],
             'shipping.firstname' => ['required', 'string'],
             'shipping.lastname' => ['required', 'string'],
@@ -62,7 +64,9 @@ class StripeController extends Controller
 
         $cart = $user ? $user->cart()->firstOrCreate(['user_id' => $user->id]) : Cart::firstOrCreate(['guest_token' => $guest_token]);
         $cart_items = $cart->items()->with(['product', 'option', 'customProductSession'])->get();
-        if ($cart_items->isEmpty()) return response()->json(['message' => 'Panier vide'], 400);
+        if ($cart_items->isEmpty()) {
+            return response()->json(['message' => 'Panier vide'], 400);
+        }
         $stripe = app(StripeClient::class);
 
         return DB::transaction(function () use ($user, $guest_token, $cart_items, $data, $stripe) {
@@ -72,10 +76,12 @@ class StripeController extends Controller
 
             foreach ($cart_items as $ci) {
                 $product = $ci->product;
-                if (!$product) abort(422, 'Produit introuvable dans le panier.');
-                $unit_ttc = CartPricingCalculator::unitPrice($ci->customProductSession?->unit_price_snapshot, $ci->option?->price_ttc, (float)$product->price_ttc);
-                $unit_ht = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float)$product->price_ht);
-                $quantity = (int)$ci->quantity;
+                if (! $product) {
+                    abort(422, 'Produit introuvable dans le panier.');
+                }
+                $unit_ttc = CartPricingCalculator::unitPrice($ci->customProductSession?->unit_price_snapshot, $ci->option?->price_ttc, (float) $product->price_ttc);
+                $unit_ht = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float) $product->price_ht);
+                $quantity = (int) $ci->quantity;
                 $total_ttc += CartPricingCalculator::lineTotal($unit_ttc, $quantity);
                 $total_ht += CartPricingCalculator::lineTotal($unit_ht, $quantity);
                 $priced_items[] = ['cartItem' => $ci, 'product' => $product, 'unitTtc' => $unit_ttc, 'qty' => $quantity];
@@ -130,9 +136,9 @@ class StripeController extends Controller
                     'product_option_id' => $ci->product_option_id,
                     'custom_product_session_id' => $custom_session?->id,
                     'lot_id' => null,
-                    'unit_price' => round((float)$unit_ttc, 2),
+                    'unit_price' => round((float) $unit_ttc, 2),
                     'quantity' => $quantity,
-                    'total' => round(((float)$unit_ttc) * $quantity, 2),
+                    'total' => round(((float) $unit_ttc) * $quantity, 2),
                     'customization_snapshot' => $custom_session?->configuration,
                     'customization_preview_path' => $custom_session?->preview_image_path,
                 ]);
@@ -150,11 +156,11 @@ class StripeController extends Controller
 
             // Stripe PaymentIntent create
             $intent = $stripe->paymentIntents->create([
-                'amount' => (int)round($total_ttc * 100),
+                'amount' => (int) round($total_ttc * 100),
                 'currency' => 'eur',
                 'payment_method_types' => ['card'],
                 'description' => "Commande #$order->id",
-                'metadata' => ['order_id' => (string)$order->id, 'user_id' => $user ? (string)$user->id : '', 'payment_id' => (string)$payment->id,],
+                'metadata' => ['order_id' => (string) $order->id, 'user_id' => $user ? (string) $user->id : '', 'payment_id' => (string) $payment->id],
             ]);
 
             $payment->provider_payment_id = $intent->id;
@@ -175,7 +181,9 @@ class StripeController extends Controller
     /**
      * Stripe webhook - Payment events
      * Endpoint called by Stripe
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Event processed" {"status": "success"}
      * @response 200 scenario="Event already processed (idempotency)" {"status": "already_processed"}
      * @response 400 scenario="Invalid signature" {"error": "Invalid signature"}
@@ -206,7 +214,9 @@ class StripeController extends Controller
             $webhook_event = WebhookEvent::where('provider', $provider)->where('provider_event_id', $provider_event_id)->first();
         }
 
-        if ($webhook_event && $webhook_event->processed_at) return response()->json(['status' => 'already_processed']);
+        if ($webhook_event && $webhook_event->processed_at) {
+            return response()->json(['status' => 'already_processed']);
+        }
 
         if ($webhook_event && empty($webhook_event->payload)) {
             $webhook_event->payload = $event->toArray();
@@ -239,7 +249,7 @@ class StripeController extends Controller
                         }
 
                         // confirmation email (idempotent)
-                        if (!$order->paid_email_sent_at && ($order->user || $order->email)) {
+                        if (! $order->paid_email_sent_at && ($order->user || $order->email)) {
                             if ($order->user) {
                                 $order->user->notify(new OrderConfirmed($order));
                             } else {
@@ -252,14 +262,14 @@ class StripeController extends Controller
                         // Decrement stock — FIFO
                         foreach ($order->items as $item) {
                             $lot = StockLot::where('product_id', $item->product_id)
-                                ->when($item->product_option_id, fn($q) => $q->where('product_option_id', $item->product_option_id), fn($q) => $q->whereNull('product_option_id'))
+                                ->when($item->product_option_id, fn ($q) => $q->where('product_option_id', $item->product_option_id), fn ($q) => $q->whereNull('product_option_id'))
                                 ->where('quantity', '>', 0)
                                 ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
                                 ->orderBy('id')
                                 ->first();
 
                             if ($lot) {
-                                $deducted = StockAllocator::deduction($lot->quantity, (int)$item->quantity);
+                                $deducted = StockAllocator::deduction($lot->quantity, (int) $item->quantity);
                                 $lot->decrement('quantity', $deducted);
 
                                 StockMovement::create([
@@ -300,6 +310,7 @@ class StripeController extends Controller
 
             $webhook_event->processed_at = now();
             $webhook_event->save();
+
             return response()->json(['status' => 'success']);
         } catch (Throwable $e) {
             if ($webhook_event) {
@@ -308,6 +319,7 @@ class StripeController extends Controller
                     'retry_count' => 0,
                 ]);
             }
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

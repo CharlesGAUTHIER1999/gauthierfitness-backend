@@ -15,6 +15,7 @@ class CustomizationAssetController extends Controller
     /**
      * Upload a logo (PNG/JPG/JPEG/WebP, ≤ 3 MB)
      * Stores the file in `storage/app/public/customization/logos/{user_id}/`
+     *
      * @response 422 scenario="Invalid file" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadLogo(Request $request): JsonResponse
@@ -25,6 +26,7 @@ class CustomizationAssetController extends Controller
     /**
      * Upload a customization image (PNG/JPG/JPEG/WebP, ≤ 5 MB).
      * Stores the file in `storage/app/public/customization/images/{user_id}/`
+     *
      * @response 422 scenario="Invalid file" {"message": "The file must be a file of type: png, jpg, jpeg, webp."}
      */
     public function uploadImage(Request $request): JsonResponse
@@ -34,21 +36,21 @@ class CustomizationAssetController extends Controller
 
     private function storeUpload(Request $request, string $subdirectory, int $maxKb, string $successMessage): JsonResponse
     {
-        $data = $request->validate(['file' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', "max:$maxKb",],]);
+        $data = $request->validate(['file' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', "max:$maxKb"]]);
         $file = $data['file'];
         $user = $request->user('sanctum');
 
         if ($user) {
-            $owner_key = (string)$user->id;
+            $owner_key = (string) $user->id;
         } else {
             $guest_token = $request->header('X-Guest-Cart-Token');
-            abort_if(!$guest_token, 400, 'Missing guest cart identifier');
-            $owner_key = 'guest-' . preg_replace('/[^a-zA-Z0-9_-]/', '', $guest_token);
+            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
+            $owner_key = 'guest-'.preg_replace('/[^a-zA-Z0-9_-]/', '', $guest_token);
         }
 
         $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $directory = "customization/$subdirectory/" . $owner_key;
-        $filename = Str::uuid()->toString() . '.' . $extension;
+        $directory = "customization/$subdirectory/".$owner_key;
+        $filename = Str::uuid()->toString().'.'.$extension;
         $stored_path = $file->storeAs($directory, $filename, 'public');
 
         return response()->json([

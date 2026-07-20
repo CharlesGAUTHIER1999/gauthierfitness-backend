@@ -12,7 +12,9 @@ class OpenAIImageService
 {
     /**
      * Generates an image using OpenAI
+     *
      * @return array{b64: string, payload: array}
+     *
      * @throws AiContentRejectedException if prompt rejected by gpt-image-1
      * @throws AiServiceUnavailableException if service is unreachable/down
      */
@@ -31,18 +33,24 @@ class OpenAIImageService
         }
 
         if ($response->failed()) {
-            if ($response->status() === 400) throw new AiContentRejectedException('OpenAI image generation rejected the prompt: '.$response->body());
+            if ($response->status() === 400) {
+                throw new AiContentRejectedException('OpenAI image generation rejected the prompt: '.$response->body());
+            }
             throw new AiServiceUnavailableException('OpenAI image generation failed: '.$response->body());
         }
 
         $payload = $response->json();
         $base64 = $payload['data'][0]['b64_json'] ?? null;
-        if (! $base64) throw new AiServiceUnavailableException('No image returned by OpenAI.');
-        return ['b64' => $base64, 'payload' => $payload,];
+        if (! $base64) {
+            throw new AiServiceUnavailableException('No image returned by OpenAI.');
+        }
+
+        return ['b64' => $base64, 'payload' => $payload];
     }
 
     /**
      * Writes a base64-encoded image to public disk
+     *
      * @return array{path: string, url: string}
      */
     public function store(string $base64, string $filenamePrefix = 'design'): array

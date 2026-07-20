@@ -13,12 +13,16 @@ class AdminTicketController extends Controller
 {
     /**
      * Paginated list of support tickets (admin)
+     *
      * @queryParam status string Filter by status
      */
     public function index(Request $request): JsonResponse
     {
         $query = Ticket::with(['user:id,firstname,lastname,email'])->withCount('messages')->orderByDesc('id');
-        if ($request->filled('status')) $query->where('status', $request->query('status'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
         return response()->json($query->paginate(20));
     }
 
@@ -27,7 +31,7 @@ class AdminTicketController extends Controller
     {
         $ticket->load([
             'user:id,firstname,lastname,email',
-            'messages' => fn($q) => $q->orderBy('created_at'),
+            'messages' => fn ($q) => $q->orderBy('created_at'),
             'messages.sender:id,firstname,lastname,email',
         ]);
 

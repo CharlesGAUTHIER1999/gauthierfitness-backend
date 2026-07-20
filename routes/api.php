@@ -23,10 +23,12 @@ use Illuminate\Support\Facades\Route;
 
 /**
  * Public health check, used by the `infra/deploy-prod.sh`
+ *
  * @unauthenticated
+ *
  * @response 200 {"status": "ok", "env": "production"}
  */
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'env' => app()->environment()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'env' => app()->environment()]));
 
 // Public auth
 Route::post('/login', LoginController::class)->middleware('throttle:10,1')->name('login');
@@ -77,7 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     // Admin ping
-    Route::get('/ping', fn() => response()->json(['ok' => true]));
+    Route::get('/ping', fn () => response()->json(['ok' => true]));
     Route::get('/stats', [AdminOrderController::class, 'stats']);
 
     // Products

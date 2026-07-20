@@ -15,7 +15,9 @@ class ResetPasswordController extends Controller
     /**
      * Password reset
      * Verifies the token received by email and changes the password
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Success" {"message": "Mot de passe réinitialisé avec succès."}
      * @response 422 scenario="Invalid or expired token" {"message": "This password reset token is invalid."}
      */
@@ -41,7 +43,10 @@ class ResetPasswordController extends Controller
             }
         );
 
-        if ($status !== Password::PASSWORD_RESET) return response()->json(['message' => __($status)], 422);
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
         return response()->json(['message' => 'Mot de passe réinitialisé avec succès.']);
     }
 }

@@ -142,10 +142,15 @@ class ProductResource extends JsonResource
     // Variant type ("flavor" vs "color") from product's rootcategory
     private function inferVariantTypeFromCategories(): ?string
     {
-        if (! $this->relationLoaded('categories')) return null;
+        if (! $this->relationLoaded('categories')) {
+            return null;
+        }
         $category = $this->categories->first();
-        if (! $category) return null;
+        if (! $category) {
+            return null;
+        }
         $root = $category->parent?->slug ?? $category->slug;
+
         return $root === 'nutrition' ? 'flavor' : 'color';
     }
 }

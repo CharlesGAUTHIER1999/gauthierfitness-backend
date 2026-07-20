@@ -57,12 +57,16 @@ class AppServiceProvider extends ServiceProvider
             })
             ->withOperationTransformers(function (OperationTransformers $transformers) use ($auth_middleware_patterns) {
                 $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($auth_middleware_patterns): void {
-                    $has_auth_middleware = collect($routeInfo->route->gatherMiddleware())->some(fn(string $mw) => Str::is($auth_middleware_patterns, $mw));
-                    if (!$has_auth_middleware) $operation->security = [];
+                    $has_auth_middleware = collect($routeInfo->route->gatherMiddleware())->some(fn (string $mw) => Str::is($auth_middleware_patterns, $mw));
+                    if (! $has_auth_middleware) {
+                        $operation->security = [];
+                    }
                 });
 
                 $transformers->append(function (Operation $operation, RouteInfo $routeInfo): void {
-                    if ($routeInfo->route->uri() === 'api/ai/designs/generate') $this->documentAiDesignResponses($operation);
+                    if ($routeInfo->route->uri() === 'api/ai/designs/generate') {
+                        $this->documentAiDesignResponses($operation);
+                    }
                 });
             });
     }
@@ -71,7 +75,7 @@ class AppServiceProvider extends ServiceProvider
     private function documentAiDesignResponses(Operation $operation): void
     {
         // Success status 201
-        $operation->responses = array_values(array_filter($operation->responses ?? [], fn($response) => !($response instanceof Response && (int)$response->code === 200)));
+        $operation->responses = array_values(array_filter($operation->responses ?? [], fn ($response) => ! ($response instanceof Response && (int) $response->code === 200)));
 
         // 201 : design generated, moderated and persisted
         $asset = (new ObjectType)
@@ -117,9 +121,9 @@ class AppServiceProvider extends ServiceProvider
         $operation->addResponse(
             Response::make(422)
                 ->setDescription(
-                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant " .
-                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; " .
-                    'image générée rejetée par la modération (`reason: image_flagged`). ' .
+                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant ".
+                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; ".
+                    'image générée rejetée par la modération (`reason: image_flagged`). '.
                     'Les erreurs de validation du formulaire renvoient également un 422.'
                 )
                 ->setContent('application/json', Schema::fromType($moderationBody))

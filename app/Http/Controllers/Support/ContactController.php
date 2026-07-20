@@ -14,7 +14,9 @@ class ContactController extends Controller
 {
     /**
      * Send a contact message
+     *
      * @unauthenticated
+     *
      * @response 200 scenario="Message sent" {"message": "Message envoyé. Nous te répondrons rapidement."}
      * @response 429 scenario="Too many requests (throttle)" {"message": "Too Many Attempts."}
      */
@@ -30,6 +32,7 @@ class ContactController extends Controller
 
         $to = config('mail.support_address') ?: config('mail.from.address');
         Mail::to($to)->send(new ContactMessageMail($data));
-        return response()->json(['message' => 'Message envoyé. Nous te répondrons rapidement.',]);
+
+        return response()->json(['message' => 'Message envoyé. Nous te répondrons rapidement.']);
     }
 }

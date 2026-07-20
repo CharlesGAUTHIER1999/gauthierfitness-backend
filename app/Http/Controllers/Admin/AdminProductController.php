@@ -17,6 +17,7 @@ class AdminProductController extends Controller
 {
     /**
      * Paginated list of products (admin)
+     *
      * @queryParam search string Search by name or SKU.
      * @queryParam is_active boolean Filter by active status.
      * @queryParam is_customizable boolean Filter customizable products.
@@ -29,9 +30,16 @@ class AdminProductController extends Controller
             'options:id,product_id,type,code,label,position',
         ])->orderByDesc('id');
 
-        if ($request->filled('search')) $query->search($request->query('search'));
-        if ($request->filled('is_active')) $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
-        if ($request->filled('is_customizable')) $query->where('is_customizable', filter_var($request->query('is_customizable'), FILTER_VALIDATE_BOOLEAN));
+        if ($request->filled('search')) {
+            $query->search($request->query('search'));
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('is_customizable')) {
+            $query->where('is_customizable', filter_var($request->query('is_customizable'), FILTER_VALIDATE_BOOLEAN));
+        }
+
         return ProductResource::collection($query->paginate(20));
     }
 
@@ -52,6 +60,7 @@ class AdminProductController extends Controller
 
     /**
      * Create a product
+     *
      * @response 422 scenario="SKU already used" {"message": "The sku has already been taken."}
      */
     public function store(Request $request): JsonResponse
@@ -112,6 +121,7 @@ class AdminProductController extends Controller
         }
 
         $product->load('options');
+
         return response()->json(new ProductResource($product), 201);
     }
 
@@ -136,26 +146,31 @@ class AdminProductController extends Controller
         ]);
 
         $product->update($data);
+
         return response()->json(new ProductResource($product->fresh()));
     }
 
     /**
      * Delete a product
+     *
      * @response 200 {"message": "Produit supprimé."}
      */
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
+
         return response()->json(['message' => 'Produit supprimé.']);
     }
 
     /**
      * Activate / deactivate a product
+     *
      * @response 200 {"is_active": true}
      */
     public function toggleActive(Product $product): JsonResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
+
         return response()->json(['is_active' => $product->is_active]);
     }
 }

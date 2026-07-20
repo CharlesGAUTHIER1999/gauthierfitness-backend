@@ -33,6 +33,7 @@ class CartController extends Controller
 
     /**
      * Add a product to the cart
+     *
      * @response 422 scenario="Insufficient stock" {"message": "Stock insuffisant"}
      * @response 403 scenario="Customization session belongs to another user" {}
      */
@@ -42,7 +43,9 @@ class CartController extends Controller
         $quantity = (int) ($data['quantity'] ?? 1);
         $cart = $this->resolveCart($request);
         $stock = StockLot::where('product_id', $data['product_id'])->when($data['product_option_id'] ?? null, fn ($q) => $q->where('product_option_id', $data['product_option_id']))->sum('quantity');
-        if ($quantity > (int) $stock) return response()->json(['message' => 'Stock insuffisant'], 422);
+        if ($quantity > (int) $stock) {
+            return response()->json(['message' => 'Stock insuffisant'], 422);
+        }
         $custom_session_id = $data['custom_product_session_id'] ?? null;
 
         if ($custom_session_id) {
@@ -58,7 +61,7 @@ class CartController extends Controller
                 'quantity' => $quantity,
             ]);
 
-            $session->update(['status' => 'added_to_cart',]);
+            $session->update(['status' => 'added_to_cart']);
         } else {
             $item = CartItem::firstOrNew([
                 'cart_id' => $cart->id,
@@ -76,51 +79,66 @@ class CartController extends Controller
 
     /**
      * Update the quantity of a cart line.
+     *
      * @response 404 scenario="Item not found or belongs to another user" {}
      */
     public function update(Request $request, CartItem $item)
     {
         abort_unless($this->ownsCart($request, $item->cart), 404);
-        $data = $request->validate(['quantity' => ['required', 'integer', 'min:1'],]);
+        $data = $request->validate(['quantity' => ['required', 'integer', 'min:1']]);
         $item->quantity = (int) $data['quantity'];
         $item->save();
+
         return $this->show($request);
     }
 
     /**
      * Remove a cart line
+     *
      * @response 404 scenario="Item not found or belongs to another user" {}
      */
     public function destroy(Request $request, CartItem $item)
     {
         abort_unless($this->ownsCart($request, $item->cart), 404);
-        if ($item->customProductSession) $item->customProductSession->update(['status' => 'ready',]);
+        if ($item->customProductSession) {
+            $item->customProductSession->update(['status' => 'ready']);
+        }
         $item->delete();
+
         return $this->show($request);
     }
 
     // Resolves the cart for this request
     private function resolveCart(Request $request): Cart
     {
-        if ($user = $request->user('sanctum')) return Cart::firstOrCreate(['user_id' => $user->id]);
+        if ($user = $request->user('sanctum')) {
+            return Cart::firstOrCreate(['user_id' => $user->id]);
+        }
         $guest_token = $request->header('X-Guest-Cart-Token');
         abort_if(! $guest_token, 400, 'Missing guest cart identifier');
+
         return Cart::firstOrCreate(['guest_token' => $guest_token]);
     }
 
     // Whether the current request (user or guest) owns the given cart
     private function ownsCart(Request $request, Cart $cart): bool
     {
-        if ($user = $request->user('sanctum')) return (int) $cart->user_id === (int) $user->id;
+        if ($user = $request->user('sanctum')) {
+            return (int) $cart->user_id === (int) $user->id;
+        }
         $guest_token = $request->header('X-Guest-Cart-Token');
+
         return $guest_token && $cart->guest_token === $guest_token;
     }
 
     // Whether the current request (user or guest) owns the given customization session
     private function ownsSession(Request $request, CustomProductSession $session): bool
     {
-        if ($user = $request->user('sanctum')) return (int) $session->user_id === (int) $user->id;
+        if ($user = $request->user('sanctum')) {
+            return (int) $session->user_id === (int) $user->id;
+        }
         $guest_token = $request->header('X-Guest-Cart-Token');
+
         return $guest_token && $session->guest_token === $guest_token;
     }
 
@@ -144,7 +162,9 @@ class CartController extends Controller
             $variant_value = $product->color_label;
 
             $size_label = null;
-            if ($option && $option->type === 'size') $size_label = $option->label ?? $option->code;
+            if ($option && $option->type === 'size') {
+                $size_label = $option->label ?? $option->code;
+            }
 
             return [
                 'id' => $item->id,
@@ -178,10 +198,17 @@ class CartController extends Controller
     // Resolve a stored path to a public URL
     private function publicImageUrl(?string $path): ?string
     {
-        if (! $path) return null;
-        if (Str::startsWith($path, ['http://', 'https://'])) return $path;
+        if (! $path) {
+            return null;
+        }
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
         $path = ltrim($path, '/');
-        if (Str::startsWith($path, 'storage/')) return url('/'.$path);
+        if (Str::startsWith($path, 'storage/')) {
+            return url('/'.$path);
+        }
+
         return url('/storage/'.$path);
     }
 }

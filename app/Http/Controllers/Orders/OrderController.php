@@ -30,6 +30,7 @@ class OrderController extends Controller
 
     /**
      * Order detail
+     *
      * @response 404 scenario="Order not found or belongs to another user" {}
      */
     public function show(Request $request, Order $order): JsonResponse
@@ -48,11 +49,13 @@ class OrderController extends Controller
 
     /**
      * Create an order (deprecated).
+     *
      * @deprecated This endpoint always returns 405
+     *
      * @response 405 {"message": "Use POST /payment/intent to create an order."}
      */
     public function store(): JsonResponse
     {
-        return response()->json(['message' => 'Use POST /payment/intent to create an order.',], 405);
+        return response()->json(['message' => 'Use POST /payment/intent to create an order.'], 405);
     }
 }

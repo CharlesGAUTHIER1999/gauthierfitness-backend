@@ -15,7 +15,9 @@ class ProductController extends Controller
 {
     /**
      * Paginated list of public products
+     *
      * @unauthenticated
+     *
      * @queryParam per_page integer Products per page (1-60, default 12)
      * @queryParam gender string Gender category slug (e.g. "homme", "femme")
      * @queryParam category string Category slug (e.g. "t-shirts")
@@ -26,7 +28,7 @@ class ProductController extends Controller
     {
         $default_page = 12;
         $max_page = 60;
-        $per_page = (int)$request->query('per_page', $default_page);
+        $per_page = (int) $request->query('per_page', $default_page);
         $per_page = max(1, min($per_page, $max_page));
 
         $query = Product::active()
@@ -47,27 +49,27 @@ class ProductController extends Controller
             ]);
 
         if ($request->filled('gender')) {
-            $gender = (string)$request->query('gender');
+            $gender = (string) $request->query('gender');
             $query->whereHas('categories', function ($q) use ($gender) {
-                $q->where('slug', $gender)->orWhere('slug', 'like', $gender . '-%');
+                $q->where('slug', $gender)->orWhere('slug', 'like', $gender.'-%');
             });
         }
 
         if ($request->filled('search')) {
-            $search = (string)$request->query('search');
+            $search = (string) $request->query('search');
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
-            $query->where('name', 'like', '%' . $escaped . '%');
+            $query->where('name', 'like', '%'.$escaped.'%');
         }
 
         if ($request->filled('category')) {
-            $category = (string)$request->query('category');
+            $category = (string) $request->query('category');
             $query->whereHas('categories', function ($q) use ($category) {
                 $q->where('slug', $category);
             });
         }
 
         if ($request->filled('tag')) {
-            $tag = (string)$request->query('tag');
+            $tag = (string) $request->query('tag');
 
             if ($tag === 'new') {
                 $query->orderByDesc('created_at')->orderByDesc('products.id');
@@ -85,8 +87,11 @@ class ProductController extends Controller
 
     /**
      * Product detail by slug.
+     *
      * @unauthenticated
+     *
      * @urlParam slug string required Product slug (URL-safe)
+     *
      * @response 404 scenario="Product not found" {"message": "No query results for model [App\\Models\\Product]."}
      */
     public function show(string $slug): ProductResource

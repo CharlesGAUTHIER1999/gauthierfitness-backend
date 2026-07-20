@@ -31,8 +31,13 @@ class ProductImage extends Model
     // Returns the absolute public URL of the image
     public function getFullUrlAttribute(): ?string
     {
-        if (! $this->url) return null;
-        if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://')) return $this->url;
+        if (! $this->url) {
+            return null;
+        }
+        if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://')) {
+            return $this->url;
+        }
+
         return asset('storage/'.ltrim($this->url, '/'));
     }
 }

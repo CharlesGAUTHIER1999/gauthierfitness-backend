@@ -11,6 +11,7 @@ class StockLot extends Model
     use HasFactory;
 
     protected $fillable = ['product_id', 'product_option_id', 'lot_number', 'expiration_date', 'initial_quantity', 'quantity'];
+
     protected $casts = ['expiration_date' => 'date'];
 
     // Product this stock lot belongs to. */

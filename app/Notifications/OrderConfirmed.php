@@ -57,7 +57,10 @@ class OrderConfirmed extends Notification
         }
 
         // Guest orders aren't tied to an account
-        if ($order->user) $mail->line(' ')->line('Vous pouvez suivre l’évolution de votre commande depuis votre espace client.')->action('Voir mes commandes', config('app.front_url').'/account/orders');
+        if ($order->user) {
+            $mail->line(' ')->line('Vous pouvez suivre l’évolution de votre commande depuis votre espace client.')->action('Voir mes commandes', config('app.front_url').'/account/orders');
+        }
+
         return $mail->salutation('— Gauthier Fitness');
     }
 }
