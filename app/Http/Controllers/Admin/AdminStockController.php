@@ -41,16 +41,16 @@ class AdminStockController extends Controller
         $product->load(['options' => fn ($q) => $q->orderBy('position')->select('id', 'product_id', 'type', 'code', 'label', 'position')]);
 
         // All lots for the product in one query (FIFO : nearest expiration first)
-        $allLots = StockLot::where('product_id', $product->id)->orderByRaw('expiration_date IS NULL, expiration_date ASC')->orderBy('id')->get();
+        $all_lots = StockLot::where('product_id', $product->id)->orderByRaw('expiration_date IS NULL, expiration_date ASC')->orderBy('id')->get();
 
         // Lots without an option (global stock / product without variants)
-        $globalLots = $allLots->whereNull('product_option_id')->values();
+        $global_lots = $all_lots->whereNull('product_option_id')->values();
 
         // Lots per option
-        $lotsByOption = $allLots->whereNotNull('product_option_id')->groupBy('product_option_id');
+        $lots_by_option = $all_lots->whereNotNull('product_option_id')->groupBy('product_option_id');
 
-        $optionStocks = $product->options->map(function ($option) use ($lotsByOption) {
-            $lots = $lotsByOption->get($option->id, collect())->values();
+        $option_stocks = $product->options->map(function ($option) use ($lots_by_option) {
+            $lots = $lots_by_option->get($option->id, collect())->values();
 
             return [
                 'option_id' => $option->id,
@@ -66,10 +66,10 @@ class AdminStockController extends Controller
             'product_id' => $product->id,
             'product_name' => $product->name,
             'global_stock' => [
-                'total_qty' => (int) $globalLots->sum('quantity'),
-                'lots' => $globalLots,
+                'total_qty' => (int) $global_lots->sum('quantity'),
+                'lots' => $global_lots,
             ],
-            'option_stocks' => $optionStocks,
+            'option_stocks' => $option_stocks,
         ]);
     }
 

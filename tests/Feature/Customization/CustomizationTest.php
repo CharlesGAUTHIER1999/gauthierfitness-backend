@@ -14,13 +14,11 @@ class CustomizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /* ── Store ─────────────────────────────────────────────────── */
-
+    /* Store */
     public function test_user_can_create_customization_session_for_customizable_product(): void
     {
         $user = User::factory()->create();
         $product = Product::factory()->create(['is_customizable' => true]);
-
         Sanctum::actingAs($user);
 
         $this->postJson('/api/customization/sessions', [
@@ -36,19 +34,14 @@ class CustomizationTest extends TestCase
         ]);
     }
 
-    // Sanctum::actingAs() bypasses real guard resolution and would pass even if the
-    // controller read the wrong guard (regression: it did, see GF34 hotfix — the route
-    // moved out of the auth:sanctum middleware group, which used to set the default
-    // guard for the request; $request->user() without 'sanctum' then silently returned
-    // null for a genuinely logged-in user). A real bearer token exercises the same path
-    // production traffic does.
+    // Sanctum::actingAs() bypasses real guard resolution
     public function test_authenticated_user_with_real_bearer_token_can_create_session(): void
     {
         $user = User::factory()->create();
         $product = Product::factory()->create(['is_customizable' => true]);
         $token = $user->createToken('test')->plainTextToken;
 
-        $this->withHeader('Authorization', "Bearer {$token}")
+        $this->withHeader('Authorization', "Bearer $token")
             ->postJson('/api/customization/sessions', [
                 'product_id' => $product->id,
                 'configuration' => ['color' => 'red'],
@@ -65,7 +58,6 @@ class CustomizationTest extends TestCase
     {
         $user = User::factory()->create();
         $product = Product::factory()->create(['is_customizable' => false]);
-
         Sanctum::actingAs($user);
 
         $this->postJson('/api/customization/sessions', [
@@ -132,8 +124,7 @@ class CustomizationTest extends TestCase
         ])->assertForbidden();
     }
 
-    /* ── Show ──────────────────────────────────────────────────── */
-
+    /* Show */
     public function test_user_can_show_own_customization_session(): void
     {
         $user = User::factory()->create();
@@ -148,7 +139,7 @@ class CustomizationTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->getJson("/api/customization/sessions/{$session->id}")
+        $this->getJson("/api/customization/sessions/$session->id")
             ->assertOk()
             ->assertJsonPath('data.id', $session->id);
     }
@@ -167,9 +158,7 @@ class CustomizationTest extends TestCase
         ]);
 
         Sanctum::actingAs($user);
-
-        $this->getJson("/api/customization/sessions/{$session->id}")
-            ->assertForbidden();
+        $this->getJson("/api/customization/sessions/$session->id")->assertForbidden();
     }
 
     public function test_guest_can_show_own_customization_session(): void
@@ -184,7 +173,7 @@ class CustomizationTest extends TestCase
         ]);
 
         $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
-            ->getJson("/api/customization/sessions/{$session->id}")
+            ->getJson("/api/customization/sessions/$session->id")
             ->assertOk()
             ->assertJsonPath('data.id', $session->id);
     }
@@ -193,7 +182,7 @@ class CustomizationTest extends TestCase
     {
         $product = Product::factory()->create(['is_customizable' => true]);
 
-        $guestSession = CustomProductSession::create([
+        $guest_session = CustomProductSession::create([
             'guest_token' => 'guest-a',
             'product_id' => $product->id,
             'status' => 'draft',
@@ -201,11 +190,11 @@ class CustomizationTest extends TestCase
         ]);
 
         $this->withHeader('X-Guest-Cart-Token', 'guest-b')
-            ->getJson("/api/customization/sessions/{$guestSession->id}")
+            ->getJson("/api/customization/sessions/$guest_session->id")
             ->assertForbidden();
 
         $user = User::factory()->create();
-        $userSession = CustomProductSession::create([
+        $user_session = CustomProductSession::create([
             'user_id' => $user->id,
             'product_id' => $product->id,
             'status' => 'draft',
@@ -213,12 +202,11 @@ class CustomizationTest extends TestCase
         ]);
 
         $this->withHeader('X-Guest-Cart-Token', 'guest-b')
-            ->getJson("/api/customization/sessions/{$userSession->id}")
+            ->getJson("/api/customization/sessions/$user_session->id")
             ->assertForbidden();
     }
 
-    /* ── Update ────────────────────────────────────────────────── */
-
+    /* Update */
     public function test_user_can_update_own_session_configuration(): void
     {
         $user = User::factory()->create();
@@ -233,7 +221,7 @@ class CustomizationTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->patchJson("/api/customization/sessions/{$session->id}", [
+        $this->patchJson("/api/customization/sessions/$session->id", [
             'configuration' => ['color' => 'blue', 'size' => 'M'],
             'status' => 'ready',
         ])->assertOk();
@@ -257,7 +245,7 @@ class CustomizationTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->patchJson("/api/customization/sessions/{$session->id}", [
+        $this->patchJson("/api/customization/sessions/$session->id", [
             'status' => 'invalid_status',
         ])->assertStatus(422);
     }
@@ -274,7 +262,7 @@ class CustomizationTest extends TestCase
         ]);
 
         $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
-            ->patchJson("/api/customization/sessions/{$session->id}", [
+            ->patchJson("/api/customization/sessions/$session->id", [
                 'configuration' => ['color' => 'blue'],
                 'status' => 'ready',
             ])->assertOk();
@@ -304,7 +292,7 @@ class CustomizationTest extends TestCase
         ]);
 
         $this->withHeader('X-Guest-Cart-Token', 'guest-abc')
-            ->patchJson("/api/customization/sessions/{$session->id}", [
+            ->patchJson("/api/customization/sessions/$session->id", [
                 'design_id' => $design->id,
             ])->assertForbidden();
     }

@@ -1,171 +1,259 @@
 # Changelog
 
-Toutes les évolutions notables de l'API GauthierFitness sont documentées ici.
+All notable changes to the GauthierFitness API are documented here.
 
-Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/). Avant le tag `v1.0.0`, chaque entrée correspond à une branche de fonctionnalité `GF{n}` fusionnée dans `main` (convention de branchage du projet), plutôt qu'à un numéro de version sémantique.
+Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Before the `v1.0.0` tag, each entry
+corresponds to a `GF{n}` feature branch merged into `main` (the project's branching convention), rather than a semantic
+version number.
 
 ## [v1.0.6] - 2026-07-13
 
 ### Fixed
-- `README.md` : le quickstart Docker (chemin recommandé) ne mentionnait jamais `php artisan key:generate`, contrairement au chemin sans Docker. `APP_KEY` restait donc vide dans `.env.docker` — cassant tout ce qui dépend de l'encryption (cookies, sessions, CSRF) sur une installation fraîche suivant les instructions à la lettre. Repéré en testant le zip de rendu de bout en bout (extraction vierge + build local). Ajout de la génération de la clé + rechargement du conteneur avec `--force-recreate`.
+
+- `README.md`: the Docker quickstart (recommended path) never mentioned `php artisan key:generate`, unlike the
+  non-Docker path. `APP_KEY` therefore stayed empty in `.env.docker` — breaking everything that depends on encryption (
+  cookies, sessions, CSRF) on a fresh install following the instructions to the letter. Caught while testing the
+  delivery zip end-to-end (clean extraction + local build). Added key generation + reloading the container with
+  `--force-recreate`.
 
 ## [v1.0.5] - 2026-07-13
 
 ### Changed
-- Mise à jour des dépendances Composer mineures/patch groupées par Dependabot (`dedoc/scramble` 0.13.28→0.13.33, `laravel/sail`) et des actions GitHub utilisées en CI/CD (`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `docker/*`, `peter-evans/repository-dispatch`).
+
+- Updated minor/patch Composer dependencies grouped by Dependabot (`dedoc/scramble` 0.13.28→0.13.33, `laravel/sail`) and
+  the GitHub Actions used in CI/CD (`actions/checkout`, `actions/cache`, `actions/upload-artifact`, `docker/*`,
+  `peter-evans/repository-dispatch`).
 
 ## [v1.0.4] - 2026-07-12
 
 ### Fixed
-- `DB_ROOT_PASSWORD` manquante dans `.env.docker.example` : `docker compose up` échouait sur un clone/zip vierge, MySQL refusant de s'initialiser sans mot de passe root spécifié. Détecté en testant le démarrage Docker sur une extraction fraîche du zip de rendu (voir Fiche d'incident 7 pour un cas similaire).
+
+- Missing `DB_ROOT_PASSWORD` in `.env.docker.example`: `docker compose up` failed on a fresh clone/zip, MySQL refusing
+  to initialize without a root password specified. Caught while testing the Docker startup on a fresh extraction of the
+  delivery zip (see Incident Report 7 for a similar case).
 
 ## [v1.0.3] - 2026-07-12
 
 ### Changed
-- Contrôleurs réorganisés par domaine (`Cart/`, `Catalog/`, `Customization/`, `Orders/`, `Payments/`, `Support/`), même logique que `Admin/`/`AI/`/`Auth/` déjà en place. `CartMergeService` déplacé dans `Services/Cart/`.
-- Annotations Scramble (`scenario=`, `@queryParam`, `@urlParam`) traduites en anglais pour homogénéiser la doc OpenAPI générée.
+
+- Controllers reorganized by domain (`Cart/`, `Catalog/`, `Customization/`, `Orders/`, `Payments/`, `Support/`), same
+  pattern as `Admin/`/`AI/`/`Auth/` already in place. `CartMergeService` moved to `Services/Cart/`.
+- Scramble annotations (`scenario=`, `@queryParam`, `@urlParam`) translated to English to make the generated OpenAPI
+  docs consistent.
 
 ## [v1.0.2] - 2026-07-10
 
 ### Fixed
-- `vendor/` construit à l'image Docker était masqué par le bind mount local, cassant l'app pour tout utilisateur n'ayant jamais lancé Composer nativement — l'entrypoint du conteneur le reconstruit désormais automatiquement au démarrage si besoin.
-- Ajout de healthchecks (MySQL + app) et passage à `docker compose up -d --wait` pour éliminer les race conditions au premier lancement.
+
+- The `vendor/` built into the Docker image was masked by the local bind mount, breaking the app for anyone who had
+  never run Composer natively — the container entrypoint now rebuilds it automatically at startup if needed.
+- Added healthchecks (MySQL + app) and switched to `docker compose up -d --wait` to eliminate first-run race conditions.
 
 ## [v1.0.1] - 2026-07-10
 
 ### Fixed
-- Ajout de `.env.docker.example` manquant pour l'initialisation Docker locale sur un clone/zip vierge (voir Fiche d'incident 7).
+
+- Added the missing `.env.docker.example` for local Docker initialization on a fresh clone/zip (see Incident Report 7).
 
 ### Removed
-- Favicon.ico vide et inutilisé.
+
+- Empty, unused favicon.ico.
 
 ## [v1.0.0] - 2026-07-08
 
-Première release taguée de l'API. Regroupe l'ensemble des fonctionnalités développées de GF0 à GF31 : catalogue
-produit, configurateur 2D/3D, panier, checkout Stripe, authentification, gestion des commandes/livraisons/retours,
-back-office admin, génération de designs par IA, pages légales, documentation Swagger.
+First tagged release of the API. Brings together all features developed from GF0 to GF31: product catalog,
+2D/3D configurator, cart, Stripe checkout, authentication, order/shipping/returns management,
+admin back-office, AI design generation, legal pages, Swagger documentation.
 
 ### Added
-- Tests unitaires purs (`tests/Unit/Services/...`) sur la logique métier isolée : calcul de prix snapshot du panier (`CartPricingCalculator`), allocation FIFO des lots de stock (`StockAllocator`), évaluation du seuil de modération IA (`ModerationThresholdEvaluator`), détection de termes interdits (`PromptBlocklist`).
-- Template GitHub Issue (`.github/ISSUE_TEMPLATE/bug_report.md`) pour structurer la consignation des anomalies.
-- Nouveaux produits nutrition (isolats, whey) avec visuels associés.
+
+- Pure unit tests (`tests/Unit/Services/...`) on isolated business logic: cart price snapshot calculation (
+  `CartPricingCalculator`), FIFO stock lot allocation (`StockAllocator`), AI moderation threshold evaluation (
+  `ModerationThresholdEvaluator`), banned term detection (`PromptBlocklist`).
+- GitHub Issue template (`.github/ISSUE_TEMPLATE/bug_report.md`) to structure bug reporting.
+- New nutrition products (isolates, whey) with associated visuals.
 
 ### Changed
-- Extraction de la logique de calcul de prix et d'allocation de stock hors de `StripeController`, sans changement de comportement (mêmes règles, mêmes résultats), pour la rendre testable en isolation.
+
+- Extracted price calculation and stock allocation logic out of `StripeController`, with no behavior change (same rules,
+  same results), to make it testable in isolation.
 
 ### Fixed
-- `OPENAI_API_KEY` manquante dans `.env.example`.
-- Images produits committées, `.gitignore` du dossier storage corrigé.
-- README : étape `php artisan storage:link` manquante dans les instructions d'installation locale.
 
-## [GF30 — V1GF Last Checkup] - 2026-07-05
+- Missing `OPENAI_API_KEY` in `.env.example`.
+- Committed product images, fixed the storage folder's `.gitignore`.
+- README: missing `php artisan storage:link` step in the local install instructions.
+
+## [GF30 - V1GF Last Checkup] - 2026-07-05
+
 ### Fixed
-- Dernières vérifications et correctifs avant la V1 finale.
 
-## [GF29 — Lighthouse] - 2026-07-05
+- Final checks and fixes before the final V1.
+
+## [GF29 - Lighthouse] - 2026-07-05
+
 ### Changed
-- Optimisations de performance et d'accessibilité suite aux audits Lighthouse (avant/après correctifs).
 
-## [GF28 — V1GF Fixs (2)] - 2026-07-04
+- Performance and accessibility optimizations following Lighthouse audits (before/after fixes).
+
+## [GF28 - V1GF Fixs (2)] - 2026-07-04
+
 ### Fixed
-- Corrections diverses identifiées lors de la préparation de la V1 finale.
 
-## [GF27 — Documentation V2] - 2026-07-02
+- Various fixes identified while preparing the final V1.
+
+## [GF27 - Documentation V2] - 2026-07-02
+
 ### Changed
-- Traduction en anglais des commentaires et docblocks du code (aucune logique modifiée).
 
-## [GF26 — Forgot Password] - 2026-07-01
+- Translated code comments and docblocks to English (no logic changed).
+
+## [GF26 - Forgot Password] - 2026-07-01
+
 ### Added
-- Fonctionnalité mot de passe oublié (`ForgotPasswordController`, `ResetPasswordController`) via le broker natif Laravel, notification par email, anti-enumeration, throttling, révocation des tokens Sanctum lors du reset.
 
-## [GF25 — V1GF Fixs] - 2026-07-01
+- Forgot-password feature (`ForgotPasswordController`, `ResetPasswordController`) via Laravel's native broker, email
+  notification, anti-enumeration, throttling, Sanctum token revocation on reset.
+
+## [GF25 - V1GF Fixs] - 2026-07-01
+
 ### Fixed
-- Correctifs pré-V1 : configuration IA en environnement de production/staging, CI Stripe (clé publique par branche), mémoire du formulaire de livraison en checkout.
 
-## [GF15 — IA Generation] - 2026-06-28
+- Pre-V1 fixes: AI configuration in production/staging environments, Stripe CI (per-branch public key), checkout
+  shipping form memory.
+
+## [GF15 - IA Generation] - 2026-06-28
+
 ### Added
-- Génération d'images par IA (`gpt-image-1`) intégrée aux configurateurs 2D et 3D, avec modération à 4 niveaux (blocklist marque, modération OpenAI + seuil configurable, refus natif du modèle, modération de l'image avant stockage). Historique des prompts et rejets tracé (`prompt_histories`).
 
-## [GF24 — Sentry] - 2026-06-26
+- AI image generation (`gpt-image-1`) integrated into the 2D and 3D configurators, with 4-tier moderation (brand
+  blocklist, OpenAI moderation + configurable threshold, native model refusal, image moderation before storage). Prompt
+  and rejection history tracked (`prompt_histories`).
+
+## [GF24 - Sentry] - 2026-06-26
+
 ### Added
-- Intégration Sentry backend (capture des exceptions, traces, release tracking).
 
-## [GF23 — Tests Strategy] - 2026-06-24
+- Backend Sentry integration (exception capture, traces, release tracking).
+
+## [GF23 - Tests Strategy] - 2026-06-24
+
 ### Added
-- Stratégie de tests consolidée (suite PHPUnit Feature).
 
-## [GF22 — Documentation] - 2026-06-22
+- Consolidated test strategy (PHPUnit Feature suite).
+
+## [GF22 - Documentation] - 2026-06-22
+
 ### Added
-- Documentation technique du projet.
 
-## [GF21 — Swagger Doc] - 2026-06-18
+- Technical project documentation.
+
+## [GF21 - Swagger Doc] - 2026-06-18
+
 ### Added
-- Documentation API générée (Scramble/Swagger).
 
-## [GF20 — Shipments & Returns] - 2026-06-16
+- Generated API documentation (Scramble/Swagger).
+
+## [GF20 - Shipments & Returns] - 2026-06-16
+
 ### Added
-- Gestion des livraisons et retours de commande.
 
-## [GF19 — Help Service] - 2026-06-16
+- Order shipping and returns management.
+
+## [GF19 - Help Service] - 2026-06-16
+
 ### Added
-- Service d'aide / contact.
 
-## [GF18 — Juridic] - 2026-06-15
+- Help / contact service.
+
+## [GF18 - Juridic] - 2026-06-15
+
 ### Added
-- Pages et contenus juridiques (mentions légales, CGV).
 
-## [GF17 — Build Pipeline V2] - 2026-05-27
+- Legal pages and content (legal notices, T&Cs).
+
+## [GF17 - Build Pipeline V2] - 2026-05-27
+
 ### Changed
-- Amélioration du pipeline CI/CD.
 
-## [GF16 — Build Pipeline V0/V1] - 2026-02-19 / 2026-05-11
+- Improved the CI/CD pipeline.
+
+## [GF16 - Build Pipeline V0/V1] - 2026-02-19 / 2026-05-11
+
 ### Added
-- Mise en place du pipeline d'intégration et de déploiement continu (GitHub Actions, image Docker, registry GHCR).
 
-## [GF14 — Panel Admin] - 2026-05-11
+- Set up the continuous integration and deployment pipeline (GitHub Actions, Docker image, GHCR registry).
+
+## [GF14 - Panel Admin] - 2026-05-11
+
 ### Added
-- Back-office admin (produits, stock, commandes, dashboard).
 
-## [GF13 — Configuration 3D Produit V3] - 2026-05-03
-## [GF12 — Configuration 3D Produit V2] - 2026-04-19
-## [GF11 — Configuration 3D Produit V1] - 2026-04-17
+- Admin back-office (products, stock, orders, dashboard).
+
+## [GF13 - Configuration 3D Produit V3] - 2026-05-03
+
+## [GF12 - Configuration 3D Produit V2] - 2026-04-19
+
+## [GF11 - Configuration 3D Produit V1] - 2026-04-17
+
 ### Added
-- Configurateur de produit 3D (Three.js), versions successives.
 
-## [GF10 — Configuration Produit V3] - 2026-04-16
-## [GF9 — Configuration Produit V2] - 2026-04-11
-## [GF8 — Configuration Produit V1] - 2026-04-07
+- 3D product configurator (Three.js), successive versions.
+
+## [GF10 - Configuration Produit V3] - 2026-04-16
+
+## [GF9 - Configuration Produit V2] - 2026-04-11
+
+## [GF8 - Configuration Produit V1] - 2026-04-07
+
 ### Added
-- Configurateur de produit 2D (Konva), versions successives.
 
-## [GF7 — App Stability] - 2026-03-26
+- 2D product configurator (Konva), successive versions.
+
+## [GF7 - App Stability] - 2026-03-26
+
 ### Fixed
-- Corrections de stabilité applicative.
 
-## [GF6 — Orders Details] - 2026-02-15
-### Added
-- Détail des commandes.
+- Application stability fixes.
 
-## [GF5 — Orders Checkout] - 2026-02-03
-### Added
-- Tunnel de commande et paiement Stripe.
+## [GF6 - Orders Details] - 2026-02-15
 
-## [GF4 — Users Authentification] - 2026-02-01
 ### Added
-- Authentification utilisateur (Sanctum).
 
-## [GF3 — Product Cart] - 2026-01-22
-### Added
-- Panier produit.
+- Order detail view.
 
-## [GF2 — Product Details] - 2026-01-18
-### Added
-- Fiche produit détaillée.
+## [GF5 - Orders Checkout] - 2026-02-03
 
-## [GF1 — Product Catalog] - 2026-01-18
 ### Added
-- Catalogue produits initial.
 
-## [GF0 — Project setup]
+- Order tunnel and Stripe payment.
+
+## [GF4 - Users Authentification] - 2026-02-01
+
 ### Added
-- Mise en place initiale du projet Laravel.
+
+- User authentication (Sanctum).
+
+## [GF3 - Product Cart] - 2026-01-22
+
+### Added
+
+- Product cart.
+
+## [GF2 - Product Details] - 2026-01-18
+
+### Added
+
+- Detailed product page.
+
+## [GF1 - Product Catalog] - 2026-01-18
+
+### Added
+
+- Initial product catalog.
+
+## [GF0 - Project setup]
+
+### Added
+
+- Initial Laravel project setup.

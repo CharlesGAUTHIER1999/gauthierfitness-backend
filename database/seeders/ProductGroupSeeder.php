@@ -11,9 +11,9 @@ use Throwable;
 
 class ProductGroupSeeder extends Seeder
 {
-    private ?int $skuMax = null;
+    private ?int $sku_max = null;
 
-    private ?int $slugMax = null;
+    private ?int $slug_max = null;
 
     /** Group products by color/flavor variants, cloning base products into variant rows and assigning them to product groups with their images. */
     public function run(): void
@@ -30,8 +30,8 @@ class ProductGroupSeeder extends Seeder
 
         $this->enableFk();
 
-        $this->skuMax = $this->getColumnMaxLen('products', 'sku', 80);
-        $this->slugMax = $this->getColumnMaxLen('products', 'slug', 255);
+        $this->sku_max = $this->getColumnMaxLen('products', 'sku', 80);
+        $this->slug_max = $this->getColumnMaxLen('products', 'slug', 255);
 
         $c = [
             'black' => ['code' => 'black', 'label' => 'Noir'],
@@ -46,7 +46,7 @@ class ProductGroupSeeder extends Seeder
             'wood' => ['code' => 'wood', 'label' => 'Bois'],
         ];
 
-        $colorSlicesByProductKey = [
+        $color_slices_by_product_key = [
             'femmes-pantalons|Pantalon Classic' => [
                 'grey' => [0, 1, 2, 3],
                 'black' => [4, 5, 6, 7],
@@ -145,7 +145,7 @@ class ProductGroupSeeder extends Seeder
             ],
         ];
 
-        $colorsByProductKey = [
+        $colors_by_product_key = [
             'equipments-barres|Barre Olympique 20kg' => [$c['grey']],
             'equipments-barres|Barre Olympique 15kg' => [$c['grey']],
             'equipments-barres|Barre Curl' => [$c['grey']],
@@ -179,7 +179,7 @@ class ProductGroupSeeder extends Seeder
             'hommes-vestes|Veste Coupe-Vent' => [$c['green'], $c['blue'], $c['cyan']],
         ];
 
-        $flavorsByProductKey = [
+        $flavors_by_product_key = [
             'nutrition-proteines-poudre|Whey Pure Professionnal 500g' => [
                 ['code' => 'white-coconut', 'label' => 'White Coconut'],
                 ['code' => 'coconut-lime', 'label' => 'Coconut & Lime'],
@@ -231,22 +231,22 @@ class ProductGroupSeeder extends Seeder
             ],
         ];
 
-        $flavorKeys = array_keys($flavorsByProductKey);
+        $flavor_keys = array_keys($flavors_by_product_key);
 
-        foreach ($flavorsByProductKey as $productKey => $flavors) {
-            [$categorySlug, $productName] = explode('|', $productKey, 2);
+        foreach ($flavors_by_product_key as $product_key => $flavors) {
+            [$category_slug, $product_name] = explode('|', $product_key, 2);
 
-            $base = $this->findProductByCategoryAndName($categorySlug, $productName);
+            $base = $this->findProductByCategoryAndName($category_slug, $product_name);
             if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::updateOrCreate(
-                ['slug' => Str::slug($categorySlug.'-'.$productName)],
-                ['name' => $productName, 'type' => 'flavor']
+                ['slug' => Str::slug($category_slug.'-'.$product_name)],
+                ['name' => $product_name, 'type' => 'flavor']
             );
 
-            $baseUrls = DB::table('product_images')
+            $base_urls = DB::table('product_images')
                 ->where('product_id', $base->id)
                 ->orderBy('position')
                 ->orderBy('id')
@@ -260,40 +260,40 @@ class ProductGroupSeeder extends Seeder
                 'color_label' => $flavors[0]['label'],
             ]);
 
-            $main0 = $baseUrls[0] ?? null;
+            $main0 = $base_urls[0] ?? null;
             if ($main0) {
                 $this->replaceProductImages((int) $base->id, [$main0, $main0]);
             }
 
             foreach (array_slice($flavors, 1) as $idx => $flavor) {
                 $i = $idx + 1;
-                $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $flavor['code'], $flavor['label']);
+                $new_id = $this->cloneProductVariant((int) $base->id, (int) $group->id, $flavor['code'], $flavor['label']);
 
-                $main = $baseUrls[$i] ?? $baseUrls[0] ?? null;
-                if ($newId && $main) {
-                    $this->replaceProductImages((int) $newId, [$main, $main]);
+                $main = $base_urls[$i] ?? $base_urls[0] ?? null;
+                if ($new_id && $main) {
+                    $this->replaceProductImages((int) $new_id, [$main, $main]);
                 }
             }
         }
 
-        foreach ($colorsByProductKey as $productKey => $colors) {
-            if (in_array($productKey, $flavorKeys, true)) {
+        foreach ($colors_by_product_key as $product_key => $colors) {
+            if (in_array($product_key, $flavor_keys, true)) {
                 continue;
             }
 
-            [$categorySlug, $productName] = explode('|', $productKey, 2);
+            [$category_slug, $product_name] = explode('|', $product_key, 2);
 
-            $base = $this->findProductByCategoryAndName($categorySlug, $productName);
+            $base = $this->findProductByCategoryAndName($category_slug, $product_name);
             if (! $base) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug.'-'.$productName)],
-                ['name' => $productName, 'type' => 'color']
+                ['slug' => Str::slug($category_slug.'-'.$product_name)],
+                ['name' => $product_name, 'type' => 'color']
             );
 
-            $baseUrls = DB::table('product_images')
+            $base_urls = DB::table('product_images')
                 ->where('product_id', $base->id)
                 ->orderBy('position')
                 ->orderBy('id')
@@ -301,8 +301,8 @@ class ProductGroupSeeder extends Seeder
                 ->values()
                 ->toArray();
 
-            $slicesByCode = $colorSlicesByProductKey[$productKey] ?? null;
-            $canSlice = $this->hasSlicesForAllVariants($slicesByCode, $colors);
+            $slices_by_code = $color_slices_by_product_key[$product_key] ?? null;
+            $can_slice = $this->hasSlicesForAllVariants($slices_by_code, $colors);
 
             DB::table('products')->where('id', $base->id)->update([
                 'group_id' => $group->id,
@@ -310,51 +310,51 @@ class ProductGroupSeeder extends Seeder
                 'color_label' => $colors[0]['label'],
             ]);
 
-            if ($canSlice) {
-                $firstCode = $colors[0]['code'];
-                $urlsBase = $this->sliceUrls($baseUrls, $slicesByCode[$firstCode] ?? []);
+            if ($can_slice) {
+                $first_code = $colors[0]['code'];
+                $urls_base = $this->sliceUrls($base_urls, $slices_by_code[$first_code] ?? []);
 
-                if (! empty($urlsBase)) {
-                    $this->replaceProductImages((int) $base->id, $urlsBase);
+                if (! empty($urls_base)) {
+                    $this->replaceProductImages((int) $base->id, $urls_base);
                 }
 
                 foreach (array_slice($colors, 1) as $color) {
-                    $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
-                    if (! $newId) {
+                    $new_id = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
+                    if (! $new_id) {
                         continue;
                     }
 
-                    $urls = $this->sliceUrls($baseUrls, $slicesByCode[$color['code']] ?? []);
+                    $urls = $this->sliceUrls($base_urls, $slices_by_code[$color['code']] ?? []);
                     if (! empty($urls)) {
-                        $this->replaceProductImages((int) $newId, $urls);
+                        $this->replaceProductImages((int) $new_id, $urls);
                     } else {
-                        $this->copyImagesFromBase((int) $base->id, (int) $newId);
+                        $this->copyImagesFromBase((int) $base->id, (int) $new_id);
                     }
                 }
             } else {
                 foreach (array_slice($colors, 1) as $color) {
-                    $newId = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
-                    if ($newId) {
-                        $this->copyImagesFromBase((int) $base->id, (int) $newId);
+                    $new_id = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
+                    if ($new_id) {
+                        $this->copyImagesFromBase((int) $base->id, (int) $new_id);
                     }
                 }
             }
         }
 
-        $handledKeys = array_unique(array_merge(array_keys($colorsByProductKey), array_keys($flavorsByProductKey)));
+        $handled_keys = array_unique(array_merge(array_keys($colors_by_product_key), array_keys($flavors_by_product_key)));
 
-        $allProducts = Product::with('categories')->get();
+        $all_products = Product::with('categories')->get();
 
-        foreach ($allProducts as $product) {
-            $categorySlug = $this->firstCategorySlug((int) $product->id) ?? 'default';
-            $productKey = $categorySlug.'|'.$product->name;
+        foreach ($all_products as $product) {
+            $category_slug = $this->firstCategorySlug((int) $product->id) ?? 'default';
+            $product_key = $category_slug.'|'.$product->name;
 
-            if (in_array($productKey, $handledKeys, true)) {
+            if (in_array($product_key, $handled_keys, true)) {
                 continue;
             }
 
             $group = ProductGroup::firstOrCreate(
-                ['slug' => Str::slug($categorySlug.'-'.$product->name)],
+                ['slug' => Str::slug($category_slug.'-'.$product->name)],
                 ['name' => $product->name, 'type' => null]
             );
 
@@ -367,25 +367,25 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Find a product by exact name that belongs to the given category slug. */
-    private function findProductByCategoryAndName(string $categorySlug, string $productName): ?Product
+    private function findProductByCategoryAndName(string $category_slug, string $product_name): ?Product
     {
-        return Product::where('name', $productName)
-            ->whereHas('categories', function ($q) use ($categorySlug) {
-                $q->where('slug', $categorySlug);
+        return Product::where('name', $product_name)
+            ->whereHas('categories', function ($q) use ($category_slug) {
+                $q->where('slug', $category_slug);
             })
             ->first();
     }
 
     /** Check whether every color variant has a defined image-index slice. */
-    private function hasSlicesForAllVariants(?array $slicesByCode, array $colors): bool
+    private function hasSlicesForAllVariants(?array $slices_by_code, array $colors): bool
     {
-        if (! $slicesByCode || ! is_array($slicesByCode)) {
+        if (! $slices_by_code || ! is_array($slices_by_code)) {
             return false;
         }
 
         foreach ($colors as $c) {
             $code = $c['code'] ?? null;
-            if (! $code || ! array_key_exists($code, $slicesByCode)) {
+            if (! $code || ! array_key_exists($code, $slices_by_code)) {
                 return false;
             }
         }
@@ -394,13 +394,13 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Pick a subset of image URLs from the base list using the given indexes. */
-    private function sliceUrls(array $baseUrls, array $indexes): array
+    private function sliceUrls(array $base_urls, array $indexes): array
     {
         $out = [];
 
         foreach ($indexes as $idx) {
-            if (isset($baseUrls[$idx])) {
-                $out[] = $baseUrls[$idx];
+            if (isset($base_urls[$idx])) {
+                $out[] = $base_urls[$idx];
             }
         }
 
@@ -408,26 +408,26 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Clone a base product row into a new variant (same data, different color/flavor, slug and SKU). */
-    private function cloneProductVariant(int $baseProductId, int $groupId, string $variantCode, string $variantLabel): int
+    private function cloneProductVariant(int $base_product_id, int $group_id, string $variant_code, string $variant_label): int
     {
-        $base = DB::table('products')->where('id', $baseProductId)->first();
+        $base = DB::table('products')->where('id', $base_product_id)->first();
         if (! $base) {
             return 0;
         }
 
         $now = now();
-        $slug = $this->makeSlug((string) $base->slug, $variantCode);
-        $sku = $this->makeSku((string) $base->sku, $variantCode);
+        $slug = $this->makeSlug((string) $base->slug, $variant_code);
+        $sku = $this->makeSku((string) $base->sku, $variant_code);
 
-        $newId = DB::table('products')->insertGetId([
+        $new_id = DB::table('products')->insertGetId([
             'supplier_id' => $base->supplier_id,
-            'group_id' => $groupId,
+            'group_id' => $group_id,
             'name' => $base->name,
             'slug' => $slug,
             'brand' => $base->brand,
             'origin' => $base->origin,
-            'color_code' => $variantCode,
-            'color_label' => $variantLabel,
+            'color_code' => $variant_code,
+            'color_label' => $variant_label,
             'description' => $base->description,
             'price_ht' => $base->price_ht,
             'price_ttc' => $base->price_ttc,
@@ -447,23 +447,23 @@ class ProductGroupSeeder extends Seeder
         ]);
 
         $cats = DB::table('product_category')
-            ->where('product_id', $baseProductId)
+            ->where('product_id', $base_product_id)
             ->pluck('category_id');
 
-        foreach ($cats as $catId) {
+        foreach ($cats as $cat_id) {
             DB::table('product_category')->insert([
-                'product_id' => $newId,
-                'category_id' => $catId,
+                'product_id' => $new_id,
+                'category_id' => $cat_id,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
         }
 
-        return (int) $newId;
+        return (int) $new_id;
     }
 
     /** Delete a product's existing images and insert the given URLs as its new gallery. */
-    private function replaceProductImages(int $productId, array $urls): void
+    private function replaceProductImages(int $product_id, array $urls): void
     {
         $urls = array_values(array_unique(array_filter($urls)));
         if (count($urls) === 0) {
@@ -476,11 +476,11 @@ class ProductGroupSeeder extends Seeder
 
         $now = now();
 
-        DB::table('product_images')->where('product_id', $productId)->delete();
+        DB::table('product_images')->where('product_id', $product_id)->delete();
 
         foreach ($urls as $i => $url) {
             DB::table('product_images')->insert([
-                'product_id' => $productId,
+                'product_id' => $product_id,
                 'url' => $url,
                 'is_main' => $i === 0,
                 'position' => $i,
@@ -491,10 +491,10 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Copy all images from a base product to a newly cloned variant product. */
-    private function copyImagesFromBase(int $baseProductId, int $newProductId): void
+    private function copyImagesFromBase(int $base_product_id, int $new_product_id): void
     {
         $images = DB::table('product_images')
-            ->where('product_id', $baseProductId)
+            ->where('product_id', $base_product_id)
             ->orderBy('position')
             ->orderBy('id')
             ->get();
@@ -507,7 +507,7 @@ class ProductGroupSeeder extends Seeder
 
         foreach ($images as $img) {
             DB::table('product_images')->insert([
-                'product_id' => $newProductId,
+                'product_id' => $new_product_id,
                 'url' => $img->url,
                 'is_main' => (bool) $img->is_main,
                 'position' => (int) $img->position,
@@ -518,29 +518,29 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Build a unique SKU for a variant by truncating the base SKU and appending variant + random suffix. */
-    private function makeSku(string $baseSku, string $variantCode): string
+    private function makeSku(string $base_sku, string $variant_code): string
     {
-        $max = (int) ($this->skuMax ?? 80);
+        $max = (int) ($this->sku_max ?? 80);
 
         // Keep part of the base SKU + variant + random suffix to guarantee uniqueness
-        $variant = strtoupper(Str::slug($variantCode));
+        $variant = strtoupper(Str::slug($variant_code));
         $random = '-'.rand(1000, 9999);
 
         // Reserve room for "-VARIANT-1234"
         $suffix = '-'.$variant.$random;
         $keep = max(1, $max - strlen($suffix));
 
-        return substr($baseSku, 0, $keep).$suffix;
+        return substr($base_sku, 0, $keep).$suffix;
     }
 
     /** Build a unique slug for a variant by truncating the base slug and appending the variant code. */
-    private function makeSlug(string $baseSlug, string $variantCode): string
+    private function makeSlug(string $base_slug, string $variant_code): string
     {
-        $max = (int) ($this->slugMax ?? 255);
-        $suffix = '-'.Str::slug($variantCode);
+        $max = (int) ($this->slug_max ?? 255);
+        $suffix = '-'.Str::slug($variant_code);
         $keep = max(1, $max - strlen($suffix));
 
-        return substr($baseSlug, 0, $keep).$suffix;
+        return substr($base_slug, 0, $keep).$suffix;
     }
 
     /** Look up a column's max character length from information_schema, falling back to a default. */
@@ -566,11 +566,11 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Get the slug of a product's first assigned category (ordered by parent then id). */
-    private function firstCategorySlug(int $productId): ?string
+    private function firstCategorySlug(int $product_id): ?string
     {
         return DB::table('product_category')
             ->join('categories', 'categories.id', '=', 'product_category.category_id')
-            ->where('product_category.product_id', $productId)
+            ->where('product_category.product_id', $product_id)
             ->orderBy('categories.parent_id')
             ->orderBy('categories.id')
             ->value('categories.slug');

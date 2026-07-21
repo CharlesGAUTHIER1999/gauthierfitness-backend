@@ -12,14 +12,11 @@ class OrderClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    /* ── Index ─────────────────────────────────────────────────── */
-
+    /* Index */
     public function test_user_can_list_own_orders(): void
     {
         $user = User::factory()->create();
-
         Order::factory()->count(3)->create(['user_id' => $user->id]);
-
         Sanctum::actingAs($user);
 
         $this->getJson('/api/orders')
@@ -31,10 +28,8 @@ class OrderClientTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-
         Order::factory()->count(2)->create(['user_id' => $user->id]);
         Order::factory()->count(5)->create(['user_id' => $other->id]);
-
         Sanctum::actingAs($user);
 
         $this->getJson('/api/orders')
@@ -47,16 +42,14 @@ class OrderClientTest extends TestCase
         $this->getJson('/api/orders')->assertUnauthorized();
     }
 
-    /* ── Show ──────────────────────────────────────────────────── */
-
+    /* Show */
     public function test_user_can_view_own_order_detail(): void
     {
         $user = User::factory()->create();
         $order = Order::factory()->create(['user_id' => $user->id]);
-
         Sanctum::actingAs($user);
 
-        $this->getJson("/api/orders/{$order->id}")
+        $this->getJson("/api/orders/$order->id")
             ->assertOk()
             ->assertJsonPath('id', $order->id);
     }
@@ -66,14 +59,11 @@ class OrderClientTest extends TestCase
         $user = User::factory()->create();
         $other = User::factory()->create();
         $order = Order::factory()->create(['user_id' => $other->id]);
-
         Sanctum::actingAs($user);
-
-        $this->getJson("/api/orders/{$order->id}")->assertNotFound();
+        $this->getJson("/api/orders/$order->id")->assertNotFound();
     }
 
-    /* ── Store (deprecated 405) ────────────────────────────────── */
-
+    /* Store (deprecated 405) */
     public function test_store_endpoint_returns_405(): void
     {
         $user = User::factory()->create();

@@ -26,7 +26,7 @@ use Stripe\StripeClient;
 use Stripe\Webhook;
 use Throwable;
 
-#[Group(name: 'Paiement', weight: 7)]
+#[Group(name: 'Payment', weight: 7)]
 class StripeController extends Controller
 {
     /**
@@ -79,6 +79,7 @@ class StripeController extends Controller
                 if (! $product) {
                     abort(422, 'Produit introuvable dans le panier.');
                 }
+
                 $unit_ttc = CartPricingCalculator::unitPrice($ci->customProductSession?->unit_price_snapshot, $ci->option?->price_ttc, (float) $product->price_ttc);
                 $unit_ht = CartPricingCalculator::unitPrice(null, $ci->option?->price_ht, (float) $product->price_ht);
                 $quantity = (int) $ci->quantity;

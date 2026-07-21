@@ -1,103 +1,104 @@
 # GauthierFitness - Backend
 
-> API REST de la boutique e-commerce GauthierFitness. Gère le catalogue, le panier, les paiements Stripe, les sessions
-> de customisation 3D, la génération de designs IA et l'administration.
+> REST API for the GauthierFitness e-commerce store. Handles the catalog, cart, Stripe payments, 3D customization
+> sessions, AI design generation, and administration.
 
-Repo : `CharlesGAUTHIER1999/gauthierfitness-backend` &nbsp;·&nbsp; Production : <https://api.gauthierfitness.fr>
+Repo: `CharlesGAUTHIER1999/gauthierfitness-backend` &nbsp;·&nbsp; Production: <https://api.gauthierfitness.fr>
 
-> Documentation projet transverse (architecture, déploiement, manuel utilisateur, mise à jour) : [meta-repo
+> Cross-project documentation (architecture, deployment, user manual, upgrades): [meta-repo
 `gauthierfitness/docs`](https://github.com/CharlesGAUTHIER1999/gauthierfitness/tree/main/docs)
 
 ---
 
 ## Stack
 
-| Couche          | Technologie                                              |
-|-----------------|----------------------------------------------------------|
-| Runtime         | PHP 8.3                                                  |
-| Framework       | Laravel 13                                               |
-| Base de données | MySQL 8                                                  |
-| Auth API        | Laravel Sanctum (Bearer token)                           |
-| Paiement        | Stripe (PaymentIntents + webhook signé)                  |
-| IA              | OpenAI Images                                            |
-| Doc API         | [Scramble](https://scramble.dedoc.co) (OpenAPI 3.1 auto) |
-| Tests           | PHPUnit 11 (SQLite in-memory en CI)                      |
-| Style           | Laravel Pint (PSR-12)                                    |
-| CI/CD           | GitHub Actions → image GHCR → dispatch infra             |
+| Layer     | Technology                                               |
+|-----------|----------------------------------------------------------|
+| Runtime   | PHP 8.3                                                  |
+| Framework | Laravel 13                                               |
+| Database  | MySQL 8                                                  |
+| API Auth  | Laravel Sanctum (Bearer token)                           |
+| Payment   | Stripe (PaymentIntents + signed webhook)                 |
+| AI        | OpenAI Images                                            |
+| API Docs  | [Scramble](https://scramble.dedoc.co) (auto OpenAPI 3.1) |
+| Tests     | PHPUnit 11 (SQLite in-memory in CI)                      |
+| Style     | Laravel Pint (PSR-12)                                    |
+| CI/CD     | GitHub Actions → GHCR image → infra dispatch             |
 
 ---
 
-## Démarrage local
+## Local setup
 
-### Avec Docker (recommandé)
+### With Docker (recommended)
 
-Aucune installation de MySQL en local n'est nécessaire.
+No local MySQL installation required.
 
 ```bash
 cp .env.example .env
-cp .env.docker.example .env.docker    # config injectée dans le conteneur app
-docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
-docker compose exec app php artisan key:generate --show   # copier la clé affichée dans APP_KEY= de .env.docker
-docker compose up -d --force-recreate app                 # recharge le conteneur avec la nouvelle clé
+cp .env.docker.example .env.docker    # config injected into the app container
+docker compose up -d --wait   # waits for MySQL + the app to actually be ready (build included on first run, ~2-4 min)
+docker compose exec app php artisan key:generate --show   # copy the displayed key into APP_KEY= in .env.docker
+docker compose up -d --force-recreate app                 # reloads the container with the new key
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
 ```
 
-API accessible sur `http://localhost:8000` (health check : `http://localhost:8000/api/health`), doc Swagger sur
-`http://localhost:8000/docs/api`, MySQL sur `localhost:3308` (port mappé pour éviter un conflit avec un MySQL local).
+API available at `http://localhost:8000` (health check: `http://localhost:8000/api/health`), Swagger docs at
+`http://localhost:8000/docs/api`, MySQL on `localhost:3308` (mapped port to avoid a conflict with a local MySQL).
 
-Deux `Dockerfile` distincts, pour deux usages différents :
+Two distinct `Dockerfile`s, for two different uses:
 
-| Fichier               | Usage                                                                           |
-|------------------------|----------------------------------------------------------------------------------|
-| `Dockerfile` (racine) | Multi-stage, buildé par la CI (`target: production`) → image publiée sur GHCR   |
-| `docker/Dockerfile`   | Mono-stage, utilisé par `docker-compose.yml` pour un environnement de dev local |
+| File                | Use                                                                       |
+|---------------------|---------------------------------------------------------------------------|
+| `Dockerfile` (root) | Multi-stage, built by CI (`target: production`) → image published to GHCR |
+| `docker/Dockerfile` | Single-stage, used by `docker-compose.yml` for a local dev environment    |
 
-### Sans Docker
+### Without Docker
 
-Nécessite un serveur MySQL 8 déjà installé et démarré en local, avec une base et un utilisateur créés au préalable —
-`.env.example` contient des identifiants placeholder (`your_db_user` / `your_db_password`) à recréer tels quels ou à
-adapter aux vôtres (détail : [docs/02-deployment.md § 3](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#3-démarrage-local)).
+Requires a MySQL 8 server already installed and running locally, with a database and user already created —
+`.env.example` contains placeholder credentials (`your_db_user` / `your_db_password`) to recreate as-is or
+adapt to your own (
+details: [docs/02-deployment.md § 3](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#3-démarrage-local)).
 
 ```bash
 cp .env.example .env
 composer install
 php artisan key:generate
 php artisan migrate --seed
-php artisan storage:link   # requis pour que les images produits soient servies
+php artisan storage:link   # required for product images to be served
 
-# Lance simultanément server, queue, pail, vite
+# Runs server, queue, pail, and vite simultaneously
 composer dev
 ```
 
-API exposée sur `http://localhost:8000`, doc Swagger sur `http://localhost:8000/docs/api`.
+API exposed at `http://localhost:8000`, Swagger docs at `http://localhost:8000/docs/api`.
 
-### Variables d'environnement clés
+### Key environment variables
 
-| Var                                       | Usage                                               |
+| Var                                       | Use                                                 |
 |-------------------------------------------|-----------------------------------------------------|
 | `APP_ENV`                                 | `local` / `staging` / `production`                  |
-| `DB_*`                                    | Connexion MySQL                                     |
-| `SANCTUM_STATEFUL_DOMAINS`                | Domaines autorisés à utiliser le cookie Sanctum     |
-| `CORS_ALLOWED_ORIGINS`                    | Origines front autorisées (vide = localhost en dev) |
+| `DB_*`                                    | MySQL connection                                    |
+| `SANCTUM_STATEFUL_DOMAINS`                | Domains allowed to use the Sanctum cookie           |
+| `CORS_ALLOWED_ORIGINS`                    | Allowed frontend origins (empty = localhost in dev) |
 | `STRIPE_SECRET` / `STRIPE_WEBHOOK_SECRET` | Stripe                                              |
 | `OPENAI_API_KEY`                          | OpenAI Images                                       |
-| `MAIL_*`                                  | SMTP (Mailpit en local, OVH en prod)                |
-| `API_VERSION`                             | Version exposée dans la spec OpenAPI                |
+| `MAIL_*`                                  | SMTP (Mailpit locally, OVH in production)           |
+| `API_VERSION`                             | Version exposed in the OpenAPI spec                 |
 
-Tableau
-complet → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
+Full
+table → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
 
 ---
 
-## Structure du code
+## Code structure
 
 ```
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/        Admin produits, commandes, stock
-│   │   ├── AI/           AIDesignController (génération IA)
+│   │   ├── Admin/        Admin products, orders, stock
+│   │   ├── AI/           AIDesignController (AI generation)
 │   │   ├── Auth/         Login/Register/Logout/Verification
 │   │   ├── Cart/         CartController
 │   │   ├── Catalog/      ProductController
@@ -105,11 +106,11 @@ app/
 │   │   ├── Orders/       OrderController
 │   │   ├── Payments/     StripeController          ← PaymentIntent + webhook
 │   │   └── Support/      ContactController
-│   ├── Middleware/       AdminMiddleware (garde les routes /admin)
-│   ├── Requests/         FormRequests (validation + autorisation)
+│   ├── Middleware/       AdminMiddleware (guards /admin routes)
+│   ├── Requests/         FormRequests (validation + authorization)
 │   └── Resources/        API Resources (ProductResource)
-├── Models/               Eloquent : User, Cart, Order, Product, StockLot, …
-├── Notifications/        Emails transactionnels (OrderConfirmed, OrderStatusUpdated)
+├── Models/               Eloquent: User, Cart, Order, Product, StockLot, …
+├── Notifications/        Transactional emails (OrderConfirmed, OrderStatusUpdated)
 ├── Providers/            AppServiceProvider (RateLimiter, Scramble security)
 └── Services/
     ├── AI/               OpenAIImageService, OpenAIModerationService, ModerationThresholdEvaluator, PromptBlocklist
@@ -117,9 +118,9 @@ app/
     ├── Pricing/           CartPricingCalculator
     └── Stock/             StockAllocator
 
-routes/api.php            43 routes (3 groupes : public / auth:sanctum / auth:sanctum + admin)
-database/migrations/      Schéma versionné
-swagger/openapi.json      Spec OpenAPI 3.1 régénérée par Scramble
+routes/api.php            43 routes (3 groups: public / auth:sanctum / auth:sanctum + admin)
+database/migrations/      Versioned schema
+swagger/openapi.json      OpenAPI 3.1 spec regenerated by Scramble
 tests/                    Feature + Unit (SQLite in-memory)
 ```
 
@@ -127,66 +128,67 @@ tests/                    Feature + Unit (SQLite in-memory)
 
 ## Conventions
 
-- **Validation** : `Illuminate\Http\Request::validate()` pour les règles simples, FormRequest dédié quand validation
-  croisée nécessaire (cf. `AddToCartRequest::withValidator`).
-- **Réponses** : `JsonResponse` typé en retour. API Resources pour les structures complexes.
-- **Doc OpenAPI** : Scramble lit les type-hints, FormRequests et docblocks. Pour grouper les endpoints, attribut PHP 8
-  `#[Group(name: 'Authentification', weight: 1)]` sur la classe contrôleur. Pour les réponses :
-  `@response 200 scenario="..." {...}` en docblock.
-- **Sécurité Scramble** : la configuration du scheme Sanctum global + flagging public/privé est faite dans [
-  `app/Providers/AppServiceProvider.php`](app/Providers/AppServiceProvider.php), **pas** dans `config/scramble.php`. Les
-  objets `SecurityScheme` ne sont pas `var_export`-sérialisables, ce qui ferait crasher `php artisan config:cache` en
+- **Validation**: `Illuminate\Http\Request::validate()` for simple rules, a dedicated FormRequest when cross-field
+  validation is needed (see `AddToCartRequest::withValidator`).
+- **Responses**: typed `JsonResponse` returned. API Resources for complex structures.
+- **OpenAPI docs**: Scramble reads type-hints, FormRequests, and docblocks. To group endpoints, PHP 8 attribute
+  `#[Group(name: 'Authentification', weight: 1)]` on the controller class. For responses:
+  `@response 200 scenario="..." {...}` in the docblock.
+- **Scramble security**: the global Sanctum scheme config + public/private flagging is done in [
+  `app/Providers/AppServiceProvider.php`](app/Providers/AppServiceProvider.php), **not** in `config/scramble.php`. The
+  `SecurityScheme` objects aren't `var_export`-serializable, which would crash `php artisan config:cache` in
   production.
-- **Snapshot des prix** : `cart_items` et `order_items` portent le prix au moment de l'action, jamais relus du produit.
-- **Idempotence webhooks** : table `webhook_events` indexée `(provider, provider_event_id)`.
+- **Price snapshotting**: `cart_items` and `order_items` carry the price at the time of the action, never re-read from
+  the product.
+- **Webhook idempotency**: `webhook_events` table indexed on `(provider, provider_event_id)`.
 
 ---
 
-## Tests et qualité
+## Tests and quality
 
 ```bash
-php artisan test                  # PHPUnit (SQLite in-memory en CI)
-./vendor/bin/pint                 # Format PSR-12 (auto-fix)
-./vendor/bin/pint --test          # Vérification sans fix (CI)
+php artisan test                  # PHPUnit (SQLite in-memory in CI)
+./vendor/bin/pint                 # PSR-12 formatting (auto-fix)
+./vendor/bin/pint --test          # Check without fixing (CI)
 ```
 
-CI : `phpunit` → `lint` → `build image GHCR` → `dispatch infra`. Cf. [
+CI: `phpunit` → `lint` → `build GHCR image` → `dispatch infra`. See [
 `.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
 
 ---
 
-## Documentation OpenAPI
+## OpenAPI documentation
 
-La documentation est générée **depuis le code** par Scramble - il n'y a rien à maintenir à la main pour la structure des
-endpoints.
+Documentation is generated **from the code** by Scramble - there's nothing to maintain by hand for the endpoint
+structure.
 
 ```bash
-# Régénérer la spec
+# Regenerate the spec
 php artisan scramble:export       # → swagger/openapi.json
 
-# Consulter en local
+# View it locally
 php artisan serve
 # → http://localhost:8000/docs/api
 ```
 
-Annotations supportées sur les contrôleurs : `#[Group(name, weight)]`, docblock summary, `@response`, `@queryParam`,
+Supported annotations on controllers: `#[Group(name, weight)]`, docblock summary, `@response`, `@queryParam`,
 `@urlParam`, `@unauthenticated`.
-Détail : [docs/05-api.md](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/05-api.md).
+Details: [docs/05-api.md](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/05-api.md).
 
 ---
 
-## Convention de branchage
+## Branching convention
 
-- `feature` : `GF{n}-{NomCourt}` (ex : `GF21-SwaggerDoc`, `GF22-Documentation`)
-- `develop` : push automatique → image `ghcr.io/.../gauthierfitness-backend:develop` → infra déploie staging
-- `main` : push → image `:latest` + tag SHA → déclenchement manuel prod
+- `feature`: `GF{n}-{ShortName}` (e.g. `GF21-SwaggerDoc`, `GF22-Documentation`)
+- `develop`: automatic push → image `ghcr.io/.../gauthierfitness-backend:develop` → infra deploys staging
+- `main`: push → `:latest` image + SHA tag → manual production trigger
 
 ---
 
-## Liens utiles
+## Useful links
 
-- 📖 [Manuel de déploiement](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md)
-- 📖 [Manuel de mise à jour](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/04-upgrade.md)
-- 📖 [Architecture détaillée](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/01-architecture.md)
-- 🎨 [Repo frontend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend)
-- 🚀 [Repo infra](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)
+- [Deployment manual](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md)
+- [Upgrade manual](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/04-upgrade.md)
+- [Detailed architecture](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/01-architecture.md)
+- [Frontend repo](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend)
+- [Infra repo](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)

@@ -26,7 +26,6 @@ class AdminStockControllerTest extends TestCase
     }
 
     // List (global view)
-
     public function test_admin_can_view_stock_list(): void
     {
         Sanctum::actingAs($this->admin);
@@ -35,13 +34,12 @@ class AdminStockControllerTest extends TestCase
     }
 
     // Index (by product)
-
     public function test_admin_can_view_product_stock_detail(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $this->getJson("/api/admin/products/{$product->id}/stock")
+        $this->getJson("/api/admin/products/$product->id/stock")
             ->assertOk()
             ->assertJsonStructure([
                 'product_id',
@@ -52,13 +50,12 @@ class AdminStockControllerTest extends TestCase
     }
 
     // Store (restock)
-
     public function test_admin_can_add_stock(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $response = $this->postJson("/api/admin/products/{$product->id}/stock", [
+        $response = $this->postJson("/api/admin/products/$product->id/stock", [
             'lot_number' => 'LOT-TEST-001',
             'quantity' => 50,
         ]);
@@ -85,7 +82,7 @@ class AdminStockControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $this->postJson("/api/admin/products/{$product->id}/stock", [])
+        $this->postJson("/api/admin/products/$product->id/stock", [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['lot_number', 'quantity']);
     }
@@ -95,14 +92,13 @@ class AdminStockControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $this->postJson("/api/admin/products/{$product->id}/stock", [
+        $this->postJson("/api/admin/products/$product->id/stock", [
             'lot_number' => 'LOT-ZERO',
             'quantity' => 0,
         ])->assertUnprocessable();
     }
 
     // Adjust (correction)
-
     public function test_admin_can_adjust_lot(): void
     {
         Sanctum::actingAs($this->admin);
@@ -113,7 +109,7 @@ class AdminStockControllerTest extends TestCase
             'quantity' => 20,
         ]);
 
-        $this->patchJson("/api/admin/stock/lots/{$lot->id}/adjust", [
+        $this->patchJson("/api/admin/stock/lots/$lot->id/adjust", [
             'quantity' => 15,
             'reason' => 'Inventaire mensuel',
         ])->assertOk()
@@ -133,26 +129,24 @@ class AdminStockControllerTest extends TestCase
         $product = Product::factory()->create();
         $lot = StockLot::factory()->create(['product_id' => $product->id, 'quantity' => 10]);
 
-        $this->patchJson("/api/admin/stock/lots/{$lot->id}/adjust", [
+        $this->patchJson("/api/admin/stock/lots/$lot->id/adjust", [
             'quantity' => 5,
         ])->assertUnprocessable()
             ->assertJsonValidationErrors(['reason']);
     }
 
     // Movements history
-
     public function test_admin_can_view_movement_history(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $this->getJson("/api/admin/products/{$product->id}/stock/movements")
+        $this->getJson("/api/admin/products/$product->id/stock/movements")
             ->assertOk()
             ->assertJsonStructure(['data', 'total', 'per_page']);
     }
 
     // Stock by option
-
     public function test_admin_can_add_stock_for_specific_option(): void
     {
         Sanctum::actingAs($this->admin);
@@ -164,7 +158,7 @@ class AdminStockControllerTest extends TestCase
             'label' => 'Large',
         ]);
 
-        $this->postJson("/api/admin/products/{$product->id}/stock", [
+        $this->postJson("/api/admin/products/$product->id/stock", [
             'product_option_id' => $option->id,
             'lot_number' => 'LOT-L-001',
             'quantity' => 30,

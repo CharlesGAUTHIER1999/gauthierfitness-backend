@@ -9,10 +9,10 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-#[Group(name: 'Authentification', weight: 1)]
+#[Group(name: 'Authentication', weight: 1)]
 class RegisterController extends Controller
 {
-    public function __construct(private readonly CartMergeService $cartMergeService) {}
+    public function __construct(private readonly CartMergeService $cart_merge_service) {}
 
     /**
      * Register a new user
@@ -39,7 +39,7 @@ class RegisterController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
+        $this->cart_merge_service->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
         $token = $user->createToken('react')->plainTextToken;
 
         return response()->json([

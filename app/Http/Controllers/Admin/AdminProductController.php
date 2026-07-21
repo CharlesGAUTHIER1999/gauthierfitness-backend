@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
-#[Group(name: 'Admin - Produits', weight: 10)]
+#[Group(name: 'Admin - Products', weight: 10)]
 class AdminProductController extends Controller
 {
     /**

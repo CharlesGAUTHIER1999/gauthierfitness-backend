@@ -19,9 +19,6 @@ class PasswordResetTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // RateLimiter::clear('throttle:5,1') was a no-op: that string isn't the
-        // real signature the throttle middleware hashes, so hits leaked across
-        // tests hitting the same route/IP. Flushing the cache actually resets it.
         Cache::flush();
     }
 
@@ -63,15 +60,12 @@ class PasswordResetTest extends TestCase
     public function test_forgot_password_is_throttled_after_5_requests(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/forgot-password', ['email' => "user{$i}@test.fr"])->assertOk();
+            $this->postJson('/api/forgot-password', ['email' => "user$i@test.fr"])->assertOk();
         }
-
-        $this->postJson('/api/forgot-password', ['email' => 'user6@test.fr'])
-            ->assertStatus(429);
+        $this->postJson('/api/forgot-password', ['email' => 'user6@test.fr'])->assertStatus(429);
     }
 
     // Reset password
-
     public function test_user_can_reset_password_with_valid_token(): void
     {
         $user = User::factory()->create([
@@ -79,7 +73,7 @@ class PasswordResetTest extends TestCase
             'password' => bcrypt('OldPassword123!'),
         ]);
 
-        $oldToken = $user->createToken('react')->plainTextToken;
+        $old_token = $user->createToken('react')->plainTextToken;
         $token = Password::createToken($user);
 
         $this->postJson('/api/reset-password', [
@@ -93,7 +87,7 @@ class PasswordResetTest extends TestCase
         $this->assertTrue(Hash::check('NewPassword123!', $user->fresh()->password));
 
         // Old token revoked
-        $this->withHeader('Authorization', 'Bearer '.explode('|', $oldToken)[1])
+        $this->withHeader('Authorization', 'Bearer '.explode('|', $old_token)[1])
             ->getJson('/api/me')
             ->assertUnauthorized();
 

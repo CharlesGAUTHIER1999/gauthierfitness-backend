@@ -53,10 +53,10 @@ class OpenAIImageService
      *
      * @return array{path: string, url: string}
      */
-    public function store(string $base64, string $filenamePrefix = 'design'): array
+    public function store(string $base64, string $filename_prefix = 'design'): array
     {
         $binary = base64_decode($base64);
-        $path = 'designs/'.uniqid($filenamePrefix.'_').'.png';
+        $path = 'designs/'.uniqid($filename_prefix.'_').'.png';
         Storage::disk('public')->put($path, $binary);
 
         return [

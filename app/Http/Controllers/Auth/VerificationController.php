@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 
-#[Group(name: 'Authentification', weight: 1)]
+#[Group(name: 'Authentication', weight: 1)]
 class VerificationController extends Controller
 {
     /**

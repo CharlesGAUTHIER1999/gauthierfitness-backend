@@ -16,9 +16,6 @@ class ContactTest extends TestCase
     {
         parent::setUp();
         Mail::fake();
-        // RateLimiter::clear('throttle:5,1') was a no-op: that string isn't the
-        // real signature the throttle middleware hashes, so hits leaked across
-        // tests hitting the same route/IP. Flushing the cache actually resets it.
         Cache::flush();
     }
 

@@ -18,9 +18,9 @@ class OrderSeeder extends Seeder
         $users = User::all();
 
         // Avoid crashing if no product exists
-        $productsCount = Product::count();
-        if ($productsCount === 0) {
-            $this->command?->warn('OrderSeeder: aucun produit trouvé, skip.');
+        $products_count = Product::count();
+        if ($products_count === 0) {
+            $this->command?->warn('OrderSeeder: no product found, skipping.');
 
             return;
         }
@@ -32,33 +32,33 @@ class OrderSeeder extends Seeder
                 continue;
             }
             $unit = (float) ($product->price_ttc ?? 0);
-            $qty = 1;
+            $quantity = 1;
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'total_ht' => 50,
-                'total_ttc' => $unit * $qty,
+                'total_ttc' => $unit * $quantity,
                 'payment_status' => 'paid',
                 'order_status' => 'delivered',
             ]);
 
             // Safe lot lookup
-            $lotId = $product->lots()->inRandomOrder()->value('id');
+            $lot_id = $product->lots()->inRandomOrder()->value('id');
 
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $product->id,
-                'lot_id' => $lotId,
+                'lot_id' => $lot_id,
                 'unit_price' => $unit,
-                'quantity' => $qty,
-                'total' => $unit * $qty,
+                'quantity' => $quantity,
+                'total' => $unit * $quantity,
             ]);
 
             Payment::create([
                 'order_id' => $order->id,
                 'provider' => 'stripe',
-                'provider_payment_id' => 'pi_fake_'.rand(1000, 9999),
-                'amount' => $unit * $qty,
+                'provider_payment_id' => 'pi_fake_'.rand(100000, 999999),
+                'amount' => $unit * $quantity,
                 'status' => 'success',
             ]);
 

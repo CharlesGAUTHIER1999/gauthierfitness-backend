@@ -36,12 +36,12 @@ class LogoutTest extends TestCase
 
         Sanctum::actingAs($user, ['*']);
 
-        // Reload the user with the current token marked
+        // Reload user with current token marked
         $user->withAccessToken(PersonalAccessToken::first());
 
         $this->postJson('/api/logout')->assertOk();
 
-        // The token was deleted from the DB
+        // Token deleted from the DB
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 }

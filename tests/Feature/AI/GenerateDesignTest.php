@@ -26,7 +26,7 @@ class GenerateDesignTest extends TestCase
         ]);
     }
 
-    /** OpenAI moderation response (not flagged by default). */
+    /** OpenAI moderation response */
     private function moderationResponse(bool $flagged = false, array $categories = []): array
     {
         return ['results' => [[
@@ -42,7 +42,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Auth
-
     public function test_unauthenticated_user_cannot_generate_design(): void
     {
         $this->postJson(self::ENDPOINT, [
@@ -52,7 +51,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Product guardrails
-
     public function test_rejects_product_that_does_not_allow_ai(): void
     {
         $product = Product::factory()->create([
@@ -72,7 +70,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Happy path
-
     public function test_generates_design_when_content_is_clean(): void
     {
         Storage::fake('public');
@@ -117,7 +114,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Prompt moderation
-
     public function test_rejects_flagged_prompt_before_generating_image(): void
     {
         Http::fake([
@@ -148,7 +144,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Generated image moderation
-
     public function test_rejects_flagged_generated_image(): void
     {
         Storage::fake('public');
@@ -178,7 +173,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // AI provider unavailability
-
     public function test_returns_503_when_ai_provider_fails(): void
     {
         // OpenAI responds with 429 (quota/rate-limit)
@@ -202,7 +196,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Brand blocklist
-
     public function test_rejects_prompt_matching_brand_blocklist(): void
     {
         Http::fake();
@@ -227,8 +220,7 @@ class GenerateDesignTest extends TestCase
         $this->assertDatabaseEmpty('designs');
     }
 
-    // Custom score threshold (stricter than OpenAI)
-
+    // Custom score threshold
     public function test_flags_prompt_when_score_exceeds_custom_threshold(): void
     {
         Http::fake([
@@ -256,7 +248,6 @@ class GenerateDesignTest extends TestCase
     }
 
     // Image generator refusal (gpt-image-1, 400)
-
     public function test_rejects_when_image_provider_refuses_prompt(): void
     {
         Http::fake([

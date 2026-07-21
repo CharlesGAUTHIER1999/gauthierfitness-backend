@@ -13,11 +13,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-#[Group(name: 'Admin - Commandes', weight: 11)]
+#[Group(name: 'Admin - Orders', weight: 11)]
 class AdminOrderController extends Controller
 {
-    /** Maps a status to the order column tracking whether its notification email was already sent. */
-    private const EMAIL_SENT_AT_FIELDS = [
+    /** Maps status to order column tracking whether its notification email was already sent. */
+    private const array EMAIL_SENT_AT_FIELDS = [
         'shipped' => 'shipped_email_sent_at',
         'delivered' => 'delivered_email_sent_at',
         'canceled' => 'canceled_email_sent_at',

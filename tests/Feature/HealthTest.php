@@ -16,7 +16,7 @@ class HealthTest extends TestCase
 
     public function test_health_endpoint_is_public(): void
     {
-        // No auth required - used by deploy-prod.sh and external health probes
+        // No auth required
         $this->getJson('/api/health')->assertOk();
     }
 }
