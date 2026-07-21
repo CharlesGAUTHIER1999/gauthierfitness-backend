@@ -506,14 +506,14 @@ class ProductSeeder extends Seeder
     ];
 
     /** Return the customization flags (3D mode, text/image/AI options) for a given category slug. */
-    private function customizationConfig(string $categorySlug): array
+    private function customizationConfig(string $category_slug): array
     {
-        $isCustomizable =
-            str_contains($categorySlug, 'sweats') ||
-            str_contains($categorySlug, 'tshirts') ||
-            str_contains($categorySlug, 'vestes');
+        $is_customizable =
+            str_contains($category_slug, 'sweats') ||
+            str_contains($category_slug, 'tshirts') ||
+            str_contains($category_slug, 'vestes');
 
-        if ($isCustomizable) {
+        if ($is_customizable) {
             return [
                 'is_customizable' => true,
                 'customization_mode' => '3d',
@@ -792,13 +792,13 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($catalogue as $root => $categories) {
-            foreach ($categories as $categorySlug => $products) {
-                $category = Category::where('slug', $categorySlug)->first();
+            foreach ($categories as $category_slug => $products) {
+                $category = Category::where('slug', $category_slug)->first();
                 if (! $category) {
                     continue;
                 }
 
-                $imagesMap = match ($root) {
+                $images_map = match ($root) {
                     'equipments' => $this->equipments_images,
                     'femmes' => $this->femmes_images,
                     'hommes' => $this->hommes_images,
@@ -806,20 +806,20 @@ class ProductSeeder extends Seeder
                     default => [],
                 };
 
-                foreach ($products as $name => $productType) {
-                    $productMeta = $meta[$name] ?? null;
-                    $priceTtc = $productMeta['price_ttc'] ?? (rand(2000, 15000) / 100);
-                    $description = $productMeta['description'] ?? "Description détaillée de $name.";
-                    $priceHt = round($priceTtc / (1 + $vat / 100), 2);
-                    $customization = $this->customizationConfig($categorySlug);
+                foreach ($products as $name => $product_type) {
+                    $product_meta = $meta[$name] ?? null;
+                    $price_ttc = $product_meta['price_ttc'] ?? (rand(2000, 15000) / 100);
+                    $description = $product_meta['description'] ?? "Description détaillée de $name.";
+                    $price_ht = round($price_ttc / (1 + $vat / 100), 2);
+                    $customization = $this->customizationConfig($category_slug);
 
                     $product = Product::create([
                         'supplier_id' => $supplier->id,
                         'name' => $name,
-                        'slug' => Str::slug($categorySlug.'-'.$name).'-'.rand(100, 999),
+                        'slug' => Str::slug($category_slug.'-'.$name).'-'.rand(100, 999),
                         'description' => $description,
-                        'price_ht' => $priceHt,
-                        'price_ttc' => $priceTtc,
+                        'price_ht' => $price_ht,
+                        'price_ttc' => $price_ttc,
                         'vat' => $vat,
                         'sku' => substr(strtoupper(Str::slug($name)), 0, 70).'-'.rand(1000, 9999),
                         'attributes' => null,
@@ -833,7 +833,7 @@ class ProductSeeder extends Seeder
 
                     $product->categories()->attach($category->id);
 
-                    $images = $imagesMap[$categorySlug][$productType] ?? null;
+                    $images = $images_map[$category_slug][$product_type] ?? null;
                     if (! $images) {
                         continue;
                     }

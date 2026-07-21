@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
-#[Group(name: 'Catalogue', weight: 2)]
+#[Group(name: 'Catalog', weight: 2)]
 class ProductController extends Controller
 {
     /**

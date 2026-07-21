@@ -11,9 +11,9 @@ class CartPricingCalculator
         return $session_snapshot ?? $option_price ?? $product_price;
     }
 
-    public static function lineTotal(float $unitPrice, int $quantity): float
+    public static function lineTotal(float $unit_price, int $quantity): float
     {
-        return $unitPrice * $quantity;
+        return $unit_price * $quantity;
     }
 
     public static function round(float $amount): float

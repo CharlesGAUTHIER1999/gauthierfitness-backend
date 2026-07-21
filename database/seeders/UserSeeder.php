@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -18,7 +19,7 @@ class UserSeeder extends Seeder
             [
                 'firstname' => 'Charles',
                 'lastname' => 'Gauthier',
-                'password' => Hash::make('Bordeaux2025@'),
+                'password' => Hash::make(env('ADMIN_SEED_PASSWORD', Str::random(24))),
                 'phone' => null,
                 'is_b2b' => false,
                 'company_name' => null,
@@ -30,8 +31,8 @@ class UserSeeder extends Seeder
         );
 
         // Attach admin role (idempotent)
-        $adminRole = Role::where('name', 'admin')->firstOrFail();
-        $admin->roles()->syncWithoutDetaching([$adminRole->id]);
+        $admin_role = Role::where('name', 'admin')->firstOrFail();
+        $admin->roles()->syncWithoutDetaching([$admin_role->id]);
 
         // Random users (no roles)
         User::factory()->count(10)->create();

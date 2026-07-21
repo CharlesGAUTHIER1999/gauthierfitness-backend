@@ -20,20 +20,16 @@ class AdminProductControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
-
         $this->customer = User::factory()->create();
     }
 
-    /* ── Access control ─────────────────────────────────────────── */
-
+    /* Access control */
     public function test_non_admin_cannot_list_products(): void
     {
         Sanctum::actingAs($this->customer);
-
         $this->getJson('/api/admin/products')->assertForbidden();
     }
 
@@ -42,8 +38,7 @@ class AdminProductControllerTest extends TestCase
         $this->getJson('/api/admin/products')->assertUnauthorized();
     }
 
-    /* ── Index ──────────────────────────────────────────────────── */
-
+    /* Index */
     public function test_admin_can_list_products(): void
     {
         Sanctum::actingAs($this->admin);
@@ -59,27 +54,23 @@ class AdminProductControllerTest extends TestCase
         Sanctum::actingAs($this->admin);
         Product::factory()->create(['name' => 'T-shirt Oversize']);
         Product::factory()->create(['name' => 'Legging Sport']);
-
         $response = $this->getJson('/api/admin/products?search=oversize');
-
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
     }
 
-    /* ── Show ───────────────────────────────────────────────────── */
-
+    /* Show */
     public function test_admin_can_view_product(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
 
-        $this->getJson("/api/admin/products/{$product->id}")
+        $this->getJson("/api/admin/products/$product->id")
             ->assertOk()
             ->assertJsonPath('data.id', $product->id);
     }
 
-    /* ── Store ──────────────────────────────────────────────────── */
-
+    /* Store */
     public function test_admin_can_create_product(): void
     {
         Sanctum::actingAs($this->admin);
@@ -93,9 +84,7 @@ class AdminProductControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response->assertCreated()
-            ->assertJsonPath('name', 'Nouveau produit test');
-
+        $response->assertCreated()->assertJsonPath('name', 'Nouveau produit test');
         $this->assertDatabaseHas('products', ['name' => 'Nouveau produit test']);
     }
 
@@ -124,42 +113,36 @@ class AdminProductControllerTest extends TestCase
             ->assertJsonValidationErrors(['sku']);
     }
 
-    /* ── Update ─────────────────────────────────────────────────── */
-
+    /* Update */
     public function test_admin_can_update_product(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create(['name' => 'Old name']);
 
-        $this->patchJson("/api/admin/products/{$product->id}", ['name' => 'New name'])
+        $this->patchJson("/api/admin/products/$product->id", ['name' => 'New name'])
             ->assertOk()
             ->assertJsonPath('name', 'New name');
     }
 
-    /* ── Toggle active ──────────────────────────────────────────── */
-
+    /* Toggle active */
     public function test_admin_can_toggle_product_active(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create(['is_active' => true]);
 
-        $this->patchJson("/api/admin/products/{$product->id}/toggle-active")
+        $this->patchJson("/api/admin/products/$product->id/toggle-active")
             ->assertOk()
             ->assertJsonPath('is_active', false);
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'is_active' => 0]);
     }
 
-    /* ── Destroy ────────────────────────────────────────────────── */
-
+    /* Destroy */
     public function test_admin_can_delete_product(): void
     {
         Sanctum::actingAs($this->admin);
         $product = Product::factory()->create();
-
-        $this->deleteJson("/api/admin/products/{$product->id}")
-            ->assertOk();
-
+        $this->deleteJson("/api/admin/products/$product->id")->assertOk();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 }

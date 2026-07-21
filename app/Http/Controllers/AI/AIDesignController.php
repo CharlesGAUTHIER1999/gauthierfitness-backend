@@ -16,7 +16,7 @@ use App\Services\AI\PromptBlocklist;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 
-#[Group(name: 'IA - Génération de designs', weight: 5)]
+#[Group(name: 'AI - Design Generation', weight: 5)]
 class AIDesignController extends Controller
 {
     /**

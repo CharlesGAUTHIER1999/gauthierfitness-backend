@@ -21,18 +21,15 @@ class AdminTicketControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $role = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrateur']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
-
         $this->customer = User::factory()->create();
     }
 
     public function test_non_admin_cannot_list_tickets(): void
     {
         Sanctum::actingAs($this->customer);
-
         $this->getJson('/api/admin/tickets')->assertForbidden();
     }
 
@@ -44,24 +41,18 @@ class AdminTicketControllerTest extends TestCase
     public function test_admin_can_list_tickets(): void
     {
         Sanctum::actingAs($this->admin);
-
         Ticket::create(['user_id' => $this->customer->id, 'subject' => 'Question livraison', 'status' => 'open']);
         Ticket::create(['user_id' => $this->customer->id, 'subject' => 'Retour produit', 'status' => 'closed']);
-
         $response = $this->getJson('/api/admin/tickets')->assertOk();
-
         $this->assertCount(2, $response->json('data'));
     }
 
     public function test_admin_can_filter_tickets_by_status(): void
     {
         Sanctum::actingAs($this->admin);
-
         Ticket::create(['user_id' => $this->customer->id, 'subject' => 'Question livraison', 'status' => 'open']);
         Ticket::create(['user_id' => $this->customer->id, 'subject' => 'Retour produit', 'status' => 'closed']);
-
         $response = $this->getJson('/api/admin/tickets?status=open')->assertOk();
-
         $this->assertCount(1, $response->json('data'));
         $this->assertEquals('Question livraison', $response->json('data.0.subject'));
     }
@@ -84,8 +75,7 @@ class AdminTicketControllerTest extends TestCase
             'message' => 'Elle est en cours de préparation.',
         ]);
 
-        $response = $this->getJson("/api/admin/tickets/{$ticket->id}")->assertOk();
-
+        $response = $this->getJson("/api/admin/tickets/$ticket->id")->assertOk();
         $this->assertCount(2, $response->json('messages'));
         $this->assertEquals('user', $response->json('messages.0.sender_type'));
         $this->assertEquals('admin', $response->json('messages.1.sender_type'));

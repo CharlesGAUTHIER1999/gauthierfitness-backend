@@ -9,10 +9,10 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-#[Group(name: 'Authentification', weight: 1)]
+#[Group(name: 'Authentication', weight: 1)]
 class LoginController extends Controller
 {
-    public function __construct(private readonly CartMergeService $cartMergeService) {}
+    public function __construct(private readonly CartMergeService $cart_merge_service) {}
 
     /**
      * User login.
@@ -37,7 +37,7 @@ class LoginController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
         $user->tokens()->where('name', 'react')->delete();
-        $this->cartMergeService->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
+        $this->cart_merge_service->mergeGuestCartIntoUser($request->input('guest_cart_token'), $user);
         $token = $user->createToken('react')->plainTextToken;
 
         return response()->json([

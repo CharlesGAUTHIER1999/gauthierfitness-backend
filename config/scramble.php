@@ -12,7 +12,7 @@ return [
      * ],
      *
      * Without *, patterns match path segments (api matches api and api/users, not apiary).
-     * With *, Str::is is used (e.g. api/v*).
+     * With *, "Str::is" used (e.g. api/v*).
      *
      * One static include → default server is /{include} and paths are stripped (/users).
      * Multiple includes or wildcards → server defaults to / and paths stay full (/api/users).
@@ -46,25 +46,25 @@ return [
         'version' => env('API_VERSION', '1.0.0'),
 
         'description' => <<<'MD'
-            **API REST de GauthierFitness** — boutique e-commerce de produits fitness personnalisables (vêtements, accessoires, nutrition).
+            **GauthierFitness REST API** - e-commerce store for customizable fitness products (apparel, accessories, nutrition).
 
             ## Conventions
-            - Authentification : **Laravel Sanctum** (`Bearer <token>`). Le token est obtenu via `POST /api/login` ou `POST /api/register`.
-            - Format : JSON (`Accept: application/json`).
-            - Codes d'erreur :
-              - `401` — non authentifié
-              - `403` — interdit (ex : ressource d'un autre utilisateur)
-              - `404` — ressource introuvable
-              - `422` — données de validation invalides
-            - Rate limiting : `POST /api/contact` est limité à 5 requêtes/minute/IP.
+            - Authentication: **Laravel Sanctum** (`Bearer <token>`). The token is obtained via `POST /api/login` or `POST /api/register`.
+            - Format: JSON (`Accept: application/json`).
+            - Error codes:
+              - `401` — unauthenticated
+              - `403` — forbidden (e.g. another user's resource)
+              - `404` — resource not found
+              - `422` — invalid validation data
+            - Rate limiting: `POST /api/contact` is limited to 5 requests/minute/IP.
 
-            ## Domaines fonctionnels
-            - **Auth** — inscription, connexion, déconnexion, vérification.
-            - **Catalogue** — produits publics (listing paginé + détail).
-            - **Panier & Commande** — gestion du panier, paiement Stripe, suivi commande.
-            - **Customisation** — sessions de personnalisation 2D/3D + assets (logos, images).
-            - **IA** — génération d'images via OpenAI pour designs personnalisés.
-            - **Admin** — produits, commandes, stocks (réservé aux administrateurs).
+            ## Functional domains
+            - **Auth** — registration, login, logout, verification.
+            - **Catalog** — public products (paginated listing + detail).
+            - **Cart & Order** — cart management, Stripe payment, order tracking.
+            - **Customization** — 2D/3D personalization sessions + assets (logos, images).
+            - **AI** — image generation via OpenAI for custom designs.
+            - **Admin** — products, orders, stock (admin-only).
             MD,
     ],
 

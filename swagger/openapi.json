@@ -3,7 +3,7 @@
     "info": {
         "title": "GauthierFitness \u2014 API Documentation",
         "version": "1.0.0",
-        "description": "**API REST de GauthierFitness** \u2014 boutique e-commerce de produits fitness personnalisables (v\u00eatements, accessoires, nutrition).\n\n## Conventions\n- Authentification : **Laravel Sanctum** (`Bearer <token>`). Le token est obtenu via `POST /api/login` ou `POST /api/register`.\n- Format : JSON (`Accept: application/json`).\n- Codes d'erreur :\n  - `401` \u2014 non authentifi\u00e9\n  - `403` \u2014 interdit (ex : ressource d'un autre utilisateur)\n  - `404` \u2014 ressource introuvable\n  - `422` \u2014 donn\u00e9es de validation invalides\n- Rate limiting : `POST /api/contact` est limit\u00e9 \u00e0 5 requ\u00eates/minute/IP.\n\n## Domaines fonctionnels\n- **Auth** \u2014 inscription, connexion, d\u00e9connexion, v\u00e9rification.\n- **Catalogue** \u2014 produits publics (listing pagin\u00e9 + d\u00e9tail).\n- **Panier & Commande** \u2014 gestion du panier, paiement Stripe, suivi commande.\n- **Customisation** \u2014 sessions de personnalisation 2D/3D + assets (logos, images).\n- **IA** \u2014 g\u00e9n\u00e9ration d'images via OpenAI pour designs personnalis\u00e9s.\n- **Admin** \u2014 produits, commandes, stocks (r\u00e9serv\u00e9 aux administrateurs)."
+        "description": "**GauthierFitness REST API** \u2014 e-commerce store for customizable fitness products (apparel, accessories, nutrition).\n\n## Conventions\n- Authentication: **Laravel Sanctum** (`Bearer <token>`). The token is obtained via `POST /api/login` or `POST /api/register`.\n- Format: JSON (`Accept: application/json`).\n- Error codes:\n  - `401` \u2014 unauthenticated\n  - `403` \u2014 forbidden (e.g. another user's resource)\n  - `404` \u2014 resource not found\n  - `422` \u2014 invalid validation data\n- Rate limiting: `POST /api/contact` is limited to 5 requests/minute/IP.\n\n## Functional domains\n- **Auth** \u2014 registration, login, logout, verification.\n- **Catalog** \u2014 public products (paginated listing + detail).\n- **Cart & Order** \u2014 cart management, Stripe payment, order tracking.\n- **Customization** \u2014 2D/3D personalization sessions + assets (logos, images).\n- **AI** \u2014 image generation via OpenAI for custom designs.\n- **Admin** \u2014 products, orders, stock (admin-only)."
     },
     "servers": [
         {
@@ -12,34 +12,34 @@
     ],
     "tags": [
         {
-            "name": "Authentification"
+            "name": "Authentication"
         },
         {
-            "name": "Catalogue"
+            "name": "Catalog"
         },
         {
-            "name": "Panier"
+            "name": "Cart"
         },
         {
-            "name": "Customisation"
+            "name": "Customization"
         },
         {
-            "name": "IA - G\u00e9n\u00e9ration de designs"
+            "name": "AI - Design Generation"
         },
         {
-            "name": "Commandes"
+            "name": "Orders"
         },
         {
-            "name": "Paiement"
+            "name": "Payment"
         },
         {
             "name": "Contact"
         },
         {
-            "name": "Admin - Produits"
+            "name": "Admin - Products"
         },
         {
-            "name": "Admin - Commandes"
+            "name": "Admin - Orders"
         },
         {
             "name": "Admin \u2014 Stock"
@@ -59,7 +59,7 @@
                 "operationId": "login",
                 "summary": "User login.\nAuthenticates a user via email/password and returns a Sanctum token",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "requestBody": {
                     "required": true,
@@ -111,7 +111,7 @@
                 "operationId": "register",
                 "summary": "Register a new user\nCreates a user account (non-admin by default)",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "requestBody": {
                     "required": true,
@@ -177,7 +177,7 @@
                 "operationId": "password.email",
                 "summary": "Password reset request\nSends an email with a reset link if an account exists for that email",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "requestBody": {
                     "required": true,
@@ -222,7 +222,7 @@
                 "operationId": "password.reset",
                 "summary": "Password reset\nVerifies the token received by email and changes the password",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "requestBody": {
                     "required": true,
@@ -281,7 +281,7 @@
                 "operationId": "me",
                 "summary": "Current user profile.\nReturns the authenticated user with their roles",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "responses": {
                     "200": {
@@ -304,7 +304,7 @@
                 "operationId": "profile.update",
                 "summary": "Update profile\nUpdates the authenticated user's contact and postal address details",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "requestBody": {
                     "content": {
@@ -379,7 +379,7 @@
                 "operationId": "logout",
                 "summary": "Logout\nRevokes the current Sanctum token. The next call will require a new login",
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
                 "responses": {
                     "200": {
@@ -404,7 +404,7 @@
                 "operationId": "product.index",
                 "summary": "Paginated list of public products",
                 "tags": [
-                    "Catalogue"
+                    "Catalog"
                 ],
                 "responses": {
                     "200": {
@@ -555,7 +555,7 @@
                 "operationId": "product.show",
                 "summary": "Product detail by slug",
                 "tags": [
-                    "Catalogue"
+                    "Catalog"
                 ],
                 "parameters": [
                     {
@@ -587,7 +587,7 @@
             "get": {
                 "operationId": "cart.show",
                 "tags": [
-                    "Panier"
+                    "Cart"
                 ],
                 "responses": {
                     "200": {
@@ -764,7 +764,7 @@
                 "operationId": "cart.add",
                 "summary": "Add a product to the cart",
                 "tags": [
-                    "Panier"
+                    "Cart"
                 ],
                 "requestBody": {
                     "required": true,
@@ -822,7 +822,7 @@
                 "operationId": "cart.update",
                 "summary": "Update the quantity of a cart line",
                 "tags": [
-                    "Panier"
+                    "Cart"
                 ],
                 "parameters": [
                     {
@@ -879,7 +879,7 @@
                 "operationId": "cart.destroy",
                 "summary": "Remove a cart line",
                 "tags": [
-                    "Panier"
+                    "Cart"
                 ],
                 "parameters": [
                     {
@@ -916,7 +916,7 @@
                 "operationId": "customization.store",
                 "summary": "Create a customization session",
                 "tags": [
-                    "Customisation"
+                    "Customization"
                 ],
                 "requestBody": {
                     "required": true,
@@ -1031,7 +1031,7 @@
                 "operationId": "customization.show",
                 "summary": "Retrieve a customization session",
                 "tags": [
-                    "Customisation"
+                    "Customization"
                 ],
                 "parameters": [
                     {
@@ -1066,7 +1066,7 @@
                 "operationId": "customization.update",
                 "summary": "Update a customization session",
                 "tags": [
-                    "Customisation"
+                    "Customization"
                 ],
                 "parameters": [
                     {
@@ -1173,7 +1173,7 @@
                 "operationId": "customizationAsset.uploadLogo",
                 "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB)\nStores the file in `storage/app/public/customization/logos/{user_id}/`",
                 "tags": [
-                    "Customisation"
+                    "Customization"
                 ],
                 "responses": {
                     "200": {
@@ -1196,7 +1196,7 @@
                 "operationId": "customizationAsset.uploadImage",
                 "summary": "Upload a customization image (PNG/JPG/JPEG/WebP, \u2264 5 MB).\nStores the file in `storage/app/public/customization/images/{user_id}/`",
                 "tags": [
-                    "Customisation"
+                    "Customization"
                 ],
                 "responses": {
                     "200": {
@@ -1219,7 +1219,7 @@
                 "operationId": "ai.aIDesign",
                 "summary": "Generate a design via OpenAI from a text prompt",
                 "tags": [
-                    "IA - G\u00e9n\u00e9ration de designs"
+                    "AI - Design Generation"
                 ],
                 "requestBody": {
                     "required": true,
@@ -1233,7 +1233,7 @@
                 },
                 "responses": {
                     "422": {
-                        "description": "Requ\u00eate rejet\u00e9e. Cas possibles : produit non customisable ou n'autorisant pas l'IA ; prompt rejet\u00e9 par la mod\u00e9ration (`reason: prompt_flagged`) ; image g\u00e9n\u00e9r\u00e9e rejet\u00e9e par la mod\u00e9ration (`reason: image_flagged`). Les erreurs de validation du formulaire renvoient \u00e9galement un 422.",
+                        "description": "Request rejected. Possible cases: product not customizable or not allowing AI; prompt rejected by moderation (`reason: prompt_flagged`); generated image rejected by moderation (`reason: image_flagged`). Form validation errors also return a 422.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1247,7 +1247,7 @@
                                         },
                                         "reason": {
                                             "type": "string",
-                                            "description": "Origine du rejet : blocklist de marque, mod\u00e9ration du prompt, refus du g\u00e9n\u00e9rateur d\u2019images, ou mod\u00e9ration de l\u2019image g\u00e9n\u00e9r\u00e9e.",
+                                            "description": "Origin of the rejection: brand blocklist, prompt moderation, image generator refusal, or generated image moderation.",
                                             "enum": [
                                                 "prompt_blocked",
                                                 "prompt_flagged",
@@ -1257,7 +1257,7 @@
                                         },
                                         "categories": {
                                             "type": "array",
-                                            "description": "Cat\u00e9gories de mod\u00e9ration d\u00e9clench\u00e9es (ex. violence, sexual, hate).",
+                                            "description": "Triggered moderation categories (e.g. violence, sexual, hate).",
                                             "examples": [
                                                 [
                                                     "violence"
@@ -1282,7 +1282,7 @@
                         "$ref": "#/components/responses/AuthorizationException"
                     },
                     "201": {
-                        "description": "Design g\u00e9n\u00e9r\u00e9, valid\u00e9 par la mod\u00e9ration et persist\u00e9.",
+                        "description": "Design generated, validated by moderation, and persisted.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1377,7 +1377,7 @@
                         }
                     },
                     "503": {
-                        "description": "Service IA (OpenAI) momentan\u00e9ment indisponible ou injoignable.",
+                        "description": "AI service (OpenAI) temporarily unavailable or unreachable.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1404,7 +1404,7 @@
             "get": {
                 "operationId": "order.index",
                 "tags": [
-                    "Commandes"
+                    "Orders"
                 ],
                 "responses": {
                     "200": {
@@ -1431,7 +1431,7 @@
                 "summary": "Create an order (deprecated)",
                 "deprecated": true,
                 "tags": [
-                    "Commandes"
+                    "Orders"
                 ],
                 "responses": {
                     "200": {
@@ -1456,7 +1456,7 @@
                 "operationId": "order.show",
                 "summary": "Order detail",
                 "tags": [
-                    "Commandes"
+                    "Orders"
                 ],
                 "parameters": [
                     {
@@ -1495,7 +1495,7 @@
                 "operationId": "stripe.webhook",
                 "summary": "Stripe webhook - Payment events\nEndpoint called by Stripe",
                 "tags": [
-                    "Paiement"
+                    "Payment"
                 ],
                 "responses": {
                     "200": {
@@ -1518,7 +1518,7 @@
                 "operationId": "stripe.createPaymentIntent",
                 "summary": "Create a Stripe PaymentIntent for the current cart",
                 "tags": [
-                    "Paiement"
+                    "Payment"
                 ],
                 "requestBody": {
                     "required": true,
@@ -1705,7 +1705,7 @@
                 "operationId": "adminProduct.index",
                 "summary": "Paginated list of products (admin)",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "parameters": [
                     {
@@ -1879,7 +1879,7 @@
                 "operationId": "adminProduct.store",
                 "summary": "Create a product",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "requestBody": {
                     "required": true,
@@ -2017,7 +2017,7 @@
             "get": {
                 "operationId": "adminProduct.show",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "parameters": [
                     {
@@ -2061,7 +2061,7 @@
                 "operationId": "adminProduct.update",
                 "summary": "Update a product\nSlug cannot be changed here",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "parameters": [
                     {
@@ -2159,7 +2159,7 @@
                 "operationId": "adminProduct.destroy",
                 "summary": "Delete a product",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "parameters": [
                     {
@@ -2198,7 +2198,7 @@
                 "operationId": "adminProduct.toggleActive",
                 "summary": "Activate / deactivate a product",
                 "tags": [
-                    "Admin - Produits"
+                    "Admin - Products"
                 ],
                 "parameters": [
                     {
@@ -2237,7 +2237,7 @@
                 "operationId": "adminOrder.stats",
                 "summary": "Dashboard - global statistics",
                 "tags": [
-                    "Admin - Commandes"
+                    "Admin - Orders"
                 ],
                 "responses": {
                     "200": {
@@ -2337,7 +2337,7 @@
                 "operationId": "adminOrder.index",
                 "summary": "Paginated list of orders (admin)",
                 "tags": [
-                    "Admin - Commandes"
+                    "Admin - Orders"
                 ],
                 "parameters": [
                     {
@@ -2489,7 +2489,7 @@
             "get": {
                 "operationId": "adminOrder.show",
                 "tags": [
-                    "Admin - Commandes"
+                    "Admin - Orders"
                 ],
                 "parameters": [
                     {
@@ -2527,7 +2527,7 @@
                 "operationId": "adminOrder.updateStatus",
                 "summary": "Update an order's status",
                 "tags": [
-                    "Admin - Commandes"
+                    "Admin - Orders"
                 ],
                 "parameters": [
                     {
@@ -3368,7 +3368,7 @@
         "securitySchemes": {
             "Sanctum": {
                 "type": "http",
-                "description": "Token Sanctum obtenu via `POST /api/login` ou `POST /api/register`. Pr\u00e9fix\u00e9 par `Bearer ` dans le header `Authorization`.",
+                "description": "Sanctum token obtained via `POST /api/login` or `POST /api/register`. Prefixed with `Bearer ` in the `Authorization` header.",
                 "scheme": "bearer"
             }
         },

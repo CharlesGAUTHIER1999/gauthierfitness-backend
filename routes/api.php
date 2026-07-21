@@ -54,8 +54,8 @@ Route::delete('/cart/items/{item}', [CartController::class, 'destroy']);
 
 // Customization (public)
 Route::post('/customization/sessions', [CustomizationController::class, 'store']);
-Route::get('/customization/sessions/{customizationSession}', [CustomizationController::class, 'show']);
-Route::patch('/customization/sessions/{customizationSession}', [CustomizationController::class, 'update']);
+Route::get('/customization/sessions/{customization_session}', [CustomizationController::class, 'show']);
+Route::patch('/customization/sessions/{customization_session}', [CustomizationController::class, 'update']);
 Route::post('/customization/assets/logo', [CustomizationAssetController::class, 'uploadLogo'])->middleware('throttle:20,10');
 Route::post('/customization/assets/image', [CustomizationAssetController::class, 'uploadImage'])->middleware('throttle:20,10');
 

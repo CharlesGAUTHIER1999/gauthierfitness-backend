@@ -28,9 +28,9 @@ class OpenAIModerationService
      *
      * @throws AiServiceUnavailableException
      */
-    public function moderateImage(string $base64, string $mimeType = 'image/png'): array
+    public function moderateImage(string $base64, string $mime_type = 'image/png'): array
     {
-        return $this->moderate([['type' => 'image_url', 'image_url' => ['url' => "data:$mimeType;base64,$base64"]]]);
+        return $this->moderate([['type' => 'image_url', 'image_url' => ['url' => "data:$mime_type;base64,$base64"]]]);
     }
 
     /**

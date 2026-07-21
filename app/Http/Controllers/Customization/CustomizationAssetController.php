@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-#[Group(name: 'Customisation', weight: 4)]
+#[Group(name: 'Customization', weight: 4)]
 class CustomizationAssetController extends Controller
 {
     /**
@@ -34,9 +34,9 @@ class CustomizationAssetController extends Controller
         return $this->storeUpload($request, 'images', 5120, 'Image uploadée avec succès.');
     }
 
-    private function storeUpload(Request $request, string $subdirectory, int $maxKb, string $successMessage): JsonResponse
+    private function storeUpload(Request $request, string $subdirectory, int $max_kb, string $success_message): JsonResponse
     {
-        $data = $request->validate(['file' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', "max:$maxKb"]]);
+        $data = $request->validate(['file' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', "max:$max_kb"]]);
         $file = $data['file'];
         $user = $request->user('sanctum');
 
@@ -54,7 +54,7 @@ class CustomizationAssetController extends Controller
         $stored_path = $file->storeAs($directory, $filename, 'public');
 
         return response()->json([
-            'message' => $successMessage,
+            'message' => $success_message,
             'data' => [
                 'path' => $stored_path,
                 'url' => Storage::disk('public')->url($stored_path),

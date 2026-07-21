@@ -8,7 +8,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-#[Group(name: 'Commandes', weight: 6)]
+#[Group(name: 'Orders', weight: 6)]
 class OrderController extends Controller
 {
     // Order history for the user

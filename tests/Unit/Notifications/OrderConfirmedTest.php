@@ -20,9 +20,7 @@ class OrderConfirmedTest extends TestCase
     {
         $user = User::factory()->create(['firstname' => 'Alice']);
         $order = Order::factory()->create(['user_id' => $user->id]);
-
         $mail = (new OrderConfirmed($order))->toMail($user);
-
         $this->assertStringContainsString('Bonjour Alice,', $mail->greeting);
     }
 
@@ -37,8 +35,7 @@ class OrderConfirmedTest extends TestCase
             'cost' => 4.90,
         ]);
 
-        // Guest orders are notified via Laravel's on-demand ("anonymous") notifiable,
-        // which has no `firstname` property — this must never be accessed directly.
+        // Guest orders notified via Laravel's on-demand ("anonymous") notifiable
         $mail = (new OrderConfirmed($order->fresh()))->toMail(new AnonymousNotifiable);
 
         $this->assertStringContainsString('Bonjour Bob,', $mail->greeting);
@@ -47,9 +44,7 @@ class OrderConfirmedTest extends TestCase
     public function test_greeting_falls_back_to_a_generic_name_when_nothing_is_known(): void
     {
         $order = Order::factory()->create(['user_id' => null, 'guest_token' => 'guest-2']);
-
         $mail = (new OrderConfirmed($order))->toMail(new AnonymousNotifiable);
-
         $this->assertStringContainsString('Bonjour client,', $mail->greeting);
     }
 
@@ -65,7 +60,6 @@ class OrderConfirmedTest extends TestCase
         ]);
 
         $mail = (new OrderConfirmed($order->fresh()))->toMail(new AnonymousNotifiable);
-
         $this->assertTrue(collect($mail->introLines)->contains('Livraison (Express) : 9,90 €'));
     }
 
