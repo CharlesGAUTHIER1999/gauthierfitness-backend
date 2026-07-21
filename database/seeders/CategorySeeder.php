@@ -62,7 +62,7 @@ class CategorySeeder extends Seeder
 
         foreach ($categories as $root => $config) {
 
-            $rootCategory = Category::create([
+            $root_category = Category::create([
                 'name' => ucfirst($root),
                 'slug' => $root,
                 'type' => $config['type'],
@@ -70,12 +70,12 @@ class CategorySeeder extends Seeder
                 'parent_id' => null,
             ]);
 
-            foreach ($config['children'] as $childSlug) {
+            foreach ($config['children'] as $child_slug) {
                 Category::create([
-                    'name' => ucfirst(str_replace('-', ' ', $childSlug)),
-                    'slug' => $root.'-'.$childSlug,
+                    'name' => ucfirst(str_replace('-', ' ', $child_slug)),
+                    'slug' => $root.'-'.$child_slug,
                     'type' => $config['type'],
-                    'parent_id' => $rootCategory->id,
+                    'parent_id' => $root_category->id,
                     'position' => 0,
                 ]);
             }

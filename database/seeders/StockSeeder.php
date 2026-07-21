@@ -20,24 +20,24 @@ class StockSeeder extends Seeder
 
         foreach ($products as $product) {
             $root = $this->rootSlug($product);
-            $isNutrition = ($root == 'nutrition');
+            $is_nutrition = ($root == 'nutrition');
             $options = $product->options;
 
             if ($options->count() > 0) {
                 foreach ($options as $option) {
                     $this->createLots(
-                        productId: $product->id,
-                        optionId: $option->id,
-                        isNutrition: $isNutrition,
-                        lotsCount: 2
+                        product_id: $product->id,
+                        option_id: $option->id,
+                        is_nutrition: $is_nutrition,
+                        lots_count: 2
                     );
                 }
             } else {
                 $this->createLots(
-                    productId: $product->id,
-                    optionId: null,
-                    isNutrition: $isNutrition,
-                    lotsCount: 2
+                    product_id: $product->id,
+                    option_id: null,
+                    is_nutrition: $is_nutrition,
+                    lots_count: 2
                 );
             }
         }
@@ -55,19 +55,19 @@ class StockSeeder extends Seeder
     }
 
     /** Insert a given number of random stock lots for a product (and optional variant). */
-    private function createLots(int $productId, ?int $optionId, bool $isNutrition, int $lotsCount = 2): void
+    private function createLots(int $product_id, ?int $option_id, bool $is_nutrition, int $lots_count = 2): void
     {
         $now = now();
 
-        for ($i = 0; $i < $lotsCount; $i++) {
+        for ($i = 0; $i < $lots_count; $i++) {
 
             $qty = rand(0, 40);
 
             DB::table('stock_lots')->insert([
-                'product_id' => $productId,
-                'product_option_id' => $optionId,
+                'product_id' => $product_id,
+                'product_option_id' => $option_id,
                 'lot_number' => 'LOT-'.strtoupper(Str::random(10)),
-                'expiration_date' => $isNutrition ? now()->addDays(rand(30, 365))->toDateString() : null,
+                'expiration_date' => $is_nutrition ? now()->addDays(rand(30, 365))->toDateString() : null,
                 'initial_quantity' => $qty,
                 'quantity' => $qty,
                 'created_at' => $now,

@@ -34,9 +34,9 @@ return [
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
-            // évite les cascades si un logger plante
+            // avoids cascades if a logger crashes
             'ignore_exceptions' => true,
-            // IMPORTANT : évite interpolation lourde / gros context
+            // IMPORTANT: avoids heavy interpolation / large context
             'replace_placeholders' => false,
         ],
 
@@ -44,7 +44,7 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'error'),
-            // CRITIQUE
+            // CRITICAL
             'replace_placeholders' => false,
         ],
 
@@ -74,7 +74,7 @@ return [
                 'port' => env('PAPERTRAIL_PORT'),
                 'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
             ],
-            // ⚠️ on retire les processors qui peuvent gonfler les logs
+            // removes processors that can bloat the logs
             'processors' => [],
         ],
 
@@ -85,7 +85,7 @@ return [
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
-            // formatter minimaliste (évite context/extra énormes)
+            // minimal formatter (avoids huge context/extra)
             'formatter' => LineFormatter::class,
             'formatter_with' => [
                 'format' => "[%datetime%] %channel%.%level_name%: %message%\n",

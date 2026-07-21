@@ -9,12 +9,12 @@ use App\Models\User;
 class CartMergeService
 {
     // Merges guest cart (identified by its token) into the given user's cart
-    public function mergeGuestCartIntoUser(?string $guestToken, User $user): void
+    public function mergeGuestCartIntoUser(?string $guest_token, User $user): void
     {
-        if (! $guestToken) {
+        if (! $guest_token) {
             return;
         }
-        $guest_cart = Cart::where('guest_token', $guestToken)->first();
+        $guest_cart = Cart::where('guest_token', $guest_token)->first();
         if (! $guest_cart) {
             return;
         }

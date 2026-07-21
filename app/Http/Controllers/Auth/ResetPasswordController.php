@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
-#[Group(name: 'Authentification', weight: 1)]
+#[Group(name: 'Authentication', weight: 1)]
 class ResetPasswordController extends Controller
 {
     /**

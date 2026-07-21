@@ -24,7 +24,7 @@ use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
 {
-    // Register bindings in the container
+    // Register bindings in container
     public function register(): void
     {
         $this->app->singleton(StripeClient::class, function () {
@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    // Bootstrap the app : register API rate limiter and Scramble config
+    // Bootstrap the app
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
@@ -42,36 +42,36 @@ class AppServiceProvider extends ServiceProvider
         $this->configureScramble();
     }
 
-    // Configure Scramble programmatically
+    // Configure Scramble
     private function configureScramble(): void
     {
         $auth_middleware_patterns = ['auth', 'auth:*'];
 
         Scramble::configure()
-            ->withDocumentTransformers(function (OpenApi $openApi) {
-                $openApi->secure(
+            ->withDocumentTransformers(function (OpenApi $open_api) {
+                $open_api->secure(
                     SecurityScheme::http('bearer')
                         ->as('Sanctum')
-                        ->setDescription('Token Sanctum obtenu via `POST /api/login` ou `POST /api/register`. Préfixé par `Bearer ` dans le header `Authorization`.')
+                        ->setDescription('Sanctum token obtained via `POST /api/login` or `POST /api/register`. Prefixed with `Bearer ` in the `Authorization` header.')
                 );
             })
             ->withOperationTransformers(function (OperationTransformers $transformers) use ($auth_middleware_patterns) {
-                $transformers->prepend(function (Operation $operation, RouteInfo $routeInfo) use ($auth_middleware_patterns): void {
-                    $has_auth_middleware = collect($routeInfo->route->gatherMiddleware())->some(fn (string $mw) => Str::is($auth_middleware_patterns, $mw));
+                $transformers->prepend(function (Operation $operation, RouteInfo $route_info) use ($auth_middleware_patterns): void {
+                    $has_auth_middleware = collect($route_info->route->gatherMiddleware())->some(fn (string $mw) => Str::is($auth_middleware_patterns, $mw));
                     if (! $has_auth_middleware) {
                         $operation->security = [];
                     }
                 });
 
-                $transformers->append(function (Operation $operation, RouteInfo $routeInfo): void {
-                    if ($routeInfo->route->uri() === 'api/ai/designs/generate') {
+                $transformers->append(function (Operation $operation, RouteInfo $route_info): void {
+                    if ($route_info->route->uri() === 'api/ai/designs/generate') {
                         $this->documentAiDesignResponses($operation);
                     }
                 });
             });
     }
 
-    // Manually document the responses of `POST /api/ai/designs/generate`
+    // Manually document responses of `POST /api/ai/designs/generate`
     private function documentAiDesignResponses(Operation $operation): void
     {
         // Success status 201
@@ -102,42 +102,42 @@ class AppServiceProvider extends ServiceProvider
 
         $operation->addResponse(
             Response::make(201)
-                ->setDescription('Design généré, validé par la modération et persisté.')
+                ->setDescription('Design generated, validated by moderation, and persisted.')
                 ->setContent('application/json', Schema::fromType($success_body))
         );
 
         // 422 : content rejected by moderation
-        $moderationBody = (new ObjectType)
+        $moderation_body = (new ObjectType)
             ->addProperty('message', (new StringType)->examples(['Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.']))
             ->addProperty('reason', (new StringType)
                 ->enum(['prompt_blocked', 'prompt_flagged', 'image_provider_rejected', 'image_flagged'])
-                ->setDescription('Origine du rejet : blocklist de marque, modération du prompt, refus du générateur d’images, ou modération de l’image générée.'))
+                ->setDescription('Origin of the rejection: brand blocklist, prompt moderation, image generator refusal, or generated image moderation.'))
             ->addProperty('categories', (new ArrayType)
                 ->setItems(new StringType)
-                ->setDescription('Catégories de modération déclenchées (ex. violence, sexual, hate).')
+                ->setDescription('Triggered moderation categories (e.g. violence, sexual, hate).')
                 ->examples([['violence']]))
             ->setRequired(['message']);
 
         $operation->addResponse(
             Response::make(422)
                 ->setDescription(
-                    "Requête rejetée. Cas possibles : produit non customisable ou n'autorisant ".
-                    "pas l'IA ; prompt rejeté par la modération (`reason: prompt_flagged`) ; ".
-                    'image générée rejetée par la modération (`reason: image_flagged`). '.
-                    'Les erreurs de validation du formulaire renvoient également un 422.'
+                    'Request rejected. Possible cases: product not customizable or not allowing '.
+                    'AI; prompt rejected by moderation (`reason: prompt_flagged`); '.
+                    'generated image rejected by moderation (`reason: image_flagged`). '.
+                    'Form validation errors also return a 422.'
                 )
-                ->setContent('application/json', Schema::fromType($moderationBody))
+                ->setContent('application/json', Schema::fromType($moderation_body))
         );
 
         // 503 : AI provider unreachable or erroring
-        $unavailableBody = (new ObjectType)
+        $unavailable_body = (new ObjectType)
             ->addProperty('message', (new StringType)->examples(['Le service de génération IA est temporairement indisponible. Veuillez réessayer dans un instant.']))
             ->setRequired(['message']);
 
         $operation->addResponse(
             Response::make(503)
-                ->setDescription('Service IA (OpenAI) momentanément indisponible ou injoignable.')
-                ->setContent('application/json', Schema::fromType($unavailableBody))
+                ->setDescription('AI service (OpenAI) temporarily unavailable or unreachable.')
+                ->setContent('application/json', Schema::fromType($unavailable_body))
         );
     }
 }

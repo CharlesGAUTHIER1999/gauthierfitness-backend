@@ -7,7 +7,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 
-#[Group(name: 'Authentification', weight: 1)]
+#[Group(name: 'Authentication', weight: 1)]
 class ForgotPasswordController extends Controller
 {
     /**

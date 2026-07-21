@@ -12,11 +12,10 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-#[Group(name: 'Panier', weight: 3)]
+#[Group(name: 'Cart', weight: 3)]
 class CartController extends Controller
 {
-    // Retrieve the current cart
-
+    // Retrieve current cart
     public function show(Request $request)
     {
         $cart = $this->resolveCart($request);
@@ -120,7 +119,7 @@ class CartController extends Controller
         return Cart::firstOrCreate(['guest_token' => $guest_token]);
     }
 
-    // Whether the current request (user or guest) owns the given cart
+    // Whether current request owns the given cart
     private function ownsCart(Request $request, Cart $cart): bool
     {
         if ($user = $request->user('sanctum')) {
@@ -131,7 +130,7 @@ class CartController extends Controller
         return $guest_token && $cart->guest_token === $guest_token;
     }
 
-    // Whether the current request (user or guest) owns the given customization session
+    // Whether current request owns the given customization session
     private function ownsSession(Request $request, CustomProductSession $session): bool
     {
         if ($user = $request->user('sanctum')) {
@@ -142,7 +141,7 @@ class CartController extends Controller
         return $guest_token && $session->guest_token === $guest_token;
     }
 
-    // Build the JSON-friendly cart representation
+    // Build JSON-friendly cart representation
     private function formatCart(Cart $cart): array
     {
         $items = $cart->items->map(function ($item) {
@@ -195,7 +194,7 @@ class CartController extends Controller
         ];
     }
 
-    // Resolve a stored path to a public URL
+    // Resolve stored path to public URL
     private function publicImageUrl(?string $path): ?string
     {
         if (! $path) {

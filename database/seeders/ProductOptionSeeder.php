@@ -16,9 +16,9 @@ class ProductOptionSeeder extends Seeder
         $this->disableFk();
         DB::table('product_options')->truncate();
         $this->enableFk();
-        $menSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-        $womenSizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
-        $beltGloveSizes = ['S', 'M', 'L', 'XL'];
+        $men_sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+        $women_sizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        $belt_glove_sizes = ['S', 'M', 'L', 'XL'];
         $products = Product::with('categories.parent')->get();
 
         foreach ($products as $product) {
@@ -76,7 +76,7 @@ class ProductOptionSeeder extends Seeder
                     continue;
                 }
 
-                $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $womenSizes);
+                $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $women_sizes);
 
                 continue;
             }
@@ -90,18 +90,18 @@ class ProductOptionSeeder extends Seeder
                 }
 
                 if (str_contains($product->name, 'Ceinture')) {
-                    $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $beltGloveSizes);
+                    $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $belt_glove_sizes);
 
                     continue;
                 }
 
                 if (str_contains($product->name, 'Gants')) {
-                    $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $beltGloveSizes);
+                    $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $belt_glove_sizes);
 
                     continue;
                 }
 
-                $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $menSizes);
+                $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $men_sizes);
 
                 continue;
             }
@@ -120,35 +120,35 @@ class ProductOptionSeeder extends Seeder
     }
 
     /** Create a "size" option for each given size value. */
-    private function seedSizes(int $productId, string $productSku, float $vat, array $sizes): void
+    private function seedSizes(int $product_id, string $product_sku, float $vat, array $sizes): void
     {
         $pos = 1;
         foreach ($sizes as $size) {
-            $this->createOption($productId, [
+            $this->createOption($product_id, [
                 'type' => 'size',
                 'code' => $size,
                 'label' => $size,
                 'position' => $pos++,
                 'vat' => $vat,
-                'sku' => $this->makeOptionSku($productSku, $size),
+                'sku' => $this->makeOptionSku($product_sku, $size),
             ]);
         }
     }
 
     /** Create a "capacity" option for each given code, using a custom or auto-generated label. */
-    private function seedCapacities(int $productId, string $productSku, float $vat, array $codes, array $labels = []): void
+    private function seedCapacities(int $product_id, string $product_sku, float $vat, array $codes, array $labels = []): void
     {
         $pos = 1;
         foreach ($codes as $code) {
             $label = $labels[$code] ?? $this->prettyCapacityLabel($code);
 
-            $this->createOption($productId, [
+            $this->createOption($product_id, [
                 'type' => 'capacity',
                 'code' => $code,
                 'label' => $label,
                 'position' => $pos++,
                 'vat' => $vat,
-                'sku' => $this->makeOptionSku($productSku, $code),
+                'sku' => $this->makeOptionSku($product_sku, $code),
             ]);
         }
     }
@@ -185,18 +185,18 @@ class ProductOptionSeeder extends Seeder
     }
 
     /** Build a unique SKU for an option by appending its code to the product SKU. */
-    private function makeOptionSku(string $productSku, string $code): string
+    private function makeOptionSku(string $product_sku, string $code): string
     {
-        $sku = $productSku.'-'.strtoupper($code);
+        $sku = $product_sku.'-'.strtoupper($code);
 
         return substr($sku, 0, 80);
     }
 
     /** Persist a new ProductOption record from the given data array. */
-    private function createOption(int $productId, array $data): void
+    private function createOption(int $product_id, array $data): void
     {
         ProductOption::create([
-            'product_id' => $productId,
+            'product_id' => $product_id,
             'type' => $data['type'],
             'code' => $data['code'],
             'label' => $data['label'] ?? null,

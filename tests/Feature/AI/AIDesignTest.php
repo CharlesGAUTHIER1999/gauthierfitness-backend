@@ -22,11 +22,11 @@ class AIDesignTest extends TestCase
 
     private function fakeOpenAIOk(): void
     {
-        $pngBase64 = base64_encode(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
+        $png_base64 = base64_encode(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
 
         Http::fake([
             'api.openai.com/*' => Http::response([
-                'data' => [['b64_json' => $pngBase64]],
+                'data' => [['b64_json' => $png_base64]],
             ], 200),
         ]);
     }

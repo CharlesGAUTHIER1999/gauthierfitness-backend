@@ -10,7 +10,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-#[Group(name: 'Customisation', weight: 4)]
+#[Group(name: 'Customization', weight: 4)]
 class CustomizationController extends Controller
 {
     private const array SESSION_RELATIONS = [
@@ -82,11 +82,11 @@ class CustomizationController extends Controller
      *
      * @response 403 scenario="Session belongs to another user" {}
      */
-    public function show(Request $request, CustomProductSession $customizationSession): JsonResponse
+    public function show(Request $request, CustomProductSession $customization_session): JsonResponse
     {
-        $this->authorizeOwner($customizationSession, $request);
+        $this->authorizeOwner($customization_session, $request);
 
-        return response()->json(['data' => $customizationSession->load(self::SESSION_RELATIONS)]);
+        return response()->json(['data' => $customization_session->load(self::SESSION_RELATIONS)]);
     }
 
     /**
@@ -94,9 +94,9 @@ class CustomizationController extends Controller
      *
      * @response 403 scenario="Session belongs to another user" {}
      */
-    public function update(Request $request, CustomProductSession $customizationSession): JsonResponse
+    public function update(Request $request, CustomProductSession $customization_session): JsonResponse
     {
-        $this->authorizeOwner($customizationSession, $request);
+        $this->authorizeOwner($customization_session, $request);
 
         $data = $request->validate([
             'configuration' => ['nullable', 'array'],
@@ -109,19 +109,19 @@ class CustomizationController extends Controller
             abort_unless($request->user('sanctum'), 403);
             $design = Design::findOrFail($data['design_id']);
             abort_unless((int) $design->user_id === (int) $request->user('sanctum')->id, 403);
-            abort_unless((int) $design->product_id === (int) $customizationSession->product_id, 422, 'Design does not match the customization session product.');
+            abort_unless((int) $design->product_id === (int) $customization_session->product_id, 422, 'Design does not match the customization session product.');
         }
 
-        $customizationSession->update([
-            'configuration' => $data['configuration'] ?? $customizationSession->configuration,
-            'design_id' => $data['design_id'] ?? $customizationSession->design_id,
-            'preview_image_path' => array_key_exists('preview_image_path', $data) ? $data['preview_image_path'] : $customizationSession->preview_image_path,
-            'status' => $data['status'] ?? $customizationSession->status,
+        $customization_session->update([
+            'configuration' => $data['configuration'] ?? $customization_session->configuration,
+            'design_id' => $data['design_id'] ?? $customization_session->design_id,
+            'preview_image_path' => array_key_exists('preview_image_path', $data) ? $data['preview_image_path'] : $customization_session->preview_image_path,
+            'status' => $data['status'] ?? $customization_session->status,
         ]);
 
         return response()->json([
             'message' => 'Customization session updated.',
-            'data' => $customizationSession->fresh(self::SESSION_RELATIONS),
+            'data' => $customization_session->fresh(self::SESSION_RELATIONS),
         ]);
     }
 

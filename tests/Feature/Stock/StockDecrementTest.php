@@ -41,28 +41,28 @@ class StockDecrementTest extends TestCase
             'total' => 89.97,
         ]);
 
-        // Simulates the webhook logic (FIFO)
-        $availableLot = StockLot::where('product_id', $item->product_id)
+        // Simulates webhook logic (FIFO)
+        $available_lot = StockLot::where('product_id', $item->product_id)
             ->whereNull('product_option_id')
             ->where('quantity', '>', 0)
             ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
             ->orderBy('id')
             ->first();
 
-        $this->assertNotNull($availableLot);
+        $this->assertNotNull($available_lot);
 
-        $deducted = min($availableLot->quantity, (int) $item->quantity);
-        $availableLot->decrement('quantity', $deducted);
+        $deducted = min($available_lot->quantity, (int) $item->quantity);
+        $available_lot->decrement('quantity', $deducted);
 
         StockMovement::create([
-            'lot_id' => $availableLot->id,
+            'lot_id' => $available_lot->id,
             'product_id' => $item->product_id,
             'quantity' => $deducted,
             'type' => 'out',
-            'reason' => "Vente — Commande #{$order->id}",
+            'reason' => "Vente — Commande #$order->id",
         ]);
 
-        $item->lot_id = $availableLot->id;
+        $item->lot_id = $available_lot->id;
         $item->save();
 
         $this->assertDatabaseHas('stock_lots', [
@@ -96,22 +96,22 @@ class StockDecrementTest extends TestCase
             'expiration_date' => now()->addYear(),
         ]);
 
-        // Lot expiring first (should be used)
-        $firstLot = StockLot::factory()->create([
+        // Lot expiring first
+        $first_lot = StockLot::factory()->create([
             'product_id' => $product->id,
             'lot_number' => 'LOT-EARLY',
             'quantity' => 50,
             'expiration_date' => now()->addMonth(),
         ]);
 
-        $selectedLot = StockLot::where('product_id', $product->id)
+        $selected_lot = StockLot::where('product_id', $product->id)
             ->whereNull('product_option_id')
             ->where('quantity', '>', 0)
             ->orderByRaw('expiration_date IS NULL, expiration_date ASC')
             ->orderBy('id')
             ->first();
 
-        $this->assertEquals($firstLot->id, $selectedLot->id, 'FIFO doit sélectionner le lot avec la date d\'expiration la plus proche');
+        $this->assertEquals($first_lot->id, $selected_lot->id, 'FIFO doit sélectionner le lot avec la date d\'expiration la plus proche');
     }
 
     public function test_no_decrement_when_no_stock_available(): void

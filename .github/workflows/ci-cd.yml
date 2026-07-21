@@ -1,7 +1,7 @@
 # ════════════════════════════════════════════════════════════════════
 #  GauthierFitness Backend - CI
-#  repo : CharlesGAUTHIER1999/gauthierfitness-backend
-#  Séquence : PHPUnit → Pint → Build image GHCR → Trigger deploy infra
+#  repo: CharlesGAUTHIER1999/gauthierfitness-backend
+#  Sequence: PHPUnit → Pint → Build GHCR image → Trigger infra deploy
 # ════════════════════════════════════════════════════════════════════
 
 name: CI Backend
@@ -34,7 +34,7 @@ jobs:
           extensions: pdo, pdo_sqlite, pdo_mysql, mbstring, bcmath, gd, zip, pcntl
           coverage: pcov
 
-      - name: Préparer les dossiers Laravel
+      - name: Prepare Laravel directories
         run: |
           mkdir -p bootstrap/cache
           mkdir -p storage/framework/{cache,sessions,views}
@@ -51,19 +51,20 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Préparer .env
+      - name: Prepare .env
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: PHPUnit (Unit + Feature) avec coverage
-        run: php artisan test --stop-on-failure --coverage --coverage-clover=coverage.xml
+      # Coverage floor set below current measured coverage (83.5%)
+      - name: PHPUnit (Unit + Feature) with coverage
+        run: php artisan test --stop-on-failure --coverage --coverage-clover=coverage.xml --min=80
         env:
           APP_ENV: testing
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
 
-      - name: Upload rapport de coverage
+      - name: Upload coverage report
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
@@ -96,7 +97,7 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
 
-      - name: Pint (vérification style)
+      - name: Pint (style check)
         run: ./vendor/bin/pint --test
 
   # ---------------------------------------------
@@ -149,7 +150,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ------------------------------------------------------------------------------
-  # JOB 4 - Déclenchement du deploy dans gauthierfitness-infra (only on develop)
+  # JOB 4 - Trigger deploy in gauthierfitness-infra (only on develop)
   # ------------------------------------------------------------------------------
   trigger-deploy:
     name: "Trigger deploy infra"
@@ -158,7 +159,7 @@ jobs:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     steps:
-      - name: Dispatch vers gauthierfitness-infra
+      - name: Dispatch to gauthierfitness-infra
         uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.INFRA_DISPATCH_TOKEN }}

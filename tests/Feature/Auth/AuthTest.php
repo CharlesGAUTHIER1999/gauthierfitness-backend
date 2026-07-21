@@ -10,8 +10,7 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    /* ── Register ──────────────────────────────────────────────── */
-
+    /* Register */
     public function test_user_can_register(): void
     {
         $response = $this->postJson('/api/register', [
@@ -22,9 +21,7 @@ class AuthTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        $response->assertCreated()
-            ->assertJsonStructure(['token', 'user' => ['id', 'email']]);
-
+        $response->assertCreated()->assertJsonStructure(['token', 'user' => ['id', 'email']]);
         $this->assertDatabaseHas('users', ['email' => 'charles@gauthierfitness.fr']);
     }
 
@@ -41,8 +38,7 @@ class AuthTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    /* ── Login ─────────────────────────────────────────────────── */
-
+    /* Login */
     public function test_user_can_login(): void
     {
         $user = User::factory()->create([
@@ -55,8 +51,7 @@ class AuthTest extends TestCase
             'password' => 'Password123!',
         ]);
 
-        $response->assertOk()
-            ->assertJsonStructure(['token', 'user']);
+        $response->assertOk()->assertJsonStructure(['token', 'user']);
     }
 
     public function test_login_fails_with_wrong_password(): void
@@ -72,8 +67,7 @@ class AuthTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    /* ── Me / Logout ───────────────────────────────────────────── */
-
+    /* Me and Logout */
     public function test_authenticated_user_can_access_me(): void
     {
         $user = User::factory()->create();

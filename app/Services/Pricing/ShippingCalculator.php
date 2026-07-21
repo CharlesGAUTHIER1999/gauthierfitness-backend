@@ -16,12 +16,12 @@ class ShippingCalculator
     private const float EXPRESS_COST = 9.90;
 
     // Cost (TTC) of the given method
-    public static function cost(string $method, float $productSubtotalTtc): float
+    public static function cost(string $method, float $product_subtotal_ttc): float
     {
         if ($method === 'express') {
             return self::EXPRESS_COST;
         }
 
-        return $productSubtotalTtc >= self::FREE_SHIPPING_THRESHOLD ? 0.0 : self::STANDARD_COST;
+        return $product_subtotal_ttc >= self::FREE_SHIPPING_THRESHOLD ? 0.0 : self::STANDARD_COST;
     }
 }
