@@ -15,11 +15,11 @@ class PromptBlocklist
      */
     public function matches(string $text, ?array $blocklist = null): array
     {
-        $normalized = Str::lower(Str::ascii($text));
+        $normalized = $this->normalize($text);
         $matched = [];
 
         foreach ($blocklist ?? config('ai.moderation.blocklist', []) as $term) {
-            $needle = Str::lower(Str::ascii($term));
+            $needle = $this->normalize($term);
             if ($needle === '') {
                 continue;
             }
@@ -29,5 +29,16 @@ class PromptBlocklist
         }
 
         return array_values(array_unique($matched));
+    }
+
+    // Lowercases, strips accents, and maps common leetspeak substitutions
+    private function normalize(string $text): string
+    {
+        $text = Str::lower(Str::ascii($text));
+
+        return strtr($text, [
+            '0' => 'o', '1' => 'i', '3' => 'e', '4' => 'a', '5' => 's',
+            '7' => 't', '@' => 'a', '$' => 's', '!' => 'i', '|' => 'i',
+        ]);
     }
 }

@@ -49,4 +49,11 @@ class PromptBlocklistTest extends TestCase
 
         $this->assertSame(['arme'], $matches);
     }
+
+    public function test_detects_leetspeak_character_substitution(): void
+    {
+        $matches = $this->blocklist->matches('H!TLER', ['hitler']);
+
+        $this->assertSame(['hitler'], $matches);
+    }
 }
