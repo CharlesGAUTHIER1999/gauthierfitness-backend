@@ -103,7 +103,6 @@ class ProductOptionSeeder extends Seeder
 
                 $this->seedSizes($product->id, $product->sku, $product->vat ?? 20.0, $men_sizes);
 
-                continue;
             }
         }
     }

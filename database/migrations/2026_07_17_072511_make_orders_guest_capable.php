@@ -7,10 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Allows an order to belong to an anonymous guest (via a token) instead of
-     * a user, and stores the contact email needed to send the confirmation
-     * email when there is no account to notify. Mirrors carts.guest_token /
-     * custom_product_sessions.guest_token.
+     * Allows an order to belong to an anonymous guest (via a token)
      */
     public function up(): void
     {

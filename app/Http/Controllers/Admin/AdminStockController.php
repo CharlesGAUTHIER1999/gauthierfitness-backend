@@ -16,8 +16,7 @@ use Throwable;
 class AdminStockController extends Controller
 {
     /**
-     * Global stock view : all products with their total quantity.
-     * Returns a paginated list of products (25/page)
+     * Global stock view
      *
      * @queryParam search string Search by name or SKU.
      */
@@ -33,7 +32,6 @@ class AdminStockController extends Controller
 
     /**
      * Stock detail for a product
-     * Returns lots grouped into two blocks: `global_stock` (lots without an option) and `option_stocks` (lots per variant).
      * Lots are sorted FIFO (nearest expiration first).
      */
     public function index(Product $product): JsonResponse

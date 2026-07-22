@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class ProductFactory extends Factory
 {
-    /** Define the default state for a fake product, including pricing and identifiers. */
+    /** Define default state for a fake product, including pricing and identifiers. */
     public function definition(): array
     {
         $price_ht = $this->faker->randomFloat(2, 5, 200);

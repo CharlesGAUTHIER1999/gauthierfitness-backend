@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProductImageFactory extends Factory
 {
-    /** Define the default state for a fake product image. */
+    /** Define default state for a fake product image. */
     public function definition(): array
     {
         return [

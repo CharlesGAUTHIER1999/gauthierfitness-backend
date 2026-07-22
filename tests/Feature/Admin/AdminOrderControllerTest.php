@@ -121,6 +121,6 @@ class AdminOrderControllerTest extends TestCase
         $this->patchJson("/api/admin/orders/$order->id/status", [
             'order_status' => 'new',
         ])->assertOk()
-            ->assertJsonPath('message', 'Status unchanged');
+            ->assertJsonPath('message', 'Statut inchangé');
     }
 }

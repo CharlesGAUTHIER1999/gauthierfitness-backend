@@ -7,10 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Allows a customization session to belong to an anonymous guest (via a
-     * token) instead of a user. Unlike carts.guest_token, this column is not
-     * unique — a guest can open several customization sessions (one per
-     * product).
+     * Allows a customization session to belong to an anonymous guest (via a token)
      */
     public function up(): void
     {

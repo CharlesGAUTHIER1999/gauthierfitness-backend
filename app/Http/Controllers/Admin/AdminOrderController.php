@@ -105,8 +105,8 @@ class AdminOrderController extends Controller
     /**
      * Update an order's status
      *
-     * @response 200 {"message": "Status updated", "order": {}}
-     * @response 200 scenario="No change" {"message": "Status unchanged", "order": {}}
+     * @response 200 {"message": "Statut mis à jour", "order": {}}
+     * @response 200 scenario="No change" {"message": "Statut inchangé", "order": {}}
      *
      * @throws Throwable
      */
@@ -117,7 +117,7 @@ class AdminOrderController extends Controller
 
         return DB::transaction(function () use ($order, $new_status) {
             if ($order->order_status === $new_status) {
-                return response()->json(['message' => 'Status unchanged', 'order' => $order]);
+                return response()->json(['message' => 'Statut inchangé', 'order' => $order]);
             }
             $order->order_status = $new_status;
             $order->save();
@@ -130,7 +130,7 @@ class AdminOrderController extends Controller
                 $order->save();
             }
 
-            return response()->json(['message' => 'Status updated', 'order' => $order->fresh()]);
+            return response()->json(['message' => 'Statut mis à jour', 'order' => $order->fresh()]);
         });
     }
 }

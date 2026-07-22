@@ -12,7 +12,6 @@ class ForgotPasswordController extends Controller
 {
     /**
      * Password reset request
-     * Sends an email with a reset link if an account exists for that email
      *
      * @unauthenticated
      *

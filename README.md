@@ -58,7 +58,7 @@ Two distinct `Dockerfile`s, for two different uses:
 Requires a MySQL 8 server already installed and running locally, with a database and user already created —
 `.env.example` contains placeholder credentials (`your_db_user` / `your_db_password`) to recreate as-is or
 adapt to your own (
-details: [docs/02-deployment.md § 3](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#3-démarrage-local)).
+details: [docs/02-deployment.md § 3](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#3-local-startup)).
 
 ```bash
 cp .env.example .env
@@ -87,7 +87,7 @@ API exposed at `http://localhost:8000`, Swagger docs at `http://localhost:8000/d
 | `API_VERSION`                             | Version exposed in the OpenAPI spec                 |
 
 Full
-table → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-variables-denvironnement).
+table → [docs/02-deployment.md § 4](https://github.com/CharlesGAUTHIER1999/gauthierfitness/blob/main/docs/02-deployment.md#4-environment-variables).
 
 ---
 

@@ -71,6 +71,6 @@ class OrderClientTest extends TestCase
 
         $this->postJson('/api/orders', [])
             ->assertStatus(405)
-            ->assertJsonPath('message', 'Use POST /payment/intent to create an order.');
+            ->assertJsonPath('message', 'Utilisez POST /payment/intent pour créer une commande.');
     }
 }

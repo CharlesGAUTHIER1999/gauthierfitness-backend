@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class UserFactory extends Factory
 {
-    /** Define the default state for a fake user (identity, credentials, address). */
+    /** Define default state for a fake user (identity, credentials, address). */
     public function definition(): array
     {
         return [

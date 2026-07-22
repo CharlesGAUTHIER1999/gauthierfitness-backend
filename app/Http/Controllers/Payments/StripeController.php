@@ -34,7 +34,7 @@ class StripeController extends Controller
      *
      * @response 200 scenario="PaymentIntent created" { "order_id": 42, "payment_intent_id": "pi_3xxxxxxxxxxxxxxxxxxxxxxx", "client_secret": "pi_3xxxxxxxxxxxxxxxxxxxxxxx_secret_yyyyyyyyyyyyyyyyyyyyyyyy","amount": 89.90, "shipping_cost": 4.90, "currency": "EUR" }
      * @response 400 scenario="Empty cart" {"message": "Panier vide"}
-     * @response 400 scenario="Missing guest cart identifier" {"message": "Missing guest cart identifier"}
+     * @response 400 scenario="Missing guest cart identifier" {"message": "Identifiant de panier invité manquant"}
      * @response 422 scenario="Invalid shipping data" {"message": "The shipping.zip field is required."}
      *
      * @throws Throwable
@@ -46,7 +46,7 @@ class StripeController extends Controller
 
         if (! $user) {
             $guest_token = $request->header('X-Guest-Cart-Token');
-            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
+            abort_if(! $guest_token, 400, 'Identifiant de panier invité manquant');
         }
 
         $data = $request->validate([

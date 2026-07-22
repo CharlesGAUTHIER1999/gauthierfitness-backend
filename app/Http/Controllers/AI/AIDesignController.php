@@ -24,15 +24,15 @@ class AIDesignController extends Controller
      *
      * @throws AiServiceUnavailableException if OpenAI is unreachable or errors out (rendered as 503)
      *
-     * @response 422 scenario="Product does not support AI generation" {"message": "AI generation is not allowed for this product."}
+     * @response 422 scenario="Product does not support AI generation" {"message": "La génération IA n'est pas autorisée pour ce produit."}
      * @response 422 scenario="Prompt rejected by moderation" {"message": "Votre demande ne respecte pas nos règles de contenu et ne peut pas être générée.", "reason": "prompt_flagged", "categories": ["violence"]}
      * @response 422 scenario="Image rejected by moderation" {"message": "L'image générée ne respecte pas nos règles de contenu et a été rejetée.", "reason": "image_flagged", "categories": ["sexual"]}
      */
     public function __invoke(GenerateDesignRequest $request, OpenAIImageService $images, OpenAIModerationService $moderation, PromptBlocklist $blocklist): JsonResponse
     {
         $product = Product::findOrFail($request->validated('product_id'));
-        abort_unless($product->is_customizable, 422, 'This product is not customizable.');
-        abort_unless($product->allow_ai_generation, 422, 'AI generation is not allowed for this product.');
+        abort_unless($product->is_customizable, 422, "Ce produit n'est pas personnalisable.");
+        abort_unless($product->allow_ai_generation, 422, "La génération IA n'est pas autorisée pour ce produit.");
         $prompt = $request->validated('prompt');
         $user_id = $request->user()->id;
         set_time_limit(180);

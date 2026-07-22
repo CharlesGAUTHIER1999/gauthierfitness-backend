@@ -45,5 +45,6 @@ return [
         'key' => env('OPENAI_API_KEY'),
         'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
         'moderation_model' => env('OPENAI_MODERATION_MODEL', 'omni-moderation-latest'),
+        'vision_moderation_model' => env('OPENAI_VISION_MODERATION_MODEL', 'gpt-4o-mini'),
     ],
 ];

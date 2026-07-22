@@ -27,6 +27,7 @@ class OpenAIImageService
                     'model' => config('services.openai.image_model', 'gpt-image-1'),
                     'prompt' => $prompt,
                     'size' => '1024x1024',
+                    'quality' => 'medium',
                 ]);
         } catch (ConnectionException $e) {
             throw new AiServiceUnavailableException('OpenAI image generation unreachable.', $e);
