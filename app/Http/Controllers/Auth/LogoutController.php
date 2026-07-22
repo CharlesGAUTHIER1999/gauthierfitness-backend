@@ -11,7 +11,7 @@ class LogoutController extends Controller
 {
     /**
      * Logout
-     * Revokes the current Sanctum token. The next call will require a new login.
+     * Revokes current Sanctum token.
      *
      * @response 200 scenario="Success" {"message": "ok"}
      * @response 401 scenario="Missing or invalid token" {"message": "Unauthenticated"}
@@ -20,7 +20,7 @@ class LogoutController extends Controller
     {
         $user = $request->user();
         if (! $user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
+            return response()->json(['message' => 'Non authentifié'], 401);
         }
         $token = $user->currentAccessToken();
         if ($token) {

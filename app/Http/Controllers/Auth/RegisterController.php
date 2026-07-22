@@ -16,7 +16,6 @@ class RegisterController extends Controller
 
     /**
      * Register a new user
-     * Creates a user account (non-admin by default)
      *
      * @unauthenticated
      *

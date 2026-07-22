@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomProductSession;
 use App\Models\Design;
 use App\Models\Product;
+use App\Services\AI\PromptBlocklist;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,13 +24,19 @@ class CustomizationController extends Controller
         'design',
     ];
 
+    private const array CONFIGURATION_VALIDATION_MESSAGES = [
+        'configuration.player_number.value.regex' => 'Le numéro doit être composé uniquement de chiffres (3 maximum).',
+        'configuration.player_name.value.max' => 'Le nom du joueur ne peut pas dépasser 20 caractères.',
+        'configuration.text_layers.*.text.max' => 'Le texte ne peut pas dépasser 30 caractères.',
+    ];
+
     /**
      * Create a customization session
      *
-     * @response 422 scenario="Product is not customizable" {"message": "This product is not customizable."}
+     * @response 422 scenario="Product is not customizable" {"message": "Ce produit n'est pas personnalisable."}
      * @response 403 scenario="Design belongs to another user" {}
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, PromptBlocklist $blocklist): JsonResponse
     {
         $data = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
@@ -39,21 +46,30 @@ class CustomizationController extends Controller
             'preview_image_path' => ['nullable', 'string'],
         ]);
 
+        // Separate pass : enforced for format only
+        $request->validate([
+            'configuration.player_number.value' => ['nullable', 'string', 'regex:/^[0-9]{0,3}$/'],
+            'configuration.player_name.value' => ['nullable', 'string', 'max:20'],
+            'configuration.text_layers.*.text' => ['nullable', 'string', 'max:30'],
+        ], self::CONFIGURATION_VALIDATION_MESSAGES);
+
+        $this->rejectBlockedText($data['configuration'] ?? [], $blocklist);
+
         $product = Product::findOrFail($data['product_id']);
-        abort_unless($product->is_customizable, 422, 'This product is not customizable.');
+        abort_unless($product->is_customizable, 422, "Ce produit n'est pas personnalisable.");
         $user = $request->user('sanctum');
         $guest_token = null;
 
         if (! $user) {
             $guest_token = $request->header('X-Guest-Cart-Token');
-            abort_if(! $guest_token, 400, 'Missing guest cart identifier');
-            abort_if(! empty($data['design_id']), 422, 'Design does not match the selected product.');
+            abort_if(! $guest_token, 400, 'Identifiant de panier invité manquant');
+            abort_if(! empty($data['design_id']), 422, 'Le design ne correspond pas au produit sélectionné.');
         }
 
         if (! empty($data['design_id'])) {
             $design = Design::findOrFail($data['design_id']);
             abort_unless((int) $design->user_id === (int) $user->id, 403);
-            abort_unless((int) $design->product_id === (int) $product->id, 422, 'Design does not match the selected product.');
+            abort_unless((int) $design->product_id === (int) $product->id, 422, 'Le design ne correspond pas au produit sélectionné.');
         }
 
         $option = ! empty($data['product_option_id']) ? $product->options()->find($data['product_option_id']) : null;
@@ -72,7 +88,7 @@ class CustomizationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Customization session created.',
+            'message' => 'Session de personnalisation créée.',
             'data' => $session->load(self::SESSION_RELATIONS),
         ], 201);
     }
@@ -94,7 +110,7 @@ class CustomizationController extends Controller
      *
      * @response 403 scenario="Session belongs to another user" {}
      */
-    public function update(Request $request, CustomProductSession $customization_session): JsonResponse
+    public function update(Request $request, CustomProductSession $customization_session, PromptBlocklist $blocklist): JsonResponse
     {
         $this->authorizeOwner($customization_session, $request);
 
@@ -105,11 +121,20 @@ class CustomizationController extends Controller
             'status' => ['nullable', 'in:draft,ready,added_to_cart,ordered'],
         ]);
 
+        // Separate pass: see the comment in store() above.
+        $request->validate([
+            'configuration.player_number.value' => ['nullable', 'string', 'regex:/^[0-9]{0,3}$/'],
+            'configuration.player_name.value' => ['nullable', 'string', 'max:20'],
+            'configuration.text_layers.*.text' => ['nullable', 'string', 'max:30'],
+        ], self::CONFIGURATION_VALIDATION_MESSAGES);
+
+        $this->rejectBlockedText($data['configuration'] ?? [], $blocklist);
+
         if (! empty($data['design_id'])) {
             abort_unless($request->user('sanctum'), 403);
             $design = Design::findOrFail($data['design_id']);
             abort_unless((int) $design->user_id === (int) $request->user('sanctum')->id, 403);
-            abort_unless((int) $design->product_id === (int) $customization_session->product_id, 422, 'Design does not match the customization session product.');
+            abort_unless((int) $design->product_id === (int) $customization_session->product_id, 422, 'Le design ne correspond pas au produit de la session de personnalisation.');
         }
 
         $customization_session->update([
@@ -120,12 +145,32 @@ class CustomizationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Customization session updated.',
+            'message' => 'Session de personnalisation mise à jour.',
             'data' => $customization_session->fresh(self::SESSION_RELATIONS),
         ]);
     }
 
-    // Abort with 403 unless the requester owns the session
+    // Abort with 422 if any free-text field (player name, text layers) contains a blocked term
+    protected function rejectBlockedText(array $configuration, PromptBlocklist $blocklist): void
+    {
+        $texts = [];
+
+        if (! empty($configuration['player_name']['value'])) {
+            $texts[] = $configuration['player_name']['value'];
+        }
+
+        foreach ($configuration['text_layers'] ?? [] as $layer) {
+            if (! empty($layer['text'])) {
+                $texts[] = $layer['text'];
+            }
+        }
+
+        foreach ($texts as $text) {
+            abort_if(! empty($blocklist->matches($text)), 422, 'Votre texte contient un terme interdit et ne peut pas être utilisé.');
+        }
+    }
+
+    // Abort with 403 unless requester owns the session
     protected function authorizeOwner(CustomProductSession $session, Request $request): void
     {
         if ($user = $request->user('sanctum')) {

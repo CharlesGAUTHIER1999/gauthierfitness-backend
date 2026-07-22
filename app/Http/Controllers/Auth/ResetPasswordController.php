@@ -14,7 +14,7 @@ class ResetPasswordController extends Controller
 {
     /**
      * Password reset
-     * Verifies the token received by email and changes the password
+     * Verifies token received by email and changes password
      *
      * @unauthenticated
      *

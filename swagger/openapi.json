@@ -3,7 +3,7 @@
     "info": {
         "title": "GauthierFitness \u2014 API Documentation",
         "version": "1.0.0",
-        "description": "**GauthierFitness REST API** \u2014 e-commerce store for customizable fitness products (apparel, accessories, nutrition).\n\n## Conventions\n- Authentication: **Laravel Sanctum** (`Bearer <token>`). The token is obtained via `POST /api/login` or `POST /api/register`.\n- Format: JSON (`Accept: application/json`).\n- Error codes:\n  - `401` \u2014 unauthenticated\n  - `403` \u2014 forbidden (e.g. another user's resource)\n  - `404` \u2014 resource not found\n  - `422` \u2014 invalid validation data\n- Rate limiting: `POST /api/contact` is limited to 5 requests/minute/IP.\n\n## Functional domains\n- **Auth** \u2014 registration, login, logout, verification.\n- **Catalog** \u2014 public products (paginated listing + detail).\n- **Cart & Order** \u2014 cart management, Stripe payment, order tracking.\n- **Customization** \u2014 2D/3D personalization sessions + assets (logos, images).\n- **AI** \u2014 image generation via OpenAI for custom designs.\n- **Admin** \u2014 products, orders, stock (admin-only)."
+        "description": "**GauthierFitness REST API** - e-commerce store for customizable fitness products (apparel, accessories, nutrition).\n\n## Conventions\n- Authentication: **Laravel Sanctum** (`Bearer <token>`). The token is obtained via `POST /api/login` or `POST /api/register`.\n- Format: JSON (`Accept: application/json`).\n- Error codes:\n  - `401` \u2014 unauthenticated\n  - `403` \u2014 forbidden (e.g. another user's resource)\n  - `404` \u2014 resource not found\n  - `422` \u2014 invalid validation data\n- Rate limiting: `POST /api/contact` is limited to 5 requests/minute/IP.\n\n## Functional domains\n- **Auth** \u2014 registration, login, logout, verification.\n- **Catalog** \u2014 public products (paginated listing + detail).\n- **Cart & Order** \u2014 cart management, Stripe payment, order tracking.\n- **Customization** \u2014 2D/3D personalization sessions + assets (logos, images).\n- **AI** \u2014 image generation via OpenAI for custom designs.\n- **Admin** \u2014 products, orders, stock (admin-only)."
     },
     "servers": [
         {
@@ -57,7 +57,7 @@
         "/login": {
             "post": {
                 "operationId": "login",
-                "summary": "User login.\nAuthenticates a user via email/password and returns a Sanctum token",
+                "summary": "User login",
                 "tags": [
                     "Authentication"
                 ],
@@ -109,7 +109,7 @@
         "/register": {
             "post": {
                 "operationId": "register",
-                "summary": "Register a new user\nCreates a user account (non-admin by default)",
+                "summary": "Register a new user",
                 "tags": [
                     "Authentication"
                 ],
@@ -175,7 +175,7 @@
         "/forgot-password": {
             "post": {
                 "operationId": "password.email",
-                "summary": "Password reset request\nSends an email with a reset link if an account exists for that email",
+                "summary": "Password reset request",
                 "tags": [
                     "Authentication"
                 ],
@@ -220,7 +220,7 @@
         "/reset-password": {
             "post": {
                 "operationId": "password.reset",
-                "summary": "Password reset\nVerifies the token received by email and changes the password",
+                "summary": "Password reset\nVerifies token received by email and changes password",
                 "tags": [
                     "Authentication"
                 ],
@@ -279,7 +279,7 @@
         "/me": {
             "get": {
                 "operationId": "me",
-                "summary": "Current user profile.\nReturns the authenticated user with their roles",
+                "summary": "Current user profile.\nReturns authenticated user with their roles",
                 "tags": [
                     "Authentication"
                 ],
@@ -302,7 +302,7 @@
             },
             "patch": {
                 "operationId": "profile.update",
-                "summary": "Update profile\nUpdates the authenticated user's contact and postal address details",
+                "summary": "Update profile\nUpdates authenticated user's contact and postal address details",
                 "tags": [
                     "Authentication"
                 ],
@@ -377,7 +377,7 @@
         "/logout": {
             "post": {
                 "operationId": "logout",
-                "summary": "Logout\nRevokes the current Sanctum token. The next call will require a new login",
+                "summary": "Logout\nRevokes current Sanctum token",
                 "tags": [
                     "Authentication"
                 ],
@@ -989,7 +989,7 @@
                                             "type": "string",
                                             "description": "Error overview.",
                                             "examples": [
-                                                "Missing guest cart identifier"
+                                                "Identifiant de panier invit\u00e9 manquant"
                                             ]
                                         }
                                     },
@@ -1026,7 +1026,7 @@
                 "security": []
             }
         },
-        "/customization/sessions/{customizationSession}": {
+        "/customization/sessions/{customization_session}": {
             "get": {
                 "operationId": "customization.show",
                 "summary": "Retrieve a customization session",
@@ -1035,7 +1035,7 @@
                 ],
                 "parameters": [
                     {
-                        "name": "customizationSession",
+                        "name": "customization_session",
                         "in": "path",
                         "required": true,
                         "description": "The customization session ID",
@@ -1070,7 +1070,7 @@
                 ],
                 "parameters": [
                     {
-                        "name": "customizationSession",
+                        "name": "customization_session",
                         "in": "path",
                         "required": true,
                         "description": "The customization session ID",
@@ -1171,7 +1171,7 @@
         "/customization/assets/logo": {
             "post": {
                 "operationId": "customizationAsset.uploadLogo",
-                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB)\nStores the file in `storage/app/public/customization/logos/{user_id}/`",
+                "summary": "Upload a logo (PNG/JPG/JPEG/WebP, \u2264 3 MB)",
                 "tags": [
                     "Customization"
                 ],
@@ -1194,7 +1194,7 @@
         "/customization/assets/image": {
             "post": {
                 "operationId": "customizationAsset.uploadImage",
-                "summary": "Upload a customization image (PNG/JPG/JPEG/WebP, \u2264 5 MB).\nStores the file in `storage/app/public/customization/images/{user_id}/`",
+                "summary": "Upload a customization image (PNG/JPG/JPEG/WebP, \u2264 5 MB)",
                 "tags": [
                     "Customization"
                 ],
@@ -1608,7 +1608,7 @@
                                             "type": "string",
                                             "description": "Error overview.",
                                             "examples": [
-                                                "Missing guest cart identifier"
+                                                "Identifiant de panier invit\u00e9 manquant"
                                             ]
                                         }
                                     },
@@ -2775,7 +2775,7 @@
         "/admin/stock": {
             "get": {
                 "operationId": "adminStock.list",
-                "summary": "Global stock view : all products with their total quantity.\nReturns a paginated list of products (25/page)",
+                "summary": "Global stock view",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -2921,7 +2921,7 @@
         "/admin/products/{product}/stock": {
             "get": {
                 "operationId": "adminStock.index",
-                "summary": "Stock detail for a product\nReturns lots grouped into two blocks: `global_stock` (lots without an option) and `option_stocks` (lots per variant).\nLots are sorted FIFO (nearest expiration first)",
+                "summary": "Stock detail for a product\nLots are sorted FIFO (nearest expiration first)",
                 "tags": [
                     "Admin \u2014 Stock"
                 ],
@@ -3442,7 +3442,22 @@
                         "type": "integer"
                     },
                     "user_id": {
-                        "type": "integer"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "guest_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "total_ht": {
                         "type": "string"
@@ -3502,6 +3517,8 @@
                 "required": [
                     "id",
                     "user_id",
+                    "guest_token",
+                    "email",
                     "total_ht",
                     "total_ttc",
                     "payment_status",

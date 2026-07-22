@@ -63,7 +63,7 @@ class CustomizationTest extends TestCase
         $this->postJson('/api/customization/sessions', [
             'product_id' => $product->id,
         ])->assertStatus(422)
-            ->assertJsonPath('message', 'This product is not customizable.');
+            ->assertJsonPath('message', "Ce produit n'est pas personnalisable.");
     }
 
     public function test_create_session_requires_authentication_or_guest_token(): void
@@ -295,5 +295,102 @@ class CustomizationTest extends TestCase
             ->patchJson("/api/customization/sessions/$session->id", [
                 'design_id' => $design->id,
             ])->assertForbidden();
+    }
+
+    /* Free-text field validation */
+
+    public function test_create_session_rejects_non_numeric_player_number(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/customization/sessions', [
+            'product_id' => $product->id,
+            'configuration' => ['player_number' => ['value' => 'AB']],
+        ])->assertStatus(422);
+    }
+
+    public function test_create_session_accepts_numeric_player_number(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/customization/sessions', [
+            'product_id' => $product->id,
+            'configuration' => ['player_number' => ['value' => '23'], 'color' => 'red'],
+        ])->assertCreated();
+    }
+
+    public function test_create_session_rejects_blocked_term_in_player_name(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/customization/sessions', [
+            'product_id' => $product->id,
+            'configuration' => ['player_name' => ['value' => 'nazi']],
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Votre texte contient un terme interdit et ne peut pas être utilisé.');
+    }
+
+    public function test_create_session_rejects_blocked_term_in_text_layer(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/customization/sessions', [
+            'product_id' => $product->id,
+            'configuration' => ['text_layers' => [['id' => 'txt-1', 'text' => 'hamas']]],
+        ])->assertStatus(422);
+    }
+
+    public function test_update_session_rejects_blocked_term_and_preserves_other_configuration_keys(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $session = CustomProductSession::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => ['color' => 'red'],
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->patchJson("/api/customization/sessions/$session->id", [
+            'configuration' => ['color' => 'blue', 'player_name' => ['value' => 'nazi']],
+        ])->assertStatus(422);
+
+        $session->refresh();
+        $this->assertEquals('red', $session->configuration['color']);
+    }
+
+    public function test_update_session_with_clean_text_preserves_all_configuration_keys(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['is_customizable' => true]);
+
+        $session = CustomProductSession::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'status' => 'draft',
+            'configuration' => ['color' => 'red'],
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->patchJson("/api/customization/sessions/$session->id", [
+            'configuration' => ['color' => 'blue', 'player_name' => ['value' => 'Alice'], 'player_number' => ['value' => '10']],
+        ])->assertOk();
+
+        $session->refresh();
+        $this->assertEquals('blue', $session->configuration['color']);
+        $this->assertEquals('Alice', $session->configuration['player_name']['value']);
+        $this->assertEquals('10', $session->configuration['player_number']['value']);
     }
 }

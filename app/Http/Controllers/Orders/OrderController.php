@@ -52,10 +52,10 @@ class OrderController extends Controller
      *
      * @deprecated This endpoint always returns 405
      *
-     * @response 405 {"message": "Use POST /payment/intent to create an order."}
+     * @response 405 {"message": "Utilisez POST /payment/intent pour créer une commande."}
      */
     public function store(): JsonResponse
     {
-        return response()->json(['message' => 'Use POST /payment/intent to create an order.'], 405);
+        return response()->json(['message' => 'Utilisez POST /payment/intent pour créer une commande.'], 405);
     }
 }
