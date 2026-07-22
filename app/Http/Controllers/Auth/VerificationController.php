@@ -11,7 +11,7 @@ class VerificationController extends Controller
 {
     /**
      * Current user profile.
-     * Returns the authenticated user with their roles.
+     * Returns authenticated user with their roles
      *
      * @response 200 scenario="Success" { "id": 1, "firstname": "Alice", "lastname": "Dupont", "email": "alice@example.com", "roles": ["customer"], "is_admin": false }
      */

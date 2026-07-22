@@ -64,7 +64,39 @@ class GenerateDesignTest extends TestCase
             'product_id' => $product->id,
             'prompt' => self::VALID_PROMPT,
         ])->assertStatus(422)
-            ->assertJsonPath('message', 'AI generation is not allowed for this product.');
+            ->assertJsonPath('message', "La génération IA n'est pas autorisée pour ce produit.");
+
+        Http::assertNothingSent();
+    }
+
+    public function test_rejects_non_customizable_product(): void
+    {
+        $product = Product::factory()->create([
+            'is_customizable' => false,
+            'allow_ai_generation' => true,
+        ]);
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson(self::ENDPOINT, [
+            'product_id' => $product->id,
+            'prompt' => self::VALID_PROMPT,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', "Ce produit n'est pas personnalisable.");
+
+        Http::assertNothingSent();
+    }
+
+    // Validation
+    public function test_validates_prompt_length(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson(self::ENDPOINT, [
+            'product_id' => $this->aiProduct()->id,
+            'prompt' => 'short', // < 10 chars
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['prompt']);
 
         Http::assertNothingSent();
     }

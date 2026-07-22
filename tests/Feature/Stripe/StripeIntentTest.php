@@ -66,7 +66,7 @@ class StripeIntentTest extends TestCase
     {
         $this->postJson('/api/payment/intent', $this->shippingPayload())
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Missing guest cart identifier');
+            ->assertJsonPath('message', 'Identifiant de panier invité manquant');
     }
 
     public function test_guest_can_create_payment_intent_with_guest_token(): void

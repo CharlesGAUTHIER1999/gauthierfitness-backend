@@ -15,7 +15,7 @@ class ProductGroupSeeder extends Seeder
 
     private ?int $slug_max = null;
 
-    /** Group products by color/flavor variants, cloning base products into variant rows and assigning them to product groups with their images. */
+    /** Group products by color/flavor variants */
     public function run(): void
     {
         $this->disableFk();
@@ -30,8 +30,8 @@ class ProductGroupSeeder extends Seeder
 
         $this->enableFk();
 
-        $this->sku_max = $this->getColumnMaxLen('products', 'sku', 80);
-        $this->slug_max = $this->getColumnMaxLen('products', 'slug', 255);
+        $this->sku_max = $this->getColumnMaxLen('sku', 80);
+        $this->slug_max = $this->getColumnMaxLen('slug', 255);
 
         $c = [
             'black' => ['code' => 'black', 'label' => 'Noir'],
@@ -271,7 +271,7 @@ class ProductGroupSeeder extends Seeder
 
                 $main = $base_urls[$i] ?? $base_urls[0] ?? null;
                 if ($new_id && $main) {
-                    $this->replaceProductImages((int) $new_id, [$main, $main]);
+                    $this->replaceProductImages($new_id, [$main, $main]);
                 }
             }
         }
@@ -326,16 +326,16 @@ class ProductGroupSeeder extends Seeder
 
                     $urls = $this->sliceUrls($base_urls, $slices_by_code[$color['code']] ?? []);
                     if (! empty($urls)) {
-                        $this->replaceProductImages((int) $new_id, $urls);
+                        $this->replaceProductImages($new_id, $urls);
                     } else {
-                        $this->copyImagesFromBase((int) $base->id, (int) $new_id);
+                        $this->copyImagesFromBase((int) $base->id, $new_id);
                     }
                 }
             } else {
                 foreach (array_slice($colors, 1) as $color) {
                     $new_id = $this->cloneProductVariant((int) $base->id, (int) $group->id, $color['code'], $color['label']);
                     if ($new_id) {
-                        $this->copyImagesFromBase((int) $base->id, (int) $new_id);
+                        $this->copyImagesFromBase((int) $base->id, $new_id);
                     }
                 }
             }
@@ -459,7 +459,7 @@ class ProductGroupSeeder extends Seeder
             ]);
         }
 
-        return (int) $new_id;
+        return $new_id;
     }
 
     /** Delete a product's existing images and insert the given URLs as its new gallery. */
@@ -520,7 +520,7 @@ class ProductGroupSeeder extends Seeder
     /** Build a unique SKU for a variant by truncating the base SKU and appending variant + random suffix. */
     private function makeSku(string $base_sku, string $variant_code): string
     {
-        $max = (int) ($this->sku_max ?? 80);
+        $max = $this->sku_max ?? 80;
 
         // Keep part of the base SKU + variant + random suffix to guarantee uniqueness
         $variant = strtoupper(Str::slug($variant_code));
@@ -536,7 +536,7 @@ class ProductGroupSeeder extends Seeder
     /** Build a unique slug for a variant by truncating the base slug and appending the variant code. */
     private function makeSlug(string $base_slug, string $variant_code): string
     {
-        $max = (int) ($this->slug_max ?? 255);
+        $max = $this->slug_max ?? 255;
         $suffix = '-'.Str::slug($variant_code);
         $keep = max(1, $max - strlen($suffix));
 
@@ -544,7 +544,7 @@ class ProductGroupSeeder extends Seeder
     }
 
     /** Look up a column's max character length from information_schema, falling back to a default. */
-    private function getColumnMaxLen(string $table, string $column, int $default): int
+    private function getColumnMaxLen(string $column, int $default): int
     {
         try {
             $row = DB::selectOne(
@@ -554,7 +554,7 @@ class ProductGroupSeeder extends Seeder
                    AND TABLE_NAME = ?
                    AND COLUMN_NAME = ?
                  LIMIT 1',
-                [$table, $column]
+                ['products', $column]
             );
 
             $len = isset($row->len) ? (int) $row->len : 0;

@@ -50,7 +50,7 @@ class CartController extends Controller
         if ($custom_session_id) {
             $session = CustomProductSession::findOrFail($custom_session_id);
             abort_unless($this->ownsSession($request, $session), 403);
-            abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'Customization session does not match product.');
+            abort_unless((int) $session->product_id === (int) $data['product_id'], 422, 'La session de personnalisation ne correspond pas au produit.');
 
             $item = CartItem::create([
                 'cart_id' => $cart->id,
@@ -114,7 +114,7 @@ class CartController extends Controller
             return Cart::firstOrCreate(['user_id' => $user->id]);
         }
         $guest_token = $request->header('X-Guest-Cart-Token');
-        abort_if(! $guest_token, 400, 'Missing guest cart identifier');
+        abort_if(! $guest_token, 400, 'Identifiant de panier invité manquant');
 
         return Cart::firstOrCreate(['guest_token' => $guest_token]);
     }

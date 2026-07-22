@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class StockLotFactory extends Factory
 {
-    /** Define the default state for a fake stock lot (lot number, expiration, quantity). */
+    /** Define default state for a fake stock lot (lot number, expiration, quantity). */
     public function definition(): array
     {
         return [

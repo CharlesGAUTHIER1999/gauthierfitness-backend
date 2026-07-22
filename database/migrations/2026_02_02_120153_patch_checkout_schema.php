@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /** Patches order_items FKs/indexes, adds a unique constraint to payments, and adds shipping fields to shipments. */
+    /** Patches order_items FKs/indexes */
     public function up(): void
     {
-        /** 1 - order_items: do NOT cascade delete on product / option + useful composite index */
+        /** 1 - order_items */
         Schema::table('order_items', function (Blueprint $table) {
             $table->dropForeign(['product_id']);
             $table->dropForeign(['product_option_id']);

@@ -149,9 +149,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ------------------------------------------------------------------------------
+  # -------------------------------------------------------------------
   # JOB 4 - Trigger deploy in gauthierfitness-infra (only on develop)
-  # ------------------------------------------------------------------------------
+  # -------------------------------------------------------------------
   trigger-deploy:
     name: "Trigger deploy infra"
     runs-on: ubuntu-latest

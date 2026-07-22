@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class SupplierFactory extends Factory
 {
-    /** Define the default state for a fake supplier. */
+    /** Define default state for a fake supplier. */
     public function definition(): array
     {
         $name = $this->faker->company();

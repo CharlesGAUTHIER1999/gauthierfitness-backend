@@ -4,13 +4,13 @@ namespace App\Services\AI;
 
 use Illuminate\Support\Str;
 
-// Brand Policy filter : detects topics in a prompt that are explicitly prohibited
+// Brand Policy filter
 class PromptBlocklist
 {
     /**
      * List of forbidden terms detected in the given text.
      *
-     * @param  list<string>|null  $blocklist  Overrides the configured blocklist (mainly for testing).
+     * @param  list<string>|null  $blocklist  Overrides configured blocklist (mainly for testing).
      * @return list<string>
      */
     public function matches(string $text, ?array $blocklist = null): array

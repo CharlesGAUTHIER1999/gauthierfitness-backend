@@ -28,16 +28,14 @@ class StockSeeder extends Seeder
                     $this->createLots(
                         product_id: $product->id,
                         option_id: $option->id,
-                        is_nutrition: $is_nutrition,
-                        lots_count: 2
+                        is_nutrition: $is_nutrition
                     );
                 }
             } else {
                 $this->createLots(
                     product_id: $product->id,
                     option_id: null,
-                    is_nutrition: $is_nutrition,
-                    lots_count: 2
+                    is_nutrition: $is_nutrition
                 );
             }
         }
@@ -55,11 +53,11 @@ class StockSeeder extends Seeder
     }
 
     /** Insert a given number of random stock lots for a product (and optional variant). */
-    private function createLots(int $product_id, ?int $option_id, bool $is_nutrition, int $lots_count = 2): void
+    private function createLots(int $product_id, ?int $option_id, bool $is_nutrition): void
     {
         $now = now();
 
-        for ($i = 0; $i < $lots_count; $i++) {
+        for ($i = 0; $i < 2; $i++) {
 
             $qty = rand(0, 40);
 

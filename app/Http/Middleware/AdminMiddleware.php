@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class AdminMiddleware
 {
-    // Allow the request through only for authenticated admin users
+    // Allow request through only for authenticated admin users
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
