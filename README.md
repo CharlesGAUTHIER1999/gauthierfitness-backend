@@ -39,6 +39,7 @@ cp .env.docker.example .env.docker    # config injected into the app container
 docker compose up -d --wait   # waits for MySQL + the app to actually be ready (build included on first run, ~2-4 min)
 docker compose exec app php artisan key:generate --show   # copy the displayed key into APP_KEY= in .env.docker
 docker compose up -d --force-recreate app                 # reloads the container with the new key
+docker compose restart nginx                               # nginx cached the old container IP - reload it
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
 ```
