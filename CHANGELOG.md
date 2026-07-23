@@ -6,6 +6,21 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Bef
 corresponds to a `GF{n}` feature branch merged into `main` (the project's branching convention), rather than a semantic
 version number.
 
+## [v1.0.11] - 2026-07-23
+
+### Fixed
+
+- `tests/bootstrap.php` (new): `php artisan test` was silently running against the MySQL dev database instead
+  of SQLite in-memory. Docker injects real `DB_*` variables via `.env.docker`, and those win over
+  `phpunit.xml`'s overrides because `putenv()` (used by PHPUnit's `<env force="true">`) doesn't update the
+  `$_ENV`/`$_SERVER` superglobals Laravel reads first, so every test run was wiping local dev data. The new bootstrap file forces all three env sources before the
+  framework boots. Confirmed stable: 200 tests, 524 assertions, dev data untouched across repeated runs.
+- `package.json` (asset tooling): `axios` `^1.11.0` → `1.18.1` and `vite` `^7.0.7` → `7.3.6`, fixing several
+  CVEs (ReDoS, proxy-header leaks, and prototype-pollution gadgets in axios; a Windows `server.fs.deny` bypass
+  and an NTLMv2 hash disclosure in vite/launch-editor) — `npm audit` now reports 0 vulnerabilities. Kept within
+  the current major versions (no `vite@8`) to avoid an untested breaking change this close to submission;
+  build verified green.
+
 ## [v1.0.10] - 2026-07-23
 
 ### Added
