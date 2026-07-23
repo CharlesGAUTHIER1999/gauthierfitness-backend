@@ -6,6 +6,69 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Bef
 corresponds to a `GF{n}` feature branch merged into `main` (the project's branching convention), rather than a semantic
 version number.
 
+## [v1.0.10] - 2026-07-23
+
+### Added
+
+- Backfilled missing changelog entries for v1.0.7, v1.0.8, and v1.0.9.
+
+## [v1.0.9] - 2026-07-23
+
+### Fixed
+
+- `tests/TestCase.php` now flushes the cache in `setUp()`: the rate limiter on `POST /api/payment/intent`
+  (`throttle:3,1`) is cache-backed and previously leaked state between tests, causing intermittent 429s in
+  `StripeIntentTest` depending on execution order. Reconfirmed stable across repeated runs: 200 tests, 524
+  assertions.
+
+## [v1.0.8] - 2026-07-23
+
+### Fixed
+
+- README Quick Start: added a `docker compose restart nginx` step after recreating the app container — nginx
+  cached the old container's IP and caused 502s until restarted.
+- `docker/Dockerfile` now actually `COPY`s `docker/php/php.ini` and `docker/php/www-pool-tuning.conf` into the
+  image. They were never wired in before, leaving OPcache on its default `validate_timestamps=On`, which
+  re-validates every file on every request over the slow Windows bind mount — adding ~10s per request. Caught
+  while timing the delivery zip's payment flow end-to-end.
+
+## [v1.0.7] - 2026-07-22
+
+Brings together guest support for product customization and Stripe checkout, server-side shipping pricing, a
+blocklist obfuscation fix, and a round of code-quality cleanup (GF33 to GF40).
+
+### Added
+
+- Guest customization sessions: unauthenticated users can create/own a `CustomProductSession` via an
+  `X-Guest-Cart-Token` header instead of an account (`guest_token` column, `user_id` made nullable). AI design
+  generation stays login-only.
+- Guest checkout: `POST /api/payment/intent` no longer requires authentication — guest requests use the cart
+  token instead, orders gained nullable `guest_token`/`email` columns, and order-confirmation emails route
+  directly to the guest's address since there's no account to notify.
+- `ShippingCalculator` service prices `standard` (4.90€, free above 70€ subtotal) and `express` (9.90€, never
+  free) shipping server-side — the client-sent method is never trusted for the amount; `shipments` gained
+  `method`/`cost` columns.
+- Free-text product search via a `search` query param on `GET /api/products`.
+- Leetspeak-aware normalization in the customization-text blocklist (e.g. `H!TLER` now matches `hitler`), plus
+  a second moderation layer (`OpenAIModerationService::detectProhibitedVisualContent`) covering weapons/drugs/
+  hate symbols that OpenAI's standard moderation categories miss.
+
+### Fixed
+
+- Customization/checkout endpoints now resolve the user explicitly via `$request->user('sanctum')` instead of
+  the default guard — a regression where genuinely authenticated requests were silently treated as
+  unauthenticated after guest support moved these routes out of the `auth:sanctum` middleware group.
+- Removed a duplicated `/api/payment/intent` route registration; `OrderConfirmed`'s greeting no longer crashes
+  for guest orders (falls back to the shipping firstname, then "client") since guest notifications have no
+  `firstname` to read.
+- `.env.docker.example` completed with previously-missing Mail/Stripe/OpenAI variables.
+- README API route count corrected (43 → 44).
+
+### Changed
+
+- Refactor pass adding return-type declarations and trimming docblocks across controllers/models/services, no
+  behavior change; `roles` gained a nullable `label` column.
+
 ## [v1.0.6] - 2026-07-13
 
 ### Fixed
