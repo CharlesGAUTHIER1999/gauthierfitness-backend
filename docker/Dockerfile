@@ -36,6 +36,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Custom PHP/OPcache and php-fpm pool tuning
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
+COPY docker/php/www-pool-tuning.conf /usr/local/etc/php-fpm.d/zz-www-pool-tuning.conf
+
 # Copy code
 COPY . .
 
